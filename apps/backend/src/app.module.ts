@@ -1,31 +1,34 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { TurfsModule } from './turfs/turfs.module';
 import { BookingsModule } from './bookings/bookings.module';
-import { User } from './entities/user.entity';
-import { Turf } from './entities/turf.entity';
-import { Booking } from './entities/booking.entity';
+import { UsersModule } from './users/users.module';
+import { DashboardModule } from './dashboard/dashboard.module';
+import { SeedingModule } from './seeding/seeding.module';
+import { getDatabaseConfig } from './database/config/database.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    TypeOrmModule.forRoot({
-      type: 'sqlite',
-      database: 'turf-booking.db',
-      entities: [User, Turf, Booking],
-      synchronize: true, // Set to false in production
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: getDatabaseConfig,
+      inject: [ConfigService],
     }),
     AuthModule,
     TurfsModule,
     BookingsModule,
+    UsersModule,
+    DashboardModule,
+    SeedingModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

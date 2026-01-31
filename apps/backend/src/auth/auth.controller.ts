@@ -10,11 +10,21 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UserOnboardingDto, TurfOwnerOnboardingDto } from './dto/onboarding.dto';
+import {
+  RegisterWithPhoneOtpDto,
+  RegisterWithEmailOtpDto,
+} from './dto/register-otp.dto';
+import {
+  RequestPhoneOtpDto,
+  RequestEmailOtpDto,
+  VerifyPhoneOtpDto,
+  VerifyEmailOtpDto,
+} from './dto/otp-request.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
@@ -24,6 +34,42 @@ export class AuthController {
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
+  }
+
+  @Post('admin/login')
+  async adminLogin(@Body() loginDto: LoginDto) {
+    return this.authService.adminLogin(loginDto);
+  }
+
+  // OTP endpoints
+  @Post('otp/phone/request')
+  async requestPhoneOtp(@Body() dto: RequestPhoneOtpDto) {
+    return this.authService.requestPhoneOtp(dto);
+  }
+
+  @Post('otp/email/request')
+  async requestEmailOtp(@Body() dto: RequestEmailOtpDto) {
+    return this.authService.requestEmailOtp(dto);
+  }
+
+  @Post('register/phone')
+  async registerWithPhoneOtp(@Body() dto: RegisterWithPhoneOtpDto) {
+    return this.authService.registerWithPhoneOtp(dto);
+  }
+
+  @Post('register/email')
+  async registerWithEmailOtp(@Body() dto: RegisterWithEmailOtpDto) {
+    return this.authService.registerWithEmailOtp(dto);
+  }
+
+  @Post('login/phone')
+  async loginWithPhoneOtp(@Body() dto: VerifyPhoneOtpDto) {
+    return this.authService.loginWithPhoneOtp(dto);
+  }
+
+  @Post('login/email')
+  async loginWithEmailOtp(@Body() dto: VerifyEmailOtpDto) {
+    return this.authService.loginWithEmailOtp(dto);
   }
 
   @UseGuards(JwtAuthGuard)

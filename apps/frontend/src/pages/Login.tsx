@@ -5,9 +5,10 @@ import { useAuth } from "../context/AuthContext";
 export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [isAdmin, setIsAdmin] = useState(false);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-    const { login } = useAuth();
+    const { login, adminLogin } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -16,8 +17,13 @@ export default function Login() {
         setLoading(true);
 
         try {
-            await login(email, password);
-            navigate("/dashboard");
+            if (isAdmin) {
+                await adminLogin(email, password);
+                navigate("/admin/dashboard");
+            } else {
+                await login(email, password);
+                navigate("/dashboard");
+            }
         } catch (err: any) {
             setError(
                 err.response?.data?.message || "Login failed. Please try again."
@@ -44,6 +50,13 @@ export default function Login() {
                     <p className="mt-2 text-center text-sm text-gray-600">
                         Or{" "}
                         <Link
+                            to="/register-otp"
+                            className="font-medium text-green-600 hover:text-green-500"
+                        >
+                            sign up with OTP
+                        </Link>
+                        {" or "}
+                        <Link
                             to="/register"
                             className="font-medium text-green-600 hover:text-green-500"
                         >
@@ -52,6 +65,18 @@ export default function Login() {
                     </p>
                 </div>
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+                    <div className="flex items-center">
+                        <input
+                            id="admin-checkbox"
+                            type="checkbox"
+                            checked={isAdmin}
+                            onChange={(e) => setIsAdmin(e.target.checked)}
+                            className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor="admin-checkbox" className="ml-2 block text-sm text-gray-900">
+                            Admin Login
+                        </label>
+                    </div>
                     {error && (
                         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
                             {error}

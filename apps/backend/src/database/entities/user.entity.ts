@@ -38,8 +38,14 @@ export class User {
   @Column()
   lastName: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, unique: true })
   phone: string;
+
+  @Column({ nullable: true })
+  emailVerified: boolean;
+
+  @Column({ nullable: true })
+  phoneVerified: boolean;
 
   @Column({
     type: 'simple-enum',
@@ -47,6 +53,13 @@ export class User {
     default: UserRole.USER,
   })
   role: UserRole;
+
+  // Turf Owner Approval Status
+  @Column({ nullable: true, default: false })
+  isApproved: boolean; // Admin approval for turf owners
+
+  @Column({ nullable: true, type: 'text' })
+  approvalNotes: string; // Admin notes for approval/rejection
 
   @Column({
     type: 'simple-enum',
@@ -77,6 +90,24 @@ export class User {
 
   @Column({ nullable: true })
   address: string;
+
+  @Column({ nullable: true })
+  city: string;
+
+  @Column({ nullable: true })
+  state: string;
+
+  @Column({ nullable: true })
+  zipCode: string;
+
+  @Column({ nullable: true })
+  country: string;
+
+  @Column({ nullable: true })
+  profileImage: string;
+
+  @Column({ nullable: true, type: 'text' })
+  bio: string;
 
   @OneToMany(() => Turf, (turf) => turf.owner)
   turfs: Turf[];

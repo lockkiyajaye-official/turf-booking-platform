@@ -1,15 +1,24 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import api from '../services/api';
 
 interface User {
   id: string;
-  email: string;
+  email?: string;
   firstName: string;
   lastName: string;
   role: 'admin' | 'user' | 'turf_owner';
   onboardingStatus: 'pending' | 'in_progress' | 'completed';
   phone?: string;
+  emailVerified?: boolean;
+  phoneVerified?: boolean;
+  isApproved?: boolean;
   businessName?: string;
+  businessAddress?: string;
+  businessPhone?: string;
+  businessDescription?: string;
+  taxId?: string;
+  approvalNotes?: string;
 }
 
 interface AuthContextType {
@@ -17,8 +26,16 @@ interface AuthContextType {
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
+  loginWithPhoneOtp: (phone: string, otp: string) => Promise<void>;
+  loginWithEmailOtp: (email: string, otp: string) => Promise<void>;
+  registerWithPhoneOtp: (data: RegisterWithPhoneOtpData) => Promise<void>;
+  registerWithEmailOtp: (data: RegisterWithEmailOtpData) => Promise<void>;
+  requestPhoneOtp: (phone: string) => Promise<{ otp?: string; expiresIn: number }>;
+  requestEmailOtp: (email: string) => Promise<{ otp?: string; expiresIn: number }>;
+  adminLogin: (email: string, password: string) => Promise<void>;
   logout: () => void;
   loading: boolean;
+  refreshUser: () => Promise<void>;
 }
 
 interface RegisterData {
@@ -28,6 +45,24 @@ interface RegisterData {
   lastName: string;
   phone?: string;
   role: 'admin' | 'user' | 'turf_owner';
+}
+
+interface RegisterWithPhoneOtpData {
+  phone: string;
+  otp: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
+  role: 'user' | 'turf_owner';
+}
+
+interface RegisterWithEmailOtpData {
+  email: string;
+  otp: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  role: 'user' | 'turf_owner';
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -69,12 +104,69 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('token', authToken);
   };
 
+  const adminLogin = async (email: string, password: string) => {
+    const response = await api.post('/auth/admin/login', { email, password });
+    const { user: userData, token: authToken } = response.data;
+    setUser(userData);
+    setToken(authToken);
+    localStorage.setItem('token', authToken);
+  };
+
   const register = async (data: RegisterData) => {
     const response = await api.post('/auth/register', data);
     const { user: userData, token: authToken } = response.data;
     setUser(userData);
     setToken(authToken);
     localStorage.setItem('token', authToken);
+  };
+
+  const requestPhoneOtp = async (phone: string) => {
+    const response = await api.post('/auth/otp/phone/request', { phone });
+    return response.data;
+  };
+
+  const requestEmailOtp = async (email: string) => {
+    const response = await api.post('/auth/otp/email/request', { email });
+    return response.data;
+  };
+
+  const loginWithPhoneOtp = async (phone: string, otp: string) => {
+    const response = await api.post('/auth/login/phone', { phone, otp });
+    const { user: userData, token: authToken } = response.data;
+    setUser(userData);
+    setToken(authToken);
+    localStorage.setItem('token', authToken);
+  };
+
+  const loginWithEmailOtp = async (email: string, otp: string) => {
+    const response = await api.post('/auth/login/email', { email, otp });
+    const { user: userData, token: authToken } = response.data;
+    setUser(userData);
+    setToken(authToken);
+    localStorage.setItem('token', authToken);
+  };
+
+  const registerWithPhoneOtp = async (data: RegisterWithPhoneOtpData) => {
+    const response = await api.post('/auth/register/phone', data);
+    const { user: userData, token: authToken } = response.data;
+    setUser(userData);
+    setToken(authToken);
+    localStorage.setItem('token', authToken);
+  };
+
+  const registerWithEmailOtp = async (data: RegisterWithEmailOtpData) => {
+    const response = await api.post('/auth/register/email', data);
+    const { user: userData, token: authToken } = response.data;
+    setUser(userData);
+    setToken(authToken);
+    localStorage.setItem('token', authToken);
+  };
+
+  const refreshUser = async () => {
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+      await fetchUser(storedToken);
+    }
   };
 
   const logout = () => {
@@ -84,7 +176,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, loading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        login,
+        adminLogin,
+        register,
+        loginWithPhoneOtp,
+        loginWithEmailOtp,
+        registerWithPhoneOtp,
+        registerWithEmailOtp,
+        requestPhoneOtp,
+        requestEmailOtp,
+        logout,
+        loading,
+        refreshUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

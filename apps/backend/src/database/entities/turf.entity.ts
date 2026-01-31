@@ -40,6 +40,15 @@ export class Turf {
   @Column({ default: true })
   isActive: boolean;
 
+  @Column({ default: false })
+  isPublished: boolean; // Only published turfs are visible to users
+
+  @Column({ default: false })
+  isDraft: boolean; // Draft turfs are only visible to owner
+
+  @Column({ nullable: true })
+  publishedAt: Date;
+
   @Column({ type: 'decimal', precision: 8, scale: 6, nullable: true })
   latitude: number;
 

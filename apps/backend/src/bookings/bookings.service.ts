@@ -6,9 +6,9 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Booking, BookingStatus } from '../entities/booking.entity';
-import { Turf } from '../entities/turf.entity';
-import { User, UserRole } from '../entities/user.entity';
+import { Booking, BookingStatus } from '../database/entities/booking.entity';
+import { Turf } from '../database/entities/turf.entity';
+import { User, UserRole } from '../database/entities/user.entity';
 import { CreateBookingDto } from './dto/create-booking.dto';
 
 @Injectable()
@@ -18,7 +18,7 @@ export class BookingsService {
     private bookingRepository: Repository<Booking>,
     @InjectRepository(Turf)
     private turfRepository: Repository<Turf>,
-  ) {}
+  ) { }
 
   async create(createBookingDto: CreateBookingDto, user: User) {
     const turf = await this.turfRepository.findOne({

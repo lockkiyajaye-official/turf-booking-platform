@@ -13,13 +13,13 @@ import { CreateBookingDto } from './dto/create-booking.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
-import { UserRole } from '../entities/user.entity';
-import { BookingStatus } from '../entities/booking.entity';
+import { UserRole } from '../database/entities/user.entity';
+import { BookingStatus } from '../database/entities/booking.entity';
 
 @Controller('bookings')
 @UseGuards(JwtAuthGuard)
 export class BookingsController {
-  constructor(private readonly bookingsService: BookingsService) {}
+  constructor(private readonly bookingsService: BookingsService) { }
 
   @Post()
   @UseGuards(RolesGuard)
