@@ -11,6 +11,13 @@ export default function Navbar() {
     navigate('/');
   };
 
+  const getHomePath = () => {
+    if (!user) return '/';
+    if (user.role === 'admin') return '/admin/dashboard';
+    if (user.role === 'turf_owner') return '/dashboard/turfs';
+    return '/home';
+  };
+
   return (
     <nav className="bg-white shadow-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -23,39 +30,47 @@ export default function Navbar() {
           </Link>
 
           <div className="flex items-center space-x-6">
-            <Link to="/" className="text-gray-700 hover:text-green-600 transition">
+            <Link
+              to={getHomePath()}
+              className="flex flex-col items-center text-gray-700 hover:text-green-600 transition"
+            >
               <Home className="w-5 h-5" />
+              <span className="text-xs mt-1">Home</span>
             </Link>
-            
+
             {user ? (
               <>
                 {user.role === 'turf_owner' && (
                   <Link
                     to="/dashboard/turfs"
-                    className="text-gray-700 hover:text-green-600 transition"
+                    className="flex flex-col items-center text-gray-700 hover:text-green-600 transition"
                   >
                     <Settings className="w-5 h-5" />
+                    <span className="text-xs mt-1">My Turfs</span>
                   </Link>
                 )}
                 {user.role === 'user' && (
                   <Link
                     to="/dashboard/bookings"
-                    className="text-gray-700 hover:text-green-600 transition"
+                    className="flex flex-col items-center text-gray-700 hover:text-green-600 transition"
                   >
                     <Calendar className="w-5 h-5" />
+                    <span className="text-xs mt-1">Bookings</span>
                   </Link>
                 )}
                 <Link
                   to="/dashboard/profile"
-                  className="text-gray-700 hover:text-green-600 transition"
+                  className="flex flex-col items-center text-gray-700 hover:text-green-600 transition"
                 >
                   <User className="w-5 h-5" />
+                  <span className="text-xs mt-1">Profile</span>
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-gray-700 hover:text-red-600 transition"
+                  className="flex flex-col items-center text-gray-700 hover:text-red-600 transition"
                 >
                   <LogOut className="w-5 h-5" />
+                  <span className="text-xs mt-1">Logout</span>
                 </button>
               </>
             ) : (

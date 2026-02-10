@@ -1,4 +1,4 @@
-import { Calendar, DollarSign, Eye, EyeOff, MapPin, Plus, Trash2, TrendingUp } from "lucide-react";
+import { Calendar, Eye, EyeOff, MapPin, Plus, Trash2, TrendingUp, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
@@ -36,6 +36,21 @@ interface DashboardStats {
     recentBookings: Array<any>;
 }
 
+interface OwnerPayout {
+    id: string;
+    amount: number;
+    status: "requested" | "completed" | "rejected";
+    createdAt: string;
+    processedAt?: string;
+}
+
+interface WalletSummary {
+    walletBalance: number;
+    totalEarnings: number;
+    totalPayouts: number;
+    payouts: OwnerPayout[];
+}
+
 export default function TurfOwnerDashboard() {
     const { user } = useAuth();
     const [turfs, setTurfs] = useState<Turf[]>([]);
@@ -51,10 +66,13 @@ export default function TurfOwnerDashboard() {
         amenities: "",
         availableSlots: "",
     });
+    const [wallet, setWallet] = useState<WalletSummary | null>(null);
+    const [payoutAmount, setPayoutAmount] = useState("");
 
     useEffect(() => {
         fetchTurfs();
         fetchStatistics();
+        fetchWallet();
     }, []);
 
     const fetchTurfs = async () => {
@@ -74,6 +92,15 @@ export default function TurfOwnerDashboard() {
             setStatistics(response.data);
         } catch (error) {
             console.error("Failed to fetch statistics:", error);
+        }
+    };
+
+    const fetchWallet = async () => {
+        try {
+            const response = await api.get("/payments/owner/summary");
+            setWallet(response.data);
+        } catch (error) {
+            console.error("Failed to fetch wallet summary:", error);
         }
     };
 
@@ -135,6 +162,25 @@ export default function TurfOwnerDashboard() {
             fetchTurfs();
         } catch (error) {
             alert("Failed to delete turf");
+        }
+    };
+
+    const handlePayoutRequest = async () => {
+        if (!payoutAmount) return;
+        const amountNumber = Number(payoutAmount);
+        if (!amountNumber || amountNumber <= 0) {
+            alert("Please enter a valid payout amount");
+            return;
+        }
+        try {
+            const response = await api.post("/payments/owner/payouts", {
+                amount: amountNumber,
+            });
+            setWallet(response.data);
+            setPayoutAmount("");
+            alert("Payout requested successfully. Our team will process it soon.");
+        } catch (error: any) {
+            alert(error.response?.data?.message || "Failed to request payout");
         }
     };
 
@@ -205,13 +251,32 @@ export default function TurfOwnerDashboard() {
                                 <div className="flex items-center">
                                     <TrendingUp className="w-8 h-8 text-blue-500" />
                                     <div className="ml-4">
-                                        <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+                                        <p className="text-sm font-medium text-gray-600">Total Revenue (INR)</p>
                                         <p className="text-2xl font-bold text-gray-900">
-                                            ${statistics.overview.totalRevenue.toFixed(2)}
+                                            ₹{statistics.overview.totalRevenue.toFixed(2)}
                                         </p>
                                     </div>
                                 </div>
                             </div>
+                            {wallet && (
+                                <div className="bg-white rounded-lg shadow p-6">
+                                    <div className="flex items-center">
+                                        <Wallet className="w-8 h-8 text-emerald-500" />
+                                        <div className="ml-4">
+                                            <p className="text-sm font-medium text-gray-600">
+                                                Wallet balance (INR)
+                                            </p>
+                                            <p className="text-2xl font-bold text-gray-900">
+                                                ₹{wallet.walletBalance.toFixed(2)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <p className="mt-2 text-xs text-gray-500">
+                                        This wallet balance increases automatically when users complete
+                                        online payments via Razorpay for your turfs.
+                                    </p>
+                                </div>
+                            )}
                             <div className="bg-white rounded-lg shadow p-6">
                                 <div className="flex items-center">
                                     <Calendar className="w-8 h-8 text-green-500" />
@@ -255,12 +320,72 @@ export default function TurfOwnerDashboard() {
                                         <span>{item.turfName}</span>
                                         <div className="text-right">
                                             <p className="font-semibold">{item.totalBookings} bookings</p>
-                                            <p className="text-sm text-gray-600">${item.revenue.toFixed(2)}</p>
+                                            <p className="text-sm text-gray-600">
+                                                ₹{item.revenue.toFixed(2)}
+                                            </p>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         </div>
+
+                        {wallet && (
+                            <div className="bg-white rounded-lg shadow p-6">
+                                <h3 className="text-lg font-semibold mb-4">Payouts</h3>
+                                <div className="flex flex-col md:flex-row md:items-end gap-4 mb-4">
+                                    <div className="flex-1">
+                                        <label className="block text-sm font-medium mb-1">
+                                            Request payout amount (₹)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            step={0.01}
+                                            value={payoutAmount}
+                                            onChange={(e) => setPayoutAmount(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500"
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Available: ₹{wallet.walletBalance.toFixed(2)}
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handlePayoutRequest}
+                                        className="px-6 py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700"
+                                    >
+                                        Request payout
+                                    </button>
+                                </div>
+
+                                {wallet.payouts.length > 0 ? (
+                                    <div className="mt-4 space-y-2 text-sm">
+                                        {wallet.payouts.map((payout) => (
+                                            <div
+                                                key={payout.id}
+                                                className="flex justify-between items-center py-2 border-b"
+                                            >
+                                                <div>
+                                                    <p className="font-medium">
+                                                        ₹{payout.amount.toFixed(2)}
+                                                    </p>
+                                                    <p className="text-gray-500 text-xs">
+                                                        {new Date(payout.createdAt).toLocaleString()}
+                                                    </p>
+                                                </div>
+                                                <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700 capitalize">
+                                                    {payout.status}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-500">
+                                        No payout requests yet.
+                                    </p>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -328,7 +453,7 @@ export default function TurfOwnerDashboard() {
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium mb-1">
-                                                Price per Hour ($) *
+                                                Price per Hour (₹) *
                                             </label>
                                             <input
                                                 type="number"
@@ -423,8 +548,8 @@ export default function TurfOwnerDashboard() {
                                             </span>
                                         </div>
                                         <div className="flex items-center text-green-600 font-semibold mb-4">
-                                            <DollarSign className="w-4 h-4" />
-                                            <span>${turf.pricePerHour}/hr</span>
+                                            <span className="mr-1">₹</span>
+                                            <span>{turf.pricePerHour}/hr</span>
                                         </div>
                                         <div className="mb-2">
                                             <span

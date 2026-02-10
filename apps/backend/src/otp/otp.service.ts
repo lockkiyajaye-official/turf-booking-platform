@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class OtpService {
@@ -56,31 +57,38 @@ export class OtpService {
      */
     async sendEmailOtp(email: string, otp: string): Promise<boolean> {
         if (!this.isProduction) {
-            // In development, just log the OTP
+            // In development, just log the OTP for easier testing
             console.log(`[DEV] Email OTP for ${email}: ${otp}`);
             return true;
         }
 
-        // In production, integrate with email service (SendGrid, AWS SES, etc.)
-        // Example with Nodemailer:
-        // const nodemailer = require('nodemailer');
-        // const transporter = nodemailer.createTransport({
-        //   service: 'gmail',
-        //   auth: {
-        //     user: this.configService.get('EMAIL_USER'),
-        //     pass: this.configService.get('EMAIL_PASS'),
-        //   },
-        // });
-        // await transporter.sendMail({
-        //   from: this.configService.get('EMAIL_FROM'),
-        //   to: email,
-        //   subject: 'Your OTP Code',
-        //   text: `Your OTP is: ${otp}`,
-        // });
+        try {
+            // In production, send OTP using Gmail via Nodemailer
+            const user = this.configService.get<string>('EMAIL_USER');
+            const pass = this.configService.get<string>('EMAIL_PASS');
+            const from =
+                this.configService.get<string>('EMAIL_FROM') || user;
 
-        // For now, return true (implement actual email service)
-        console.log(`[PROD] Email OTP for ${email}: ${otp}`);
-        return true;
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user,
+                    pass,
+                },
+            });
+
+            await transporter.sendMail({
+                from,
+                to: email,
+                subject: 'Your OTP Code',
+                text: `Your OTP is: ${otp}`,
+            });
+
+            return true;
+        } catch (error) {
+            console.error('Failed to send OTP email', error);
+            return false;
+        }
     }
 
     /**

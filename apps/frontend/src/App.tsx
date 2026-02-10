@@ -1,24 +1,31 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
-import Navbar from "./components/Navbar";
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import "./App.css";
 import Footer from "./components/Footer";
+import Navbar from "./components/Navbar";
+import { AuthProvider } from "./context/AuthContext";
+import About from "./pages/About";
+import AdminDashboard from "./pages/AdminDashboard";
+import Contact from "./pages/Contact";
+import Dashboard from "./pages/Dashboard";
+import FAQ from "./pages/FAQ";
+import GoogleCallback from "./pages/GoogleCallback";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import LoginOtp from "./pages/LoginOtp";
+import Onboarding from "./pages/Onboarding";
+import Profile from "./pages/Profile";
+import ProfileAccount from "./pages/ProfileAccount";
+import ProfileSecurity from "./pages/ProfileSecurity";
+import ProfileNotifications from "./pages/ProfileNotifications";
 import Register from "./pages/Register";
 import RegisterOtp from "./pages/RegisterOtp";
-import Onboarding from "./pages/Onboarding";
-import Dashboard from "./pages/Dashboard";
-import Turfs from "./pages/Turfs";
 import TurfDetail from "./pages/TurfDetail";
 import TurfOwnerDashboard from "./pages/TurfOwnerDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
+import Turfs from "./pages/Turfs";
 import UserBookings from "./pages/UserBookings";
-import Profile from "./pages/Profile";
-import About from "./pages/About";
-import Contact from "./pages/Contact";
-import FAQ from "./pages/FAQ";
-import "./App.css";
+import UserHome from "./pages/UserHome";
+import Payments from "./pages/Payments";
+import PaymentHistory from "./pages/PaymentHistory";
 
 function App() {
     return (
@@ -29,7 +36,12 @@ function App() {
                     <main className="flex-grow">
                         <Routes>
                             <Route path="/" element={<Landing />} />
+                            <Route path="/home" element={<UserHome />} />
                             <Route path="/login" element={<Login />} />
+                            <Route
+                                path="/google-callback"
+                                element={<GoogleCallback />}
+                            />
                             <Route path="/login-otp" element={<LoginOtp />} />
                             <Route path="/register" element={<Register />} />
                             <Route path="/register-otp" element={<RegisterOtp />} />
@@ -49,6 +61,26 @@ function App() {
                             <Route
                                 path="/dashboard/profile"
                                 element={<Profile />}
+                            />
+                            <Route
+                                path="/dashboard/profile/account"
+                                element={<ProfileAccount />}
+                            />
+                            <Route
+                                path="/dashboard/profile/security"
+                                element={<ProfileSecurity />}
+                            />
+                            <Route
+                                path="/dashboard/profile/notifications"
+                                element={<ProfileNotifications />}
+                            />
+                            <Route
+                                path="/dashboard/payments"
+                                element={<Payments />}
+                            />
+                            <Route
+                                path="/dashboard/payments/history"
+                                element={<PaymentHistory />}
                             />
                             <Route
                                 path="/admin/dashboard"

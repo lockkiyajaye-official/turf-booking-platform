@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from "../services/api";
-import { MapPin, Star, Clock, DollarSign } from "lucide-react";
+import { MapPin, Star, Clock } from "lucide-react";
 
 interface Turf {
     id: string;
@@ -11,7 +11,7 @@ interface Turf {
     pricePerHour: number;
     amenities: string[];
     images: string[];
-    rating: number;
+    rating: number | string;
     totalReviews: number;
 }
 
@@ -73,73 +73,82 @@ export default function Turfs() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {turfs.map((turf) => (
-                        <Link
-                            key={turf.id}
-                            to={`/turfs/${turf.id}`}
-                            className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition"
-                        >
-                            {turf.images && turf.images.length > 0 ? (
-                                <img
-                                    src={turf.images[0]}
-                                    alt={turf.name}
-                                    className="w-full h-48 object-cover"
-                                />
-                            ) : (
-                                <div className="w-full h-48 bg-green-100 flex items-center justify-center">
-                                    <span className="text-4xl">⚽</span>
-                                </div>
-                            )}
-                            <div className="p-6">
-                                <h3 className="text-xl font-semibold mb-2">
-                                    {turf.name}
-                                </h3>
-                                <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                                    {turf.description}
-                                </p>
-                                <div className="flex items-center text-gray-500 text-sm mb-2">
-                                    <MapPin className="w-4 h-4 mr-1" />
-                                    <span className="truncate">
-                                        {turf.address}
-                                    </span>
-                                </div>
-                                <div className="flex items-center justify-between mt-4">
-                                    <div className="flex items-center">
-                                        <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                                        <span className="text-sm font-medium">
-                                            {turf.rating > 0
-                                                ? turf.rating.toFixed(1)
-                                                : "New"}
+                    {turfs.map((turf) => {
+                        const ratingValue =
+                            typeof turf.rating === "number"
+                                ? turf.rating
+                                : turf.rating
+                                    ? parseFloat(turf.rating as string)
+                                    : 0;
+
+                        return (
+                            <Link
+                                key={turf.id}
+                                to={`/turfs/${turf.id}`}
+                                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition"
+                            >
+                                {turf.images && turf.images.length > 0 ? (
+                                    <img
+                                        src={turf.images[0]}
+                                        alt={turf.name}
+                                        className="w-full h-48 object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-full h-48 bg-green-100 flex items-center justify-center">
+                                        <span className="text-4xl">⚽</span>
+                                    </div>
+                                )}
+                                <div className="p-6">
+                                    <h3 className="text-xl font-semibold mb-2">
+                                        {turf.name}
+                                    </h3>
+                                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                                        {turf.description}
+                                    </p>
+                                    <div className="flex items-center text-gray-500 text-sm mb-2">
+                                        <MapPin className="w-4 h-4 mr-1" />
+                                        <span className="truncate">
+                                            {turf.address}
                                         </span>
-                                        {turf.totalReviews > 0 && (
-                                            <span className="text-sm text-gray-500 ml-1">
-                                                ({turf.totalReviews})
+                                    </div>
+                                    <div className="flex items-center justify-between mt-4">
+                                        <div className="flex items-center">
+                                            <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                                            <span className="text-sm font-medium">
+                                                {ratingValue > 0
+                                                    ? ratingValue.toFixed(1)
+                                                    : "New"}
                                             </span>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center text-green-600 font-semibold">
-                                        <DollarSign className="w-4 h-4" />
-                                        <span>{turf.pricePerHour}/hr</span>
-                                    </div>
-                                </div>
-                                {turf.amenities &&
-                                    turf.amenities.length > 0 && (
-                                        <div className="mt-3 flex flex-wrap gap-2">
-                                            {turf.amenities
-                                                .slice(0, 3)
-                                                .map((amenity, idx) => (
-                                                    <span
-                                                        key={idx}
-                                                        className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded"
-                                                    >
-                                                        {amenity}
-                                                    </span>
-                                                ))}
+                                            {turf.totalReviews > 0 && (
+                                                <span className="text-sm text-gray-500 ml-1">
+                                                    ({turf.totalReviews})
+                                                </span>
+                                            )}
                                         </div>
-                                    )}
-                            </div>
-                        </Link>
-                    ))}
+                                        <div className="flex items-center text-green-600 font-semibold">
+                                            <span className="mr-1">₹</span>
+                                            <span>{turf.pricePerHour.toLocaleString("en-IN")}/hr</span>
+                                        </div>
+                                    </div>
+                                    {turf.amenities &&
+                                        turf.amenities.length > 0 && (
+                                            <div className="mt-3 flex flex-wrap gap-2">
+                                                {turf.amenities
+                                                    .slice(0, 3)
+                                                    .map((amenity, idx) => (
+                                                        <span
+                                                            key={idx}
+                                                            className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded"
+                                                        >
+                                                            {amenity}
+                                                        </span>
+                                                    ))}
+                                            </div>
+                                        )}
+                                </div>
+                            </Link>
+                        );
+                    })}
                 </div>
 
                 {turfs.length === 0 && (

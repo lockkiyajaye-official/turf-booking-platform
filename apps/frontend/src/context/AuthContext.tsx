@@ -24,7 +24,12 @@ interface User {
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
+  /**
+   * Set auth state directly from an existing JWT token (e.g. Google OAuth callback).
+   * This stores the token, updates context, and refreshes the current user.
+   */
+  setAuthFromToken: (token: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   loginWithPhoneOtp: (phone: string, otp: string) => Promise<void>;
   loginWithEmailOtp: (email: string, otp: string) => Promise<void>;
@@ -32,7 +37,7 @@ interface AuthContextType {
   registerWithEmailOtp: (data: RegisterWithEmailOtpData) => Promise<void>;
   requestPhoneOtp: (phone: string) => Promise<{ otp?: string; expiresIn: number }>;
   requestEmailOtp: (email: string) => Promise<{ otp?: string; expiresIn: number }>;
-  adminLogin: (email: string, password: string) => Promise<void>;
+  adminLogin: (email: string, password: string) => Promise<User>;
   logout: () => void;
   loading: boolean;
   refreshUser: () => Promise<void>;
@@ -102,6 +107,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(userData);
     setToken(authToken);
     localStorage.setItem('token', authToken);
+    return userData;
+  };
+
+  const setAuthFromToken = async (authToken: string) => {
+    setToken(authToken);
+    localStorage.setItem('token', authToken);
+    await fetchUser(authToken);
   };
 
   const adminLogin = async (email: string, password: string) => {
@@ -110,6 +122,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(userData);
     setToken(authToken);
     localStorage.setItem('token', authToken);
+    return userData;
   };
 
   const register = async (data: RegisterData) => {
@@ -181,6 +194,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user,
         token,
         login,
+        setAuthFromToken,
         adminLogin,
         register,
         loginWithPhoneOtp,

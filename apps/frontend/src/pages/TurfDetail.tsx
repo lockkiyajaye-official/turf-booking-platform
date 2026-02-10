@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import api from "../services/api";
+import { MapPin, Star } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { MapPin, Star, DollarSign, Calendar, Clock } from "lucide-react";
+import api from "../services/api";
+import { loadRazorpayScript } from "../utils/razorpay";
 
 interface Turf {
     id: string;
@@ -13,7 +14,7 @@ interface Turf {
     amenities: string[];
     images: string[];
     availableSlots: string[];
-    rating: number;
+    rating: number | string;
     totalReviews: number;
     contactPhone?: string;
     contactEmail?: string;
@@ -52,7 +53,7 @@ export default function TurfDetail() {
             return;
         }
 
-        if (!selectedDate || !selectedSlot) {
+        if (!selectedDate || !selectedSlot || !id) {
             alert("Please select a date and time slot");
             return;
         }
@@ -61,17 +62,61 @@ export default function TurfDetail() {
         setBooking(true);
 
         try {
-            await api.post("/bookings", {
+            const scriptLoaded = await loadRazorpayScript();
+            if (!scriptLoaded) {
+                alert("Failed to load payment gateway. Please try again.");
+                setBooking(false);
+                return;
+            }
+
+            // Create Razorpay order via backend
+            const { data } = await api.post("/payments/create", {
                 turfId: id,
                 bookingDate: selectedDate,
                 startTime,
                 endTime,
             });
-            alert("Booking successful!");
-            navigate("/dashboard/bookings");
+
+            const options = {
+                key: data.RazorpayKeyId || import.meta.env.VITE_RAZORPAY_KEY_ID,
+                amount: data.amount,
+                currency: data.currency,
+                name: "TurfBook",
+                description: "Turf booking payment",
+                order_id: data.orderId,
+                prefill: {
+                    name: data.customer?.name,
+                    email: data.customer?.email,
+                    contact: data.customer?.contact,
+                },
+                theme: {
+                    color: "#16a34a",
+                },
+                handler: async (response: any) => {
+                    try {
+                        await api.post("/payments/verify", {
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            bookingId: data.bookingId,
+                        });
+                        alert("Payment successful! Booking confirmed.");
+                        navigate("/dashboard/bookings");
+                    } catch (error: any) {
+                        alert(
+                            error.response?.data?.message ||
+                            "Payment verification failed"
+                        );
+                    } finally {
+                        setBooking(false);
+                    }
+                },
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.open();
         } catch (error: any) {
-            alert(error.response?.data?.message || "Booking failed");
-        } finally {
+            alert(error.response?.data?.message || "Unable to start payment");
             setBooking(false);
         }
     };
@@ -95,6 +140,13 @@ export default function TurfDetail() {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const minDate = tomorrow.toISOString().split("T")[0];
+
+    const ratingValue =
+        typeof turf.rating === "number"
+            ? turf.rating
+            : turf.rating
+                ? parseFloat(turf.rating as string)
+                : 0;
 
     return (
         <div className="min-h-screen bg-gray-50 py-12">
@@ -125,8 +177,8 @@ export default function TurfDetail() {
                                 <div className="flex items-center mb-6">
                                     <Star className="w-5 h-5 text-yellow-400 mr-1" />
                                     <span className="font-semibold mr-2">
-                                        {turf.rating > 0
-                                            ? turf.rating.toFixed(1)
+                                        {ratingValue > 0
+                                            ? ratingValue.toFixed(1)
                                             : "New"}
                                     </span>
                                     {turf.totalReviews > 0 && (
@@ -185,7 +237,7 @@ export default function TurfDetail() {
                                     <div className="mb-6">
                                         <div className="flex items-center justify-between mb-4">
                                             <span className="text-3xl font-bold text-green-600">
-                                                ${turf.pricePerHour}
+                                                ₹{turf.pricePerHour.toLocaleString("en-IN")}
                                             </span>
                                             <span className="text-gray-600">
                                                 per hour
@@ -227,12 +279,11 @@ export default function TurfDetail() {
                                                                             slot
                                                                         )
                                                                     }
-                                                                    className={`px-3 py-2 rounded-md text-sm ${
-                                                                        selectedSlot ===
+                                                                    className={`px-3 py-2 rounded-md text-sm ${selectedSlot ===
                                                                         slot
-                                                                            ? "bg-green-600 text-white"
-                                                                            : "bg-white border border-gray-300 hover:border-green-500"
-                                                                    }`}
+                                                                        ? "bg-green-600 text-white"
+                                                                        : "bg-white border border-gray-300 hover:border-green-500"
+                                                                        }`}
                                                                 >
                                                                     {slot}
                                                                 </button>

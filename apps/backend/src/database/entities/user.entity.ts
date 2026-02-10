@@ -29,8 +29,8 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Column()
-  password: string;
+  @Column({ type: 'varchar', nullable: true })
+  password?: string | null;
 
   @Column()
   firstName: string;
@@ -114,6 +114,10 @@ export class User {
 
   @OneToMany(() => Booking, (booking) => booking.user)
   bookings: Booking[];
+
+  // For turf owners: accumulated earnings (in INR) that can be paid out.
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  walletBalance: number;
 
   @CreateDateColumn()
   createdAt: Date;

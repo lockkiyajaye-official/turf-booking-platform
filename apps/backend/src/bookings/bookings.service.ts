@@ -1,14 +1,14 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
-  BadRequestException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Booking, BookingStatus } from 'src/database/entities/booking.entity';
+import { Turf } from 'src/database/entities/turf.entity';
+import { User, UserRole } from 'src/database/entities/user.entity';
 import { Repository } from 'typeorm';
-import { Booking, BookingStatus } from '../database/entities/booking.entity';
-import { Turf } from '../database/entities/turf.entity';
-import { User, UserRole } from '../database/entities/user.entity';
 import { CreateBookingDto } from './dto/create-booking.dto';
 
 @Injectable()

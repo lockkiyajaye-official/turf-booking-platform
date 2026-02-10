@@ -61,7 +61,7 @@ export default function LoginOtp() {
       } else {
         await loginWithEmailOtp(email, otp);
       }
-      navigate("/dashboard");
+      navigate("/home");
     } catch (err: any) {
       setError(err.response?.data?.message || "Login failed. Please try again.");
     } finally {

@@ -1,22 +1,22 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  UseGuards,
-  Request,
+  Get,
+  Param,
+  Patch,
+  Post,
   Query,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
-import { TurfsService } from './turfs.service';
-import { CreateTurfDto } from './dto/create-turf.dto';
-import { UpdateTurfDto } from './dto/update-turf.dto';
+import { UserRole } from 'src/database/entities/user.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
-import { UserRole } from '../database/entities/user.entity';
+import { CreateTurfDto } from './dto/create-turf.dto';
+import { UpdateTurfDto } from './dto/update-turf.dto';
+import { TurfsService } from './turfs.service';
 
 @Controller('turfs')
 export class TurfsController {

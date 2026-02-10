@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User, UserRole, OnboardingStatus } from '../database/entities/user.entity';
-import { Turf } from '../database/entities/turf.entity';
-import { Booking, BookingStatus } from '../database/entities/booking.entity';
 import * as bcrypt from 'bcrypt';
+import { Booking, BookingStatus } from 'src/database/entities/booking.entity';
+import { Turf } from 'src/database/entities/turf.entity';
+import { OnboardingStatus, User, UserRole } from 'src/database/entities/user.entity';
+import { Repository } from 'typeorm';
+import { Payment } from 'src/database/entities/payment.entity';
 
 @Injectable()
 export class SeedingService {
@@ -15,13 +16,43 @@ export class SeedingService {
         private turfRepository: Repository<Turf>,
         @InjectRepository(Booking)
         private bookingRepository: Repository<Booking>,
+        @InjectRepository(Payment)
+        private paymentRepository: Repository<Payment>,
     ) { }
 
     async seed() {
-        // Clear existing data (optional - be careful in production)
-        await this.bookingRepository.delete({});
-        await this.turfRepository.delete({});
-        await this.userRepository.delete({});
+        // Clear existing data (optional - be careful in production).
+        // We must respect FK ordering and avoid TRUNCATE-on-parent-table issues,
+        // so use DELETE via query builder instead of clear() on parent tables.
+
+        // Finally from payments (referenced by turfs/bookings)
+        await this.paymentRepository
+            .createQueryBuilder()
+            .delete()
+            .from(Payment)
+            .execute();
+
+        // Delete from child table first
+        await this.bookingRepository
+            .createQueryBuilder()
+            .delete()
+            .from(Booking)
+            .execute();
+
+        // Then from turfs (referenced by bookings)
+        await this.turfRepository
+            .createQueryBuilder()
+            .delete()
+            .from(Turf)
+            .execute();
+
+        // Finally from users (referenced by turfs/bookings)
+        await this.userRepository
+            .createQueryBuilder()
+            .delete()
+            .from(User)
+            .execute();
+
 
         // Create Admin
         const adminPassword = await bcrypt.hash('admin123', 10);
@@ -62,10 +93,12 @@ export class SeedingService {
 
         // Create Turf Owners (some approved, some pending)
         const turfOwners: User[] = [];
+        const turfOwnerPassword = await bcrypt.hash('owner123', 10);
         for (let i = 1; i <= 4; i++) {
             const isApproved = i <= 2; // First 2 are approved
             const owner = this.userRepository.create({
                 email: `owner${i}@turf.com`,
+                password: turfOwnerPassword,
                 phone: `+198765432${i}`,
                 firstName: `Owner${i}`,
                 lastName: `Business${i}`,
@@ -84,6 +117,16 @@ export class SeedingService {
             turfOwners.push(await this.userRepository.save(owner));
         }
 
+        // Sample turf images from the internet (free stock photos)
+        const sampleImages = [
+            'https://images.pexels.com/photos/399187/pexels-photo-399187.jpeg',
+            'https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg',
+            'https://images.pexels.com/photos/3423613/pexels-photo-3423613.jpeg',
+            'https://images.pexels.com/photos/3991871/pexels-photo-3991871.jpeg',
+            'https://images.pexels.com/photos/3991870/pexels-photo-3991870.jpeg',
+            'https://images.pexels.com/photos/1752757/pexels-photo-1752757.jpeg',
+        ];
+
         // Create Turfs (only for approved owners)
         const turfs: Turf[] = [];
         const approvedOwners = turfOwners.filter((o) => o.isApproved === true);
@@ -94,13 +137,18 @@ export class SeedingService {
             // Create 2-3 turfs per owner
             for (let j = 1; j <= 2 + (i % 2); j++) {
                 const isPublished = j === 1; // First turf is published, others are drafts
+                const imageIndex = (i * 3 + j) % sampleImages.length;
+
                 const turfData: Partial<Turf> = {
                     name: `${owner.businessName} - Turf ${j}`,
                     description: `High-quality football turf with professional maintenance. Perfect for matches and training sessions.`,
                     address: `${owner.businessAddress}, Turf ${j}`,
                     pricePerHour: 50 + (i * 10) + (j * 5),
                     amenities: ['Parking', 'Changing Rooms', 'Water Facility', 'Lighting', 'Seating Area'],
-                    images: [`https://example.com/turf${i}${j}-1.jpg`, `https://example.com/turf${i}${j}-2.jpg`],
+                    images: [
+                        sampleImages[imageIndex],
+                        sampleImages[(imageIndex + 1) % sampleImages.length],
+                    ],
                     availableSlots: [
                         '06:00-07:00',
                         '07:00-08:00',
