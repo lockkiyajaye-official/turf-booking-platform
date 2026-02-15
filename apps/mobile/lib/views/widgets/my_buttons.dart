@@ -28,7 +28,7 @@ class MyButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<AppColors>()!;
+    // final colors = Theme.of(context).extension<AppColors>()!;
     
     return SizedBox(
       height: height,

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobile/core/model/verficatin_response.dart';
 import 'package:mobile/core/repository/auth_session_repository.dart';
@@ -57,12 +56,12 @@ class AuthSessionController extends GetxController {
     // Show splash screen for minimum duration
     await Future.delayed(Duration(seconds: 3));
 
-    final bool isFirstTimeUser = authRepository.isFirstTimeUser();
+    // final bool isFirstTimeUser = authRepository.isFirstTimeUser();
 
-    final String? doctorId = isFirstTimeUser
-        ? null
-        : authRepository.getUserId()?.toString();
-    print('erjerjk');
+    // final String? doctorId = isFirstTimeUser
+    //     ? null
+    //     : authRepository.getUserId()?.toString();
+    // print('erjerjk');
 
     //  APP OPEN ANALYTICS — HERE
 
