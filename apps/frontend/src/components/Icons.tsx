@@ -3,11 +3,7 @@ interface IconProps {
 }
 
 export const GoogleIcon = ({ className }: IconProps) => (
-    <svg
-        className={className}
-        viewBox="0 0 48 48"
-        aria-hidden="true"
-    >
+    <svg className={className} viewBox="0 0 48 48" aria-hidden="true">
         <path
             fill="#EA4335"
             d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.2C12.43 13.02 17.74 9.5 24 9.5z"
@@ -28,3 +24,29 @@ export const GoogleIcon = ({ className }: IconProps) => (
     </svg>
 );
 
+export const AppleLogo = ({ className }: IconProps) => (
+    <svg className={className} viewBox="0 0 384 512" fill="currentColor">
+        <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 33-15.2 61.3-15.2 28.3 0 35.8 15.2 61.3 15.2 44.8 0 85-80.3 107.2-114.7 9.8-15.7 12.6-24.1 12.6-24.1-66-24.7-76.8-100.3-76.8-104.7zM249.1 82.2c20.1-24.8 17.1-61.1 14.4-74.1-30.1 1.4-55.7 16.4-64.4 33-20 24.5-17 60.5-14.4 74 27.5-1.4 54.4-15.6 64.4-32.9z" />
+    </svg>
+);
+
+export const PlayStoreLogo = ({ className }: IconProps) => (
+    <svg className={className} viewBox="0 0 512 512">
+        <path
+            fill="#00f0ff"
+            d="M12.4 15.1c-.8 1.1-1.2 2.5-1.2 4.3v473.3c0 1.8.4 3.2 1.2 4.3l2.2 2.2L270.3 256 14.6 12.9l-2.2 2.2z"
+        />
+        <path
+            fill="#ffeb3b"
+            d="M356.7 342.4L270.3 256l86.4-86.4 102.3 58.1c29.1 16.5 29.1 43.6 0 60.1l-102.3 54.6z"
+        />
+        <path
+            fill="#f44336"
+            d="M356.7 342.4L270.3 256 12.4 514.1c9.4 10 24.6 11.2 38.4 3.4l305.9-175.1z"
+        />
+        <path
+            fill="#4caf50"
+            d="M356.7 169.6L50.8 11.6c-13.8-7.8-29-6.6-38.4 3.4L270.3 256l86.4-86.4z"
+        />
+    </svg>
+);
