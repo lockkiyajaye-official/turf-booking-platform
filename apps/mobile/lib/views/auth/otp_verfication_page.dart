@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:mobile/core/responsive/screen_extensions.dart';
 import 'package:mobile/core/theme/app_colors.dart';
+import 'package:mobile/routes/app_paths.dart';
+import 'package:mobile/views/home/home_page.dart';
 import 'package:mobile/views/widgets/my_buttons.dart';
 import 'package:mobile/views/widgets/my_text_field.dart';
 
@@ -17,10 +20,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
     (index) => TextEditingController(),
   );
 
-  final List<FocusNode> _focusNodes = List.generate(
-    4,
-    (index) => FocusNode(),
-  );
+  final List<FocusNode> _focusNodes = List.generate(4, (index) => FocusNode());
 
   @override
   void dispose() {
@@ -64,7 +64,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             SizedBox(height: 40.h),
-            
+
             // Title
             Text(
               'Verify Your OTP',
@@ -73,20 +73,18 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                 color: colors.textTitle,
               ),
             ),
-            
+
             SizedBox(height: 12.h),
-            
+
             // Subtitle
             Text(
               'We sent a 4-digit code to your phone number',
-              style: textTheme.bodyMedium?.copyWith(
-                color: colors.textGrey,
-              ),
+              style: textTheme.bodyMedium?.copyWith(color: colors.textGrey),
               textAlign: TextAlign.center,
             ),
-            
+
             SizedBox(height: 40.h),
-            
+
             // OTP Input Fields
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -112,19 +110,17 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                 );
               }),
             ),
-            
+
             SizedBox(height: 24.h),
-            
+
             // Resend OTP Text
             Text(
               'Resend OTP in 30 seconds',
-              style: textTheme.bodyMedium?.copyWith(
-                color: colors.textGrey,
-              ),
+              style: textTheme.bodyMedium?.copyWith(color: colors.textGrey),
             ),
-            
+
             SizedBox(height: 32.h),
-            
+
             // Verify Button
             MyButtons(
               text: "Verify OTP",
@@ -132,41 +128,42 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
               width: double.infinity,
               onTap: () {
                 // Handle OTP verification
-                final otp = _otpControllers
-                    .map((controller) => controller.text)
-                    .join();
-                print('OTP: $otp');
+                // final otp = _otpControllers
+                //     .map((controller) => controller.text)
+                //     .join();
+                Get.snackbar("Success", "OTP verified successfully!");
+                // Get.(RoutePaths.home);
+                // Get.toNamed(RoutePaths.home);
+              Get.offAllNamed(RoutePaths.home);
+
               },
               textStyle: textTheme.bodyLarge?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
               ),
-              backgroundColor:colors.primary,
+              backgroundColor: colors.primary,
             ),
-            
+
             SizedBox(height: 16.h),
-            
+
             // Change Phone Number
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   'Entered wrong number? ',
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: colors.textGrey,
-                  ),
+                  style: textTheme.bodyMedium?.copyWith(color: colors.textGrey),
                 ),
                 TextButton(
                   onPressed: () {
-                    // Handle change phone number
-                    Navigator.pop(context);
+                    Get.back();
                   },
                   style: TextButton.styleFrom(
                     padding: EdgeInsets.zero,
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                      child: Text(
+                  child: Text(
                     'Change Phone',
                     style: textTheme.bodyMedium?.copyWith(
                       color: Colors.red,
