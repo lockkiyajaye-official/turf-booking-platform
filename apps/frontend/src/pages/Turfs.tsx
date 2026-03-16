@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { MapPin, Star } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../services/api";
-import { MapPin, Star, Clock } from "lucide-react";
 
 interface Turf {
     id: string;
@@ -78,8 +78,8 @@ export default function Turfs() {
                             typeof turf.rating === "number"
                                 ? turf.rating
                                 : turf.rating
-                                    ? parseFloat(turf.rating as string)
-                                    : 0;
+                                  ? parseFloat(turf.rating as string)
+                                  : 0;
 
                         return (
                             <Link
@@ -127,7 +127,12 @@ export default function Turfs() {
                                         </div>
                                         <div className="flex items-center text-green-600 font-semibold">
                                             <span className="mr-1">₹</span>
-                                            <span>{turf.pricePerHour.toLocaleString("en-IN")}/hr</span>
+                                            <span>
+                                                {turf.pricePerHour.toLocaleString(
+                                                    "en-IN",
+                                                )}
+                                                /hr
+                                            </span>
                                         </div>
                                     </div>
                                     {turf.amenities &&

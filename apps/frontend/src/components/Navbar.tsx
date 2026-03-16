@@ -1,14 +1,7 @@
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import {
-    LogOut,
-    User,
-    Home,
-    Calendar,
-    Settings,
-    ChevronDown,
-} from "lucide-react";
+import { Home, User } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
     const { user, logout } = useAuth();
