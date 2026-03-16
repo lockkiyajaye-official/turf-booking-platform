@@ -303,7 +303,7 @@ export default function Landing() {
                                 </p>
                             </div>
                         </button>
-                        <button className="bg-white text-gray-900 border-2 border-gray-50 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-gray-50 transition-all shadow-xl hover:shadow-gray-200/50 flex items-center space-x-4 active:scale-95 group">
+                        <button className="bg-white text-gray-900 border-2 border-gray-100 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-gray-50 transition-all shadow-xl hover:shadow-gray-200/50 flex items-center space-x-4 active:scale-95 group">
                             <PlayStoreLogo className="w-8 h-8 group-hover:scale-110 transition-transform" />
                             <div className="text-left">
                                 <p className="text-[10px] uppercase font-bold opacity-50 leading-none text-gray-500">
