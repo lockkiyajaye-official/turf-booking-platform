@@ -13,8 +13,7 @@ export default function Login() {
     const navigate = useNavigate();
 
     const handleGoogleLogin = () => {
-        // Backend auth routes are under '/api'
-        window.location.href = `${API_URL}/api/auth/google`;
+        window.location.href = `${API_URL}/auth/google`;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -31,7 +30,8 @@ export default function Login() {
             }
         } catch (err: any) {
             setError(
-                err.response?.data?.message || "Login failed. Please try again."
+                err.response?.data?.message ||
+                    "Login failed. Please try again.",
             );
         } finally {
             setLoading(false);
