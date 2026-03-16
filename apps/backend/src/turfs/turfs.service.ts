@@ -1,15 +1,14 @@
 import {
   Injectable,
   NotFoundException,
-  UnauthorizedException,
-  BadRequestException,
+  UnauthorizedException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Turf } from 'src/database/entities/turf.entity';
+import { User, UserRole } from 'src/database/entities/user.entity';
 import { Repository } from 'typeorm';
-import { Turf } from '../database/entities/turf.entity';
 import { CreateTurfDto } from './dto/create-turf.dto';
 import { UpdateTurfDto } from './dto/update-turf.dto';
-import { User, UserRole } from '../database/entities/user.entity';
 
 @Injectable()
 export class TurfsService {

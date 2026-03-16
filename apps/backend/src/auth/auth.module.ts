@@ -5,9 +5,10 @@ import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { User } from '../database/entities/user.entity';
+import { User } from 'src/database/entities/user.entity';
 import { JwtStrategy } from './jwt.strategy';
-import { OtpModule } from '../otp/otp.module';
+import { OtpModule } from 'src/otp/otp.module';
+import { GoogleStrategy } from './google.strategy';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { OtpModule } from '../otp/otp.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, GoogleStrategy],
   exports: [AuthService],
 })
 export class AuthModule { }

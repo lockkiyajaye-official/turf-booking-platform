@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../services/api";
-import { Calendar, Clock, MapPin, DollarSign } from "lucide-react";
+import { Calendar, Clock, MapPin } from "lucide-react";
 
 interface Booking {
     id: string;
@@ -107,9 +107,8 @@ export default function UserBookings() {
                                             </span>
                                         </div>
                                         <div className="flex items-center">
-                                            <DollarSign className="w-4 h-4 mr-2" />
                                             <span className="font-semibold">
-                                                ${booking.totalPrice}
+                                                ₹{booking.totalPrice.toLocaleString("en-IN")}
                                             </span>
                                         </div>
                                     </div>
@@ -126,7 +125,7 @@ export default function UserBookings() {
                                             booking.status.slice(1)}
                                     </span>
                                     {booking.status === "pending" ||
-                                    booking.status === "confirmed" ? (
+                                        booking.status === "confirmed" ? (
                                         <button
                                             onClick={() =>
                                                 handleCancel(booking.id)

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { API_URL } from "../services/api";
+import { GoogleAuthButton } from "../components/GoogleAuthButton";
 
 export default function Register() {
     const [formData, setFormData] = useState({
@@ -16,6 +18,11 @@ export default function Register() {
     const { register } = useAuth();
     const navigate = useNavigate();
 
+    const handleGoogleSignup = () => {
+        // Backend auth routes are under '/api'
+        window.location.href = `${API_URL}/api/auth/google`;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
@@ -27,7 +34,7 @@ export default function Register() {
         } catch (err: any) {
             setError(
                 err.response?.data?.message ||
-                    "Registration failed. Please try again."
+                "Registration failed. Please try again."
             );
         } finally {
             setLoading(false);
@@ -203,6 +210,24 @@ export default function Register() {
                         >
                             {loading ? "Creating account..." : "Create account"}
                         </button>
+                    </div>
+
+                    <div className="relative my-4">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-gray-300" />
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                            <span className="px-2 bg-gray-50 text-gray-500">
+                                Or sign up with
+                            </span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <GoogleAuthButton
+                            label="Sign up with Google"
+                            onClick={handleGoogleSignup}
+                        />
                     </div>
                 </form>
             </div>

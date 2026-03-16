@@ -1,0 +1,29 @@
+## Project-wide rules for AI assistants
+
+- **Never run commands**
+  - Do not run any commands in any terminal (no `npm`, `pnpm`, `yarn`, `npx`, `nest`, `vite`, `flutter`, `docker`, database CLIs, or OS-level commands).
+  - Instead of executing commands, clearly list the exact commands and the order I should run them in. Assume I will copy-paste and run them myself.
+
+- **Never build or start the app**
+  - Do not build, serve, or start any part of the app (backend, frontend, or mobile) yourself.
+  - This includes `npm run build`, `npm run start`, `npm run dev`, `nest start`, `vite dev`, `flutter run`, and similar commands.
+  - If a build, dev server, or restart is needed to validate a change, tell me:
+    - **which** app(s) (backend / frontend / mobile),
+    - **which** command to run,
+    - and **when** to run it in the flow.
+
+- **Keep backend and frontend changes in sync**
+  - When changing API-related behavior, types, contracts, or auth logic in the backend, immediately update the corresponding frontend code that depends on it (and vice versa).
+  - Keep backend and frontend in agreement on:
+    - API routes, request/response shapes, and validation rules,
+    - authentication/authorization flows,
+    - error formats and status codes,
+    - any shared concepts like user roles, booking states, turf details, etc.
+  - Avoid leaving changes in only one side (backend or frontend) that would obviously break the other side.
+
+- **Prefer clear instructions over automation**
+  - When something requires manual environment steps (like seeding data, applying migrations, installing packages, or updating environment variables), provide me with:
+    - a short explanation of why it is needed, and
+    - an ordered list of concrete steps/commands I should execute.
+  - Assume I am responsible for all local setup, installs, builds, and deployment actions.
+

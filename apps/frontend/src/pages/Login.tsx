@@ -1,15 +1,21 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { API_URL } from "../services/api";
+import { GoogleAuthButton } from "../components/GoogleAuthButton";
 
 export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [isAdmin, setIsAdmin] = useState(false);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-    const { login, adminLogin } = useAuth();
+    const { login } = useAuth();
     const navigate = useNavigate();
+
+    const handleGoogleLogin = () => {
+        // Backend auth routes are under '/api'
+        window.location.href = `${API_URL}/api/auth/google`;
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -17,12 +23,11 @@ export default function Login() {
         setLoading(true);
 
         try {
-            if (isAdmin) {
-                await adminLogin(email, password);
+            const loggedInUser = await login(email, password);
+            if (loggedInUser.role === "admin") {
                 navigate("/admin/dashboard");
             } else {
-                await login(email, password);
-                navigate("/dashboard");
+                navigate("/home");
             }
         } catch (err: any) {
             setError(
@@ -65,18 +70,6 @@ export default function Login() {
                     </p>
                 </div>
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-                    <div className="flex items-center">
-                        <input
-                            id="admin-checkbox"
-                            type="checkbox"
-                            checked={isAdmin}
-                            onChange={(e) => setIsAdmin(e.target.checked)}
-                            className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                        />
-                        <label htmlFor="admin-checkbox" className="ml-2 block text-sm text-gray-900">
-                            Admin Login
-                        </label>
-                    </div>
                     {error && (
                         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
                             {error}
@@ -123,6 +116,24 @@ export default function Login() {
                         >
                             {loading ? "Signing in..." : "Sign in"}
                         </button>
+                    </div>
+
+                    <div className="relative my-4">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-gray-300" />
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                            <span className="px-2 bg-gray-50 text-gray-500">
+                                Or continue with
+                            </span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <GoogleAuthButton
+                            label="Continue with Google"
+                            onClick={handleGoogleLogin}
+                        />
                     </div>
                 </form>
             </div>

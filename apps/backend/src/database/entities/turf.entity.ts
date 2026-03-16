@@ -61,7 +61,7 @@ export class Turf {
   @Column({ nullable: true })
   contactEmail: string;
 
-  @Column({ default: 0 })
+  @Column({ type: 'decimal', precision: 3, scale: 2, default: 0 })
   rating: number;
 
   @Column({ default: 0 })

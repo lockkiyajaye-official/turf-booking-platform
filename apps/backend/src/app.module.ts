@@ -9,7 +9,8 @@ import { BookingsModule } from './bookings/bookings.module';
 import { UsersModule } from './users/users.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { SeedingModule } from './seeding/seeding.module';
-import { getDatabaseConfig } from './database/config/database.config';
+import { PaymentsModule } from './payments/payments.module';
+import { getDatabaseConfig } from 'src/database/config/database.config';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { getDatabaseConfig } from './database/config/database.config';
     UsersModule,
     DashboardModule,
     SeedingModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

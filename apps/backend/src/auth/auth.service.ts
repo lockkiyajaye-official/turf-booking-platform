@@ -8,11 +8,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { User, UserRole, OnboardingStatus } from '../database/entities/user.entity';
+import { User, UserRole, OnboardingStatus } from 'src/database/entities/user.entity';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UserOnboardingDto, TurfOwnerOnboardingDto } from './dto/onboarding.dto';
-import { OtpService } from '../otp/otp.service';
+import { OtpService } from 'src/otp/otp.service';
 import {
   RegisterWithPhoneOtpDto,
   RegisterWithEmailOtpDto,
@@ -70,9 +70,14 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    // User created via Google OAuth may not have a password
+    if (!user.password) {
+      throw new UnauthorizedException('Please login with Google for this account');
+    }
+
     const isPasswordValid = await bcrypt.compare(
       loginDto.password,
-      user.password,
+      user.password as string,
     );
 
     if (!isPasswordValid) {
@@ -332,6 +337,24 @@ export class AuthService {
 
     const { password, ...result } = user;
     const token = this.jwtService.sign({ sub: user.id, role: user.role });
+
+    return {
+      user: result,
+      token,
+    };
+  }
+
+  // Google OAuth login/signup
+  async loginWithGoogle(googleUser: User) {
+    if (!googleUser) {
+      throw new UnauthorizedException('Google authentication failed');
+    }
+
+    const { password, ...result } = googleUser;
+    const token = this.jwtService.sign({
+      sub: googleUser.id,
+      role: googleUser.role,
+    });
 
     return {
       user: result,

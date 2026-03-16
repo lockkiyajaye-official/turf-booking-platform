@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { API_URL } from "../services/api";
+import { GoogleAuthButton } from "../components/GoogleAuthButton";
 
 export default function RegisterOtp() {
     const [step, setStep] = useState<"method" | "phone" | "email">("method");
@@ -19,6 +21,11 @@ export default function RegisterOtp() {
     const [loading, setLoading] = useState(false);
     const { registerWithPhoneOtp, registerWithEmailOtp, requestPhoneOtp, requestEmailOtp } = useAuth();
     const navigate = useNavigate();
+
+    const handleGoogleSignup = () => {
+        // Backend auth routes are under '/api'
+        window.location.href = `${API_URL}/api/auth/google`;
+    };
 
     const handleRequestOtp = async (type: "phone" | "email") => {
         setError("");
@@ -138,6 +145,20 @@ export default function RegisterOtp() {
                         >
                             Continue with Email
                         </button>
+                        <div className="relative my-2">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-gray-300" />
+                            </div>
+                            <div className="relative flex justify-center text-sm">
+                                <span className="px-2 bg-gray-50 text-gray-500">
+                                    Or
+                                </span>
+                            </div>
+                        </div>
+                        <GoogleAuthButton
+                            label="Sign up with Google"
+                            onClick={handleGoogleSignup}
+                        />
                     </div>
                 </div>
             </div>
