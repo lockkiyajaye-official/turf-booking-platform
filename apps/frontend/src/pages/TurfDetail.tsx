@@ -105,7 +105,7 @@ export default function TurfDetail() {
                     } catch (error: any) {
                         alert(
                             error.response?.data?.message ||
-                            "Payment verification failed"
+                                "Payment verification failed",
                         );
                     } finally {
                         setBooking(false);
@@ -145,8 +145,8 @@ export default function TurfDetail() {
         typeof turf.rating === "number"
             ? turf.rating
             : turf.rating
-                ? parseFloat(turf.rating as string)
-                : 0;
+              ? parseFloat(turf.rating as string)
+              : 0;
 
     return (
         <div className="min-h-screen bg-gray-50 py-12">
@@ -159,8 +159,8 @@ export default function TurfDetail() {
                             className="w-full h-96 object-cover"
                         />
                     ) : (
-                        <div className="w-full h-96 bg-green-100 flex items-center justify-center">
-                            <span className="text-8xl">⚽</span>
+                        <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/30">
+                            <img src="/logo.png" />
                         </div>
                     )}
 
@@ -212,7 +212,7 @@ export default function TurfDetail() {
                                                         >
                                                             {amenity}
                                                         </span>
-                                                    )
+                                                    ),
                                                 )}
                                             </div>
                                         </div>
@@ -237,7 +237,10 @@ export default function TurfDetail() {
                                     <div className="mb-6">
                                         <div className="flex items-center justify-between mb-4">
                                             <span className="text-3xl font-bold text-green-600">
-                                                ₹{turf.pricePerHour.toLocaleString("en-IN")}
+                                                ₹
+                                                {turf.pricePerHour.toLocaleString(
+                                                    "en-IN",
+                                                )}
                                             </span>
                                             <span className="text-gray-600">
                                                 per hour
@@ -258,7 +261,7 @@ export default function TurfDetail() {
                                                     value={selectedDate}
                                                     onChange={(e) =>
                                                         setSelectedDate(
-                                                            e.target.value
+                                                            e.target.value,
                                                         )
                                                     }
                                                 />
@@ -276,18 +279,19 @@ export default function TurfDetail() {
                                                                     key={idx}
                                                                     onClick={() =>
                                                                         setSelectedSlot(
-                                                                            slot
+                                                                            slot,
                                                                         )
                                                                     }
-                                                                    className={`px-3 py-2 rounded-md text-sm ${selectedSlot ===
+                                                                    className={`px-3 py-2 rounded-md text-sm ${
+                                                                        selectedSlot ===
                                                                         slot
-                                                                        ? "bg-green-600 text-white"
-                                                                        : "bg-white border border-gray-300 hover:border-green-500"
-                                                                        }`}
+                                                                            ? "bg-green-600 text-white"
+                                                                            : "bg-white border border-gray-300 hover:border-green-500"
+                                                                    }`}
                                                                 >
                                                                     {slot}
                                                                 </button>
-                                                            )
+                                                            ),
                                                         )}
                                                     </div>
                                                 </div>

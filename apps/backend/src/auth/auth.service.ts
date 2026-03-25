@@ -1,28 +1,35 @@
 import {
+  BadRequestException,
+  ConflictException,
   Injectable,
   UnauthorizedException,
-  ConflictException,
-  BadRequestException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
-import { User, UserRole, OnboardingStatus } from 'src/database/entities/user.entity';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
-import { UserOnboardingDto, TurfOwnerOnboardingDto } from './dto/onboarding.dto';
+import {
+  OnboardingStatus,
+  User,
+  UserRole,
+} from 'src/database/entities/user.entity';
 import { OtpService } from 'src/otp/otp.service';
+import { Repository } from 'typeorm';
+import { LoginDto } from './dto/login.dto';
 import {
-  RegisterWithPhoneOtpDto,
-  RegisterWithEmailOtpDto,
-} from './dto/register-otp.dto';
+  TurfOwnerOnboardingDto,
+  UserOnboardingDto,
+} from './dto/onboarding.dto';
 import {
-  RequestPhoneOtpDto,
   RequestEmailOtpDto,
-  VerifyPhoneOtpDto,
+  RequestPhoneOtpDto,
   VerifyEmailOtpDto,
+  VerifyPhoneOtpDto,
 } from './dto/otp-request.dto';
+import {
+  RegisterWithEmailOtpDto,
+  RegisterWithPhoneOtpDto,
+} from './dto/register-otp.dto';
+import { RegisterDto } from './dto/register.dto';
 
 @Injectable()
 export class AuthService {
@@ -31,7 +38,7 @@ export class AuthService {
     private userRepository: Repository<User>,
     private jwtService: JwtService,
     private otpService: OtpService,
-  ) { }
+  ) {}
 
   async register(registerDto: RegisterDto) {
     const existingUser = await this.userRepository.findOne({
@@ -53,7 +60,10 @@ export class AuthService {
     const savedUser = await this.userRepository.save(user);
     const { password, ...result } = savedUser;
 
-    const token = this.jwtService.sign({ sub: savedUser.id, role: savedUser.role });
+    const token = this.jwtService.sign({
+      sub: savedUser.id,
+      role: savedUser.role,
+    });
 
     return {
       user: result,
@@ -72,7 +82,9 @@ export class AuthService {
 
     // User created via Google OAuth may not have a password
     if (!user.password) {
-      throw new UnauthorizedException('Please login with Google for this account');
+      throw new UnauthorizedException(
+        'Please login with Google for this account',
+      );
     }
 
     const isPasswordValid = await bcrypt.compare(
@@ -115,8 +127,16 @@ export class AuthService {
   ) {
     const user = await this.userRepository.findOne({ where: { id: userId } });
 
-    if (!user || user.role !== UserRole.TURF_OWNER) {
-      throw new UnauthorizedException('Invalid user');
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Allow users to upgrade their role to Turf Owner during onboarding
+    if (user.role === UserRole.USER) {
+      user.role = UserRole.TURF_OWNER;
+      user.isApproved = false; // Turf owners need admin approval
+    } else if (user.role !== UserRole.TURF_OWNER) {
+      throw new UnauthorizedException('Invalid user role');
     }
 
     Object.assign(user, dto);
@@ -138,16 +158,32 @@ export class AuthService {
 
   // OTP-based authentication methods
   async requestPhoneOtp(dto: RequestPhoneOtpDto) {
+    if (dto.isLogin) {
+      const existingUser = await this.userRepository.findOne({
+        where: { phone: dto.phone },
+      });
+      if (!existingUser) {
+        throw new UnauthorizedException('User not registered');
+      }
+    }
     return this.otpService.requestPhoneOtp(dto.phone);
   }
 
   async requestEmailOtp(dto: RequestEmailOtpDto) {
+    if (dto.isLogin) {
+      const existingUser = await this.userRepository.findOne({
+        where: { email: dto.email },
+      });
+      if (!existingUser) {
+        throw new UnauthorizedException('User not registered');
+      }
+    }
     return this.otpService.requestEmailOtp(dto.email);
   }
 
   async registerWithPhoneOtp(dto: RegisterWithPhoneOtpDto) {
     // Verify OTP first
-    const isValidOtp = this.otpService.verifyPhoneOtp(dto.phone, dto.otp);
+    const isValidOtp = await this.otpService.verifyPhoneOtp(dto.phone, dto.otp);
     if (!isValidOtp) {
       throw new BadRequestException('Invalid or expired OTP');
     }
@@ -200,7 +236,7 @@ export class AuthService {
 
   async registerWithEmailOtp(dto: RegisterWithEmailOtpDto) {
     // Verify OTP first
-    const isValidOtp = this.otpService.verifyEmailOtp(dto.email, dto.otp);
+    const isValidOtp = await this.otpService.verifyEmailOtp(dto.email, dto.otp);
     if (!isValidOtp) {
       throw new BadRequestException('Invalid or expired OTP');
     }
@@ -253,7 +289,7 @@ export class AuthService {
 
   async loginWithPhoneOtp(dto: VerifyPhoneOtpDto) {
     // Verify OTP first
-    const isValidOtp = this.otpService.verifyPhoneOtp(dto.phone, dto.otp);
+    const isValidOtp = await this.otpService.verifyPhoneOtp(dto.phone, dto.otp);
     if (!isValidOtp) {
       throw new BadRequestException('Invalid or expired OTP');
     }
@@ -282,7 +318,7 @@ export class AuthService {
 
   async loginWithEmailOtp(dto: VerifyEmailOtpDto) {
     // Verify OTP first
-    const isValidOtp = this.otpService.verifyEmailOtp(dto.email, dto.otp);
+    const isValidOtp = await this.otpService.verifyEmailOtp(dto.email, dto.otp);
     if (!isValidOtp) {
       throw new BadRequestException('Invalid or expired OTP');
     }
@@ -362,4 +398,3 @@ export class AuthService {
     };
   }
 }
-

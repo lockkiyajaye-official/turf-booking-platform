@@ -69,21 +69,21 @@ export default function UserBookings() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 py-12">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <h1 className="text-4xl font-bold text-gray-900 mb-8">
+        <div className="min-h-screen bg-gray-50/50">
+            <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-20">
+                <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-8 tracking-tight">
                     My Bookings
                 </h1>
 
-                <div className="space-y-4">
+                <div className="space-y-5 max-w-4xl">
                     {bookings.map((booking) => (
                         <div
                             key={booking.id}
-                            className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition"
+                            className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 md:p-8 hover:shadow-md transition-shadow"
                         >
                             <div className="flex justify-between items-start">
                                 <div className="flex-1">
-                                    <h3 className="text-xl font-semibold mb-2">
+                                    <h3 className="text-2xl font-bold text-gray-900 mb-3">
                                         {booking.turf.name}
                                     </h3>
                                     <div className="space-y-2 text-gray-600">
@@ -106,23 +106,20 @@ export default function UserBookings() {
                                                 {booking.endTime}
                                             </span>
                                         </div>
-                                        <div className="flex items-center">
-                                            <span className="font-semibold">
+                                        <div className="flex items-center text-gray-900 mt-2">
+                                            <span className="font-bold text-lg">
                                                 ₹{booking.totalPrice.toLocaleString("en-IN")}
                                             </span>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex flex-col items-end gap-2">
+                                <div className="flex flex-col items-end gap-3 ml-4">
                                     <span
-                                        className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
+                                        className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider ${getStatusColor(
                                             booking.status
                                         )}`}
                                     >
-                                        {booking.status
-                                            .charAt(0)
-                                            .toUpperCase() +
-                                            booking.status.slice(1)}
+                                        {booking.status}
                                     </span>
                                     {booking.status === "pending" ||
                                         booking.status === "confirmed" ? (
@@ -130,7 +127,7 @@ export default function UserBookings() {
                                             onClick={() =>
                                                 handleCancel(booking.id)
                                             }
-                                            className="text-red-600 hover:text-red-700 text-sm font-medium"
+                                            className="text-red-500 hover:text-red-600 text-sm font-bold transition-colors"
                                         >
                                             Cancel
                                         </button>
@@ -142,19 +139,20 @@ export default function UserBookings() {
                 </div>
 
                 {bookings.length === 0 && (
-                    <div className="text-center py-12 bg-white rounded-lg">
-                        <p className="text-gray-500 text-lg mb-4">
+                    <div className="text-center py-16 bg-white rounded-xl border border-gray-100 mt-6 max-w-4xl">
+                        <span className="text-5xl mb-4 block opacity-40">📅</span>
+                        <p className="text-gray-500 text-lg mb-4 font-medium">
                             No bookings yet.
                         </p>
                         <a
                             href="/turfs"
-                            className="text-green-600 hover:text-green-700 font-medium"
+                            className="bg-[#e53935] text-white px-6 py-2.5 rounded-lg font-bold hover:bg-red-600 transition-colors inline-block"
                         >
-                            Browse turfs to make a booking
+                            Browse turfs
                         </a>
                     </div>
                 )}
-            </div>
+            </main>
         </div>
     );
 }
