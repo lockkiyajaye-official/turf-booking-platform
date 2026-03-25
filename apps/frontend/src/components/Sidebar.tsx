@@ -1,15 +1,13 @@
 import {
-    Home,
-    Search,
     Calendar,
-    User,
     CreditCard,
+    Home,
     LogOut,
-    Users,
-    UserCheck,
     MapPin,
-    AlertCircle,
-    Settings,
+    Search,
+    User,
+    UserCheck,
+    Users,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
