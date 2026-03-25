@@ -1,7 +1,9 @@
-import { MapPin, Star } from "lucide-react";
+import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import api from "../services/api";
+import { useAuth } from "../context/AuthContext";
+import TurfCard from "../components/TurfCard";
 
 interface Turf {
     id: string;
@@ -16,13 +18,36 @@ interface Turf {
 }
 
 export default function Turfs() {
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    const routerLocation = useLocation();
     const [turfs, setTurfs] = useState<Turf[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
 
     useEffect(() => {
-        fetchTurfs();
-    }, []);
+        const params = new URLSearchParams(routerLocation.search);
+        const searchQuery = params.get("search");
+        
+        const fetchTurfsQuery = async () => {
+            try {
+                setLoading(true);
+                const queryParams: any = {};
+                if (searchQuery) {
+                    queryParams.search = searchQuery;
+                    setSearch(searchQuery);
+                }
+                const response = await api.get("/turfs", { params: queryParams });
+                setTurfs(response.data);
+            } catch (error) {
+                console.error("Failed to fetch turfs:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        fetchTurfsQuery();
+    }, [routerLocation.search]);
 
     const fetchTurfs = async () => {
         try {
@@ -46,124 +71,66 @@ export default function Turfs() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 py-12">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="mb-8">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-4">
+        <div className="min-h-screen bg-gray-50/50">
+            <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-20">
+                <div className="mb-10 max-w-3xl">
+                    <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-4 tracking-tight">
                         Find Your Perfect Turf
                     </h1>
-                    <div className="flex gap-4">
-                        <input
-                            type="text"
-                            placeholder="Search turfs..."
-                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            onKeyPress={(e) =>
-                                e.key === "Enter" && fetchTurfs()
-                            }
-                        />
+                    <p className="text-lg text-gray-500 mb-6">
+                        Discover top-rated turfs around you and book instantly.
+                    </p>
+                    
+                    <div className="flex gap-3">
+                        <div className="relative flex-1">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Search className="w-5 h-5 text-gray-400" />
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="Search by location, name or sport..."
+                                className="block w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 sm:text-base transition-colors shadow-sm"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                onKeyPress={(e) => e.key === "Enter" && fetchTurfs()}
+                            />
+                        </div>
                         <button
                             onClick={fetchTurfs}
-                            className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
+                            className="bg-[#e53935] text-white px-8 py-3 rounded-lg font-bold hover:bg-red-600 transition-colors shadow-sm whitespace-nowrap"
                         >
                             Search
                         </button>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {turfs.map((turf) => {
-                        const ratingValue =
-                            typeof turf.rating === "number"
-                                ? turf.rating
-                                : turf.rating
-                                  ? parseFloat(turf.rating as string)
-                                  : 0;
-
-                        return (
-                            <Link
-                                key={turf.id}
-                                to={`/turfs/${turf.id}`}
-                                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition"
-                            >
-                                {turf.images && turf.images.length > 0 ? (
-                                    <img
-                                        src={turf.images[0]}
-                                        alt={turf.name}
-                                        className="w-full h-48 object-cover"
-                                    />
-                                ) : (
-                                    <div className="w-full h-48 bg-green-100 flex items-center justify-center">
-                                        <span className="text-4xl">⚽</span>
-                                    </div>
-                                )}
-                                <div className="p-6">
-                                    <h3 className="text-xl font-semibold mb-2">
-                                        {turf.name}
-                                    </h3>
-                                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                                        {turf.description}
-                                    </p>
-                                    <div className="flex items-center text-gray-500 text-sm mb-2">
-                                        <MapPin className="w-4 h-4 mr-1" />
-                                        <span className="truncate">
-                                            {turf.address}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center justify-between mt-4">
-                                        <div className="flex items-center">
-                                            <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                                            <span className="text-sm font-medium">
-                                                {ratingValue > 0
-                                                    ? ratingValue.toFixed(1)
-                                                    : "New"}
-                                            </span>
-                                            {turf.totalReviews > 0 && (
-                                                <span className="text-sm text-gray-500 ml-1">
-                                                    ({turf.totalReviews})
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center text-green-600 font-semibold">
-                                            <span className="mr-1">₹</span>
-                                            <span>
-                                                {turf.pricePerHour.toLocaleString(
-                                                    "en-IN",
-                                                )}
-                                                /hr
-                                            </span>
-                                        </div>
-                                    </div>
-                                    {turf.amenities &&
-                                        turf.amenities.length > 0 && (
-                                            <div className="mt-3 flex flex-wrap gap-2">
-                                                {turf.amenities
-                                                    .slice(0, 3)
-                                                    .map((amenity, idx) => (
-                                                        <span
-                                                            key={idx}
-                                                            className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded"
-                                                        >
-                                                            {amenity}
-                                                        </span>
-                                                    ))}
-                                            </div>
-                                        )}
-                                </div>
-                            </Link>
-                        );
-                    })}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {turfs.map((turf) => (
+                        <TurfCard
+                            key={turf.id}
+                            {...turf}
+                            onClick={() => {
+                                if (user) {
+                                    navigate(`/turfs/${turf.id}`);
+                                } else {
+                                    navigate("/login", {
+                                        state: { returnTo: `/turfs/${turf.id}` },
+                                    });
+                                }
+                            }}
+                        />
+                    ))}
                 </div>
 
                 {turfs.length === 0 && (
-                    <div className="text-center py-12">
-                        <p className="text-gray-500 text-lg">
+                    <div className="text-center py-20 bg-white rounded-xl border border-gray-100 mt-6">
+                        <span className="text-5xl mb-4 block opacity-40">🏟️</span>
+                        <p className="text-gray-500 text-lg font-medium">
                             No turfs found. Try a different search.
                         </p>
                     </div>
                 )}
-            </div>
+            </main>
         </div>
     );
 }

@@ -29,7 +29,22 @@ export class DashboardService {
     });
 
     if (turfs.length === 0) {
-      throw new UnauthorizedException('No turfs found for this owner');
+      return {
+        overview: {
+          totalTurfs: 0,
+          publishedTurfs: 0,
+          draftTurfs: 0,
+          totalBookings: 0,
+          confirmedBookings: 0,
+          pendingBookings: 0,
+          cancelledBookings: 0,
+          completedBookings: 0,
+          totalRevenue: 0,
+          recentRevenue: 0,
+        },
+        bookingsByTurf: [],
+        recentBookings: [],
+      };
     }
 
     const turfIds = turfs.map((turf) => turf.id);

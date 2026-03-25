@@ -1,14 +1,22 @@
-import { IsEmail, IsString, IsPhoneNumber, IsOptional } from 'class-validator';
+import { IsEmail, IsString, IsPhoneNumber, IsOptional, IsBoolean } from 'class-validator';
 
 export class RequestPhoneOtpDto {
   @IsString()
   @IsPhoneNumber()
   phone: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isLogin?: boolean;
 }
 
 export class RequestEmailOtpDto {
   @IsEmail()
   email: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isLogin?: boolean;
 }
 
 export class VerifyPhoneOtpDto {

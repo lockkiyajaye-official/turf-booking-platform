@@ -1,175 +1,144 @@
 import { Link } from "react-router-dom";
-import {
-    Facebook,
-    Twitter,
-    Instagram,
-    Mail,
-    Phone,
-    Linkedin,
-    Send,
-} from "lucide-react";
+import { Mail, Phone, Send } from "lucide-react";
 
 export default function Footer() {
     return (
-        <footer className="bg-primary text-white pt-20 pb-10">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-                    <div className="col-span-1 md:col-span-1">
-                        <div className="flex items-center space-x-2 mb-6">
-                            <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center border border-white/20">
-                                <span className="text-white font-bold text-xl">
-                                    ⚽
-                                </span>
-                            </div>
-                            <span className="text-2xl font-black tracking-tight">
-                                Lock Kiya Jaye
-                            </span>
-                        </div>
-                        <p className="text-white/60 text-sm leading-relaxed mb-8">
-                            Join thousands of happy players booking their
-                            favorite turfs daily. Experience the smoothest
-                            booking process ever.
+        <footer className="bg-green-900 text-white pt-16 pb-8 relative overflow-hidden">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                {/* Top Section */}
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-8 mb-12">
+                    {/* Get Exclusive Updates Offers */}
+                    <div className="col-span-2">
+                        <h3 className="text-xl font-bold mb-4">
+                            Get Exclusive Updates Offers
+                        </h3>
+                        <p className="text-white/80 text-sm mb-4 leading-relaxed">
+                            Subscribe to our newsletter and be the first to know
+                            about new features and exclusive offers.
                         </p>
                         <div className="flex items-center bg-white/10 rounded-lg p-1 border border-white/20">
                             <input
-                                type="text"
+                                type="email"
                                 placeholder="Enter your email..."
-                                className="bg-transparent border-none focus:ring-0 text-sm px-3 flex-grow placeholder:text-white/40"
+                                className="bg-transparent border-none focus:ring-0 text-sm px-3 flex-grow placeholder:text-white/60 text-white"
                             />
-                            <button className="bg-white/10 p-2 rounded-md hover:bg-white/20 transition-colors">
+                            <button className="bg-green-600 p-2 rounded-md hover:bg-green-700 transition-colors">
                                 <Send className="w-4 h-4" />
                             </button>
                         </div>
                     </div>
 
+                    {/* Have a question or feedback? */}
                     <div>
-                        <h3 className="text-lg font-bold mb-6">Quick Links</h3>
-                        <ul className="space-y-4 text-sm">
+                        <h3 className="text-xl font-bold mb-4">
+                            Have a question or feedback?
+                        </h3>
+                        <div className="space-y-3 text-sm">
+                            <div className="flex items-center space-x-2 text-white/80">
+                                <Mail className="w-4 h-4 text-green-400" />
+                                <span>hello@lockkiyajaye.com</span>
+                            </div>
+                            <div className="flex items-center space-x-2 text-white/80">
+                                <Phone className="w-4 h-4 text-green-400" />
+                                <span>+123445566789</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Facilities */}
+                    <div>
+                        <h3 className="text-xl font-bold mb-4">Facilities</h3>
+                        <ul className="space-y-3 text-sm">
                             <li>
                                 <Link
-                                    to="/about"
-                                    className="text-white/60 hover:text-accent transition-colors"
+                                    to="#"
+                                    className="text-white/80 hover:text-green-400 transition-colors"
                                 >
-                                    About Us
+                                    Football Turf
                                 </Link>
                             </li>
                             <li>
                                 <Link
-                                    to="/contact"
-                                    className="text-white/60 hover:text-accent transition-colors"
+                                    to="#"
+                                    className="text-white/80 hover:text-green-400 transition-colors"
                                 >
-                                    Contat Us
+                                    Cricket Turf
                                 </Link>
                             </li>
                             <li>
                                 <Link
-                                    to="/faq"
-                                    className="text-white/60 hover:text-accent transition-colors"
+                                    to="#"
+                                    className="text-white/80 hover:text-green-400 transition-colors"
                                 >
-                                    Refund Policy
+                                    Badminton Courts
                                 </Link>
                             </li>
                             <li>
                                 <Link
-                                    to="/terms"
-                                    className="text-white/60 hover:text-accent transition-colors"
+                                    to="#"
+                                    className="text-white/80 hover:text-green-400 transition-colors"
                                 >
-                                    Terms of Service
+                                    Basketball Court
                                 </Link>
                             </li>
                         </ul>
                     </div>
 
+                    {/* Support */}
                     <div>
-                        <h3 className="text-lg font-bold mb-6">Support</h3>
-                        <ul className="space-y-4 text-sm">
+                        <h3 className="text-xl font-bold mb-4">Support</h3>
+                        <ul className="space-y-3 text-sm">
+                            <li>
+                                <Link
+                                    to="/faq"
+                                    className="text-white/80 hover:text-green-400 transition-colors"
+                                >
+                                    FAQ's
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
+                                    to="/contact"
+                                    className="text-white/80 hover:text-green-400 transition-colors"
+                                >
+                                    Contact Us
+                                </Link>
+                            </li>
                             <li>
                                 <Link
                                     to="/help"
-                                    className="text-white/60 hover:text-accent transition-colors"
+                                    className="text-white/80 hover:text-green-400 transition-colors"
                                 >
                                     Help Center
                                 </Link>
                             </li>
                             <li>
                                 <Link
-                                    to="/privacy"
-                                    className="text-white/60 hover:text-accent transition-colors"
+                                    to="/chat"
+                                    className="text-white/80 hover:text-green-400 transition-colors"
                                 >
-                                    Privacy Policy
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    to="/cookies"
-                                    className="text-white/60 hover:text-accent transition-colors"
-                                >
-                                    Cookie Policy
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    to="/booking-guide"
-                                    className="text-white/60 hover:text-accent transition-colors"
-                                >
-                                    Booking Guide
+                                    Live Chat Support
                                 </Link>
                             </li>
                         </ul>
-                    </div>
-
-                    <div>
-                        <h3 className="text-lg font-bold mb-6">Contact Us</h3>
-                        <ul className="space-y-4 text-sm">
-                            <li className="flex items-start space-x-3 text-white/60">
-                                <Mail className="w-5 h-5 text-accent flex-shrink-0" />
-                                <span>hello@lockkiyajaye.com</span>
-                            </li>
-                            <li className="flex items-start space-x-3 text-white/60">
-                                <Phone className="w-5 h-5 text-accent flex-shrink-0" />
-                                <span>+1 (555) 000-1234</span>
-                            </li>
-                        </ul>
-                        <div className="flex space-x-4 mt-8">
-                            <a
-                                href="#"
-                                className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20 hover:bg-accent hover:border-accent hover:scale-110 transition-all duration-300"
-                            >
-                                <Facebook className="w-5 h-5" />
-                            </a>
-                            <a
-                                href="#"
-                                className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20 hover:bg-accent hover:border-accent hover:scale-110 transition-all duration-300"
-                            >
-                                <Twitter className="w-5 h-5" />
-                            </a>
-                            <a
-                                href="#"
-                                className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20 hover:bg-accent hover:border-accent hover:scale-110 transition-all duration-300"
-                            >
-                                <Instagram className="w-5 h-5" />
-                            </a>
-                            <a
-                                href="#"
-                                className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20 hover:bg-accent hover:border-accent hover:scale-110 transition-all duration-300"
-                            >
-                                <Linkedin className="w-5 h-5" />
-                            </a>
-                        </div>
                     </div>
                 </div>
 
-                <div className="pt-10 border-t border-white/10 flex flex-col md:row justify-between items-center text-sm text-white/40 space-y-4 md:space-y-0 text-center md:text-left">
-                    <p>
-                        &copy; {new Date().getFullYear()} Lock Kiya Jaye. All
-                        rights reserved.
+                {/* Divider */}
+                <div className="border-t border-white/20 mb-8"></div>
+
+                {/* Bottom Section */}
+                <div className="flex flex-col md:flex-row justify-between items-center text-sm text-white/60">
+                    <p className="mb-4 md:mb-0">
+                        Lock Kiya Jaye {new Date().getFullYear()} All right
+                        reserved
                     </p>
                     <div className="flex space-x-8">
                         <Link
                             to="/privacy"
                             className="hover:text-white transition-colors"
                         >
-                            Privacy Policy
+                            Privacy & Policy
                         </Link>
                         <Link
                             to="/terms"
@@ -179,12 +148,13 @@ export default function Footer() {
                         </Link>
                     </div>
                 </div>
+            </div>
 
-                <div className="mt-16 flex justify-center opacity-10 pointer-events-none select-none overflow-hidden">
-                    <h1 className="text-[12vw] font-black leading-none translate-y-1/2">
-                        Lock Kiya Jaye
-                    </h1>
-                </div>
+            {/* Background Watermark */}
+            <div className="pt-10 flex items-center justify-center pointer-events-none select-none opacity-5">
+                <h1 className="text-[12vw] font-black leading-none text-white">
+                    Lock Kiya Jaye
+                </h1>
             </div>
         </footer>
     );

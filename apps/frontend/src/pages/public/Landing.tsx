@@ -1,25 +1,38 @@
-import { Link } from "react-router-dom";
 import {
-    Search,
-    Calendar,
-    Star,
-    Shield,
-    Clock,
-    MapPin,
     ArrowRight,
+    Calendar,
     CheckCircle2,
-    Users,
-    Trophy,
-    Zap,
+    ChevronDown,
     ChevronLeft,
     ChevronRight,
+    Clock,
+    MapPin,
     Quote,
+    Search,
+    Shield,
+    Star,
+    Trophy,
+    Users,
+    Zap,
 } from "lucide-react";
 import { useState } from "react";
-import { AppleLogo, PlayStoreLogo } from "../components/Icons";
+import { useNavigate } from "react-router-dom";
+import { AppleLogo, PlayStoreLogo } from "../../components/Icons";
 
 export default function Landing() {
+    const navigate = useNavigate();
     const [activeFilter, setActiveFilter] = useState("All Turfs");
+    const [location, setLocation] = useState("");
+    const [sport, setSport] = useState("");
+    const [date, setDate] = useState("");
+
+    const handleSearch = () => {
+        const params = new URLSearchParams();
+        if (location) params.append("search", location);
+        if (sport) params.append("sport", sport);
+        if (date) params.append("date", date);
+        navigate(`/turfs?${params.toString()}`);
+    };
 
     const turfs = [
         {
@@ -29,7 +42,7 @@ export default function Landing() {
             rating: 4.8,
             price: "1,200",
             tag: "5x5 Turf",
-            image: "https://images.unsplash.com/photo-1529900948638-02f04ce59671?auto=format&fit=crop&q=80&w=800",
+            image: "/images/turf.png",
         },
         {
             id: 2,
@@ -66,10 +79,10 @@ export default function Landing() {
 
                 <div className="container mx-auto px-4 relative z-10">
                     <div className="max-w-3xl">
-                        <div className="inline-flex items-center space-x-2 bg-accent/20 backdrop-blur-md border border-accent/30 px-4 py-2 rounded-full mb-6">
-                            <span className="w-2 h-2 bg-accent rounded-full animate-pulse"></span>
-                            <span className="text-accent text-sm font-bold uppercase tracking-wider italic">
-                                Premium Turfs Only
+                        <div className="inline-flex items-center space-x-2 border border-white px-4 py-2 rounded-full mb-6">
+                            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                            <span className="text-white text-sm font-bold tracking-wider">
+                                Available 24/7
                             </span>
                         </div>
                         <h1 className="text-6xl md:text-6xl font-black text-white mb-6 leading-tight">
@@ -87,46 +100,89 @@ export default function Landing() {
 
                         {/* Search Bar */}
                         <div className="bg-white p-4 rounded-2xl shadow-2xl flex flex-col md:flex-row items-center gap-4 max-w-4xl border border-gray-100">
-                            <div className="flex-1 flex items-center space-x-3 px-4 border-r border-gray-100 last:border-0 w-full md:w-auto">
+                            <div
+                                className="flex-1 flex items-center space-x-3 px-4 border-r border-gray-100 last:border-0 w-full md:w-auto hover:bg-gray-50 transition-colors rounded-xl py-2 cursor-text"
+                                onClick={() =>
+                                    document
+                                        .getElementById("search-location")
+                                        ?.focus()
+                                }
+                            >
                                 <MapPin className="text-accent w-5 h-5 flex-shrink-0" />
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                <div className="flex flex-col w-full">
+                                    <label
+                                        htmlFor="search-location"
+                                        className="text-[10px] font-bold text-gray-400 uppercase tracking-wider cursor-text"
+                                    >
                                         Location
-                                    </span>
+                                    </label>
                                     <input
+                                        id="search-location"
                                         type="text"
+                                        value={location}
+                                        onChange={(e) =>
+                                            setLocation(e.target.value)
+                                        }
                                         placeholder="Find Location"
-                                        className="bg-transparent border-none focus:ring-0 p-0 text-sm font-bold text-gray-800 placeholder:text-gray-300 w-full"
+                                        className="bg-transparent border-none outline-none focus:ring-0 p-0 text-sm font-bold text-gray-800 placeholder:text-gray-300 w-full"
                                     />
                                 </div>
                             </div>
-                            <div className="flex-1 flex items-center space-x-3 px-4 border-r border-gray-100 last:border-0 w-full md:w-auto">
+                            <div className="flex-1 flex items-center space-x-3 px-4 border-r border-gray-100 last:border-0 w-full md:w-auto hover:bg-gray-50 transition-colors rounded-xl py-2 cursor-pointer">
                                 <Trophy className="text-accent w-5 h-5 flex-shrink-0" />
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                <div className="flex flex-col w-full relative">
+                                    <label
+                                        htmlFor="search-sport"
+                                        className="text-[10px] font-bold text-gray-400 uppercase tracking-wider cursor-pointer"
+                                    >
                                         Sport
-                                    </span>
-                                    <select className="bg-transparent border-none focus:ring-0 p-0 text-sm font-bold text-gray-800 w-full appearance-none">
-                                        <option>Select Sport</option>
-                                        <option>Football</option>
-                                        <option>Cricket</option>
-                                        <option>Basketball</option>
+                                    </label>
+                                    <select
+                                        id="search-sport"
+                                        value={sport}
+                                        onChange={(e) =>
+                                            setSport(e.target.value)
+                                        }
+                                        className="bg-transparent border-none outline-none focus:ring-0 p-0 text-sm font-bold text-gray-800 w-full appearance-none cursor-pointer"
+                                    >
+                                        <option value="">Select Sport</option>
+                                        <option value="Football">
+                                            Football
+                                        </option>
+                                        <option value="Cricket">Cricket</option>
+                                        <option value="Basketball">
+                                            Basketball
+                                        </option>
                                     </select>
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pt-3 text-gray-400">
+                                        <ChevronDown className="w-4 h-4" />
+                                    </div>
                                 </div>
                             </div>
-                            <div className="flex-1 flex items-center space-x-3 px-4 border-r border-gray-100 last:border-0 w-full md:w-auto">
+                            <div className="flex-1 flex items-center space-x-3 px-4 border-r border-gray-100 last:border-0 w-full md:w-auto hover:bg-gray-50 transition-colors rounded-xl py-2 cursor-pointer">
                                 <Calendar className="text-accent w-5 h-5 flex-shrink-0" />
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                <div className="flex flex-col w-full relative">
+                                    <label
+                                        htmlFor="search-date"
+                                        className="text-[10px] font-bold text-gray-400 uppercase tracking-wider cursor-pointer"
+                                    >
                                         Date
-                                    </span>
+                                    </label>
                                     <input
+                                        id="search-date"
                                         type="date"
-                                        className="bg-transparent border-none focus:ring-0 p-0 text-sm font-bold text-gray-800 w-full"
+                                        value={date}
+                                        onChange={(e) =>
+                                            setDate(e.target.value)
+                                        }
+                                        className="bg-transparent border-none outline-none focus:ring-0 p-0 text-sm font-bold text-gray-800 w-full cursor-pointer [color-scheme:light]"
                                     />
                                 </div>
                             </div>
-                            <button className="bg-accent hover:bg-accent-hover text-white px-8 py-4 rounded-xl font-bold flex items-center justify-center space-x-2 transition-all active:scale-95 w-full md:w-auto">
+                            <button
+                                onClick={handleSearch}
+                                className="bg-accent hover:bg-accent-hover text-white px-8 py-4 rounded-xl font-bold flex items-center justify-center space-x-2 transition-all active:scale-95 w-full md:w-auto shadow-lg shadow-accent/20"
+                            >
                                 <Search className="w-5 h-5" />
                                 <span>Search Turf</span>
                             </button>
@@ -517,8 +573,8 @@ export default function Landing() {
                         <div className="md:w-1/2 relative">
                             <div className="relative z-10 animate-float">
                                 <img
-                                    src="https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&q=80&w=1200"
-                                    className="w-full max-w-sm mx-auto rounded-[3rem] shadow-2xl rotate-6 border-8 border-white/10"
+                                    src="/images/mobile.png"
+                                    className="w-full max-w-sm mx-auto rounded-[3rem]"
                                     alt="App mockup"
                                 />
                             </div>
@@ -529,79 +585,82 @@ export default function Landing() {
             </section>
 
             {/* Testimonials */}
-            <section className="py-24 bg-light overflow-hidden">
+            <section className="py-24 bg-gray-100 overflow-hidden">
                 <div className="container mx-auto px-4">
-                    <div className="text-center mb-16">
-                        <div className="inline-block bg-white border border-primary/10 px-4 py-1.5 rounded-full text-primary font-bold text-sm mb-6">
+                    {/* Header with Badge and Navigation */}
+                    <div className="flex justify-between items-center mb-8">
+                        <div className="inline-block bg-white border border-gray-200 px-6 py-2 rounded-full text-gray-800 font-bold text-sm">
                             Testimonials
                         </div>
-                        <h2 className="text-5xl font-black text-gray-900">
-                            What Our Players Say
-                        </h2>
+                        <div className="flex gap-2">
+                            <button className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-all">
+                                <ChevronLeft className="w-5 h-5" />
+                            </button>
+                            <button className="w-10 h-10 rounded-full bg-[#E33E33] flex items-center justify-center text-white shadow-lg hover:bg-[#c9352c] transition-all">
+                                <ChevronRight className="w-5 h-5" />
+                            </button>
+                        </div>
                     </div>
 
-                    <div className="max-w-5xl mx-auto bg-white rounded-[3rem] p-12 md:p-20 shadow-xl relative">
-                        <div className="absolute top-12 left-12 text-accent/10">
-                            <Quote className="w-32 h-32 fill-current" />
-                        </div>
-
-                        <div className="relative z-10 text-center">
-                            <h3 className="text-3xl font-black text-gray-900 mb-8 italic leading-relaxed">
-                                "Best Turf Experience in The City"
-                            </h3>
-                            <p className="text-gray-500 text-xl leading-loose mb-12">
-                                I have been using this platform for over a year
-                                now. The booking process is incredibly smooth,
-                                and the customer support is top-notch. Finding a
-                                turf for my weekend games has never been easier!
-                            </p>
-
-                            <div className="flex flex-col items-center">
-                                <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-accent mb-4 p-1 shadow-lg bg-white">
-                                    <img
-                                        src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200"
-                                        className="w-full h-full object-cover rounded-full"
-                                    />
-                                </div>
-                                <div className="text-xl font-black text-gray-900">
-                                    Rahul K.
-                                </div>
-                                <div className="text-accent font-bold text-sm uppercase tracking-wider">
-                                    Professional Footballer
-                                </div>
+                    {/* Main Content */}
+                    <div className="">
+                        {/* Left Side - Heading and Quote */}
+                        <div className="flex gap-10 lg:w-1/2">
+                            <h2 className="text-4xl lg:text-5xl font-black text-gray-900 leading-tight mb-6">
+                                What Our Players Say
+                            </h2>
+                            <div className="text-gray-300 mb-6">
+                                <Quote className="w-20 h-20 fill-current" />
                             </div>
                         </div>
 
-                        <div className="absolute top-1/2 -left-6 -translate-y-1/2">
-                            <button className="w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-accent hover:text-white transition-all">
-                                <ChevronLeft />
-                            </button>
-                        </div>
-                        <div className="absolute top-1/2 -right-6 -translate-y-1/2">
-                            <button className="w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-accent hover:text-white transition-all">
-                                <ChevronRight />
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </section>
+                        {/* Right Side - Testimonial Card */}
+                        <div className="p-6 lg:p-8 flex flex-col lg:flex-row gap-6">
+                            {/* Image */}
+                            <div className="rounded-2xl overflow-hidden">
+                                <img
+                                    src="/images/testimonials.png"
+                                    alt="Player with cricket gear"
+                                    className="object-cover "
+                                />
+                            </div>
 
-            {/* Final CTA */}
-            <section className="py-24 bg-white">
-                <div className="container mx-auto px-4 text-center">
-                    <h2 className="text-[15vw] font-black text-primary leading-none mb-4 opacity-5 pointer-events-none select-none">
-                        Lock Kiya Jaye
-                    </h2>
-                    <div className="-mt-12">
-                        <h3 className="text-4xl font-black text-gray-900 mb-8">
-                            Ready to start your first game?
-                        </h3>
-                        <Link
-                            to="/register"
-                            className="inline-block bg-accent text-white px-12 py-5 rounded-2xl font-black text-xl hover:bg-accent-hover transition-all shadow-xl hover:shadow-accent/40 active:scale-95 uppercase tracking-wider italic"
-                        >
-                            Book Now For Free
-                        </Link>
+                            {/* Content */}
+                            <div className="">
+                                <div>
+                                    <h3 className="text-xl lg:text-2xl font-black text-gray-900 mb-3">
+                                        Best Turf Experience In The City
+                                    </h3>
+                                    <p className="text-gray-600 leading-relaxed text-sm lg:text-lg mb-4">
+                                        I absolutely enjoy playing here every
+                                        weekend. The turf is always
+                                        well-maintained, the lighting is perfect
+                                        for night matches, and booking slots is
+                                        super easy. It's the ideal place for
+                                        friendly games and competitive matches.
+                                    </p>
+                                </div>
+
+                                {/* Author */}
+                                <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+                                    <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
+                                        <img
+                                            src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200"
+                                            alt="Rahul K."
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-gray-900 text-sm">
+                                            Rahul K.
+                                        </div>
+                                        <div className="text-xs text-gray-500">
+                                            Amateur Football Player
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
