@@ -13,15 +13,13 @@ class OtpVerificationPage extends StatefulWidget {
 }
 
 class _OtpVerificationPageState extends State<OtpVerificationPage> {
-  final List<TextEditingController> _otpControllers = List.generate(
-    6,
-    (index) => TextEditingController(),
-  );
+  final List<TextEditingController> _otpControllers =
+      List.generate(6, (index) => TextEditingController());
+  final List<FocusNode> _focusNodes =
+      List.generate(6, (index) => FocusNode());
 
-  final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
-
-  // Read once at initState — plain String, not reactive
   String _destination = '';
+  late final bool _isLoginMode;
 
   @override
   void initState() {
@@ -29,9 +27,11 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
     final controller = Get.find<AuthViewmodel>();
     final email = controller.emailController.text.trim();
     final phone = controller.phoneController.text.trim();
-    // FIX: read TextEditingController.text here (plain String),
-    // never inside Obx — TextEditingController is NOT a GetX observable
     _destination = email.isNotEmpty ? email : phone;
+
+    // 'mode': 'login' → login flow; anything else → register flow
+    final args = Get.arguments;
+    _isLoginMode = args is Map && args['mode'] == 'login';
   }
 
   @override
@@ -54,6 +54,32 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
   void _clearFields() {
     for (var c in _otpControllers) c.clear();
     _focusNodes[0].requestFocus();
+  }
+
+  Future<void> _handleVerify(AuthViewmodel controller) async {
+    final otp = _fullOtp;
+    if (otp.length < 6) {
+      Get.snackbar(
+        "Invalid OTP",
+        "Please enter the complete 6-digit OTP",
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    if (_isLoginMode) {
+      controller.otpController.text = otp;
+      // Use whichever identity the user entered
+      final isPhone = controller.phoneController.text.trim().isNotEmpty &&
+          controller.emailController.text.trim().isEmpty;
+      if (isPhone) {
+        await controller.loginWithPhoneOtp();
+      } else {
+        await controller.loginWithEmailOtp();
+      }
+    } else {
+      await controller.verifyOtpAndRegister(otp);
+    }
   }
 
   @override
@@ -89,11 +115,10 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
 
             SizedBox(height: 12.h),
 
-            // Plain Text — _destination is a String set in initState, NOT reactive.
-            // Do NOT wrap in Obx; TextEditingController.text has no GetX stream.
             Text(
               'We sent a 6-digit code to $_destination',
-              style: textTheme.bodyMedium?.copyWith(color: colors.textGrey),
+              style:
+                  textTheme.bodyMedium?.copyWith(color: colors.textGrey),
               textAlign: TextAlign.center,
             ),
 
@@ -111,7 +136,6 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                     focusNode: _focusNodes[index],
                     keyboardType: TextInputType.number,
                     textAlign: TextAlign.center,
-                    
                     maxLength: 1,
                     style: TextStyle(
                       fontSize: 22,
@@ -120,17 +144,18 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                     ),
                     decoration: InputDecoration(
                       counterText: '',
-                            contentPadding: EdgeInsets.zero, 
-
+                      contentPadding: EdgeInsets.zero,
                       filled: true,
                       fillColor: Colors.grey.shade100,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
+                        borderSide:
+                            BorderSide(color: Colors.grey.shade300),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
+                        borderSide:
+                            BorderSide(color: Colors.grey.shade300),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -146,7 +171,6 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
 
             SizedBox(height: 24.h),
 
-            // Obx is correct here — only controller.isLoading.value is reactive
             Obx(() => TextButton(
                   onPressed: controller.isLoading.value
                       ? null
@@ -170,23 +194,14 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
             Obx(() => MyButtons(
                   text: controller.isLoading.value
                       ? "Verifying..."
-                      : "Verify & Create Account",
+                      : _isLoginMode
+                          ? "Sign In"
+                          : "Verify & Create Account",
                   height: 50.h,
                   width: double.infinity,
                   onTap: controller.isLoading.value
                       ? null
-                      : () async {
-                          final otp = _fullOtp;
-                          if (otp.length < 6) {
-                            Get.snackbar(
-                              "Invalid OTP",
-                              "Please enter the complete 6-digit OTP",
-                              snackPosition: SnackPosition.BOTTOM,
-                            );
-                            return;
-                          }
-                          await controller.verifyOtpAndRegister(otp);
-                        },
+                      : () => _handleVerify(controller),
                   textStyle: textTheme.bodyLarge?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
@@ -201,8 +216,8 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
               children: [
                 Text(
                   'Wrong details? ',
-                  style:
-                      textTheme.bodyMedium?.copyWith(color: colors.textGrey),
+                  style: textTheme.bodyMedium
+                      ?.copyWith(color: colors.textGrey),
                 ),
                 TextButton(
                   onPressed: () => Get.back(),

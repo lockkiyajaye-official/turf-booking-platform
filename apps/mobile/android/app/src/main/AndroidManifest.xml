@@ -74,10 +74,21 @@
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
                 android:resource="@style/NormalTheme" />
+
+            <!-- App launcher -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- ← ADD THIS: Deep link for Google OAuth callback -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="yourapp" android:host="auth" />
+            </intent-filter>
+
         </activity>
         <meta-data
             android:name="flutterEmbedding"
@@ -91,4 +102,4 @@
         </intent>
     </queries>
 
-</manifest>  <!-- ← FIX: closing tag was truncated as </man -->
+</manifest>

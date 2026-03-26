@@ -54,7 +54,7 @@ class _SignUpState extends State<SignUp> {
                   /// FIRST NAME / LAST NAME
                   Row(
                     children: [
-                      Expanded(
+                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [

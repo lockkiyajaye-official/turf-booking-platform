@@ -1,8 +1,13 @@
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mobile/core/constants/app_constants.dart';
 import 'package:mobile/data/services/auth_service.dart';
 import 'package:mobile/core/storage/local_storage.dart';
 import 'package:mobile/routes/app_paths.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:async';
 
 class AuthViewmodel extends GetxController {
   final AuthService _authService = AuthService();
@@ -30,18 +35,18 @@ class AuthViewmodel extends GetxController {
   // Helpers
   // ──────────────────────────────────────────────
   void _showError(String message) => Get.snackbar(
-        'Error',
-        message,
-        backgroundColor: Colors.red.shade100,
-        snackPosition: SnackPosition.BOTTOM,
-      );
+    'Error',
+    message,
+    backgroundColor: Colors.red.shade100,
+    snackPosition: SnackPosition.BOTTOM,
+  );
 
   void _showSuccess(String message) => Get.snackbar(
-        'Success',
-        message,
-        backgroundColor: Colors.green.shade100,
-        snackPosition: SnackPosition.BOTTOM,
-      );
+    'Success',
+    message,
+    backgroundColor: Colors.green.shade100,
+    snackPosition: SnackPosition.BOTTOM,
+  );
 
   void _saveSession(Map<String, dynamic> data) {
     token.value = data['token'] ?? '';
@@ -71,7 +76,10 @@ class AuthViewmodel extends GetxController {
     final firstName = firstNameController.text.trim();
     final lastName = lastNameController.text.trim();
 
-    if (email.isEmpty || password.isEmpty || firstName.isEmpty || lastName.isEmpty) {
+    if (email.isEmpty ||
+        password.isEmpty ||
+        firstName.isEmpty ||
+        lastName.isEmpty) {
       _showError('All fields are required');
       return;
     }
@@ -170,7 +178,7 @@ class AuthViewmodel extends GetxController {
     final firstName = firstNameController.text.trim();
     final lastName = lastNameController.text.trim();
     final phone = phoneController.text.trim();
-final normalizedPhone = phone.startsWith('+') ? phone : '+91$phone';
+    final normalizedPhone = phone.startsWith('+') ? phone : '+91$phone';
 
     print('DEBUG: firstName=$firstName, lastName=$lastName');
     print('DEBUG: password length=${password.length}');
@@ -240,7 +248,51 @@ final normalizedPhone = phone.startsWith('+') ? phone : '+91$phone';
       isLoading.value = false;
     }
   }
-Future<void> verifyOtpAndRegister(String otp) async {
+
+StreamSubscription? _linkSubscription;
+Future<void> loginWithGoogle() async {
+  try {
+    isLoading.value = true;
+
+    final url = Uri.parse('${AppConstants.baseUrl}/auth/google');
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      _showError('Could not launch Google Sign-In');
+      isLoading.value = false;
+      return;
+    }
+
+    final appLinks = AppLinks();
+
+    _linkSubscription = appLinks.uriLinkStream.listen((Uri uri) async {
+      if (uri.scheme == 'yourapp' && uri.host == 'auth') {
+        _linkSubscription?.cancel();
+
+        final tokenStr = uri.queryParameters['token'];
+
+        if (tokenStr == null || tokenStr.isEmpty) {
+          _showError('Google login failed: no token received');
+          isLoading.value = false;
+          return;
+        }
+
+        token.value = tokenStr;
+        Get.find<LocalStorageService>().saveToken(token: tokenStr);
+        await fetchProfile();
+        _showSuccess('Signed in with Google');
+        isLoading.value = false;
+        Get.offAllNamed(RoutePaths.home);
+      }
+    }, onError: (e) {
+      _showError('Google Sign-In error: ${e.toString()}');
+      isLoading.value = false;
+    });
+
+  } catch (e) {
+    _showError('Google Sign-In error: ${e.toString()}');
+    isLoading.value = false;
+  }
+}
+  Future<void> verifyOtpAndRegister(String otp) async {
     final email = emailController.text.trim();
     final rawPhone = phoneController.text.trim();
     final phone = rawPhone.startsWith('+') ? rawPhone : '+91$rawPhone';

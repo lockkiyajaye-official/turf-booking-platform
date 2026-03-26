@@ -20,7 +20,6 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _identityController = TextEditingController();
   bool _isPhone = false;
-  bool _obscurePassword = true; // ← FIX 1: added missing state variable
 
   bool _looksLikePhone(String value) {
     final cleaned = value.replaceAll(RegExp(r'[\s\-\(\)]'), '');
@@ -31,15 +30,31 @@ class _LoginPageState extends State<LoginPage> {
 
   void _onIdentityChanged(String value) {
     final isPhone = _looksLikePhone(value.trim());
-    if (isPhone != _isPhone) {
-      setState(() => _isPhone = isPhone);
-    }
+    if (isPhone != _isPhone) setState(() => _isPhone = isPhone);
   }
 
   @override
   void dispose() {
     _identityController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleSendOtp(AuthViewmodel controller) async {
+    final value = _identityController.text.trim();
+    if (_isPhone) {
+      controller.phoneController.text = value;
+      controller.emailController.text = '';
+      await controller.requestPhoneOtp();
+    } else {
+      controller.emailController.text = value;
+      controller.phoneController.text = '';
+      await controller.requestEmailOtp();
+    }
+
+    // Navigate only if OTP was sent successfully
+    if (controller.otpSent.value) {
+      Get.toNamed(RoutePaths.otpVerification, arguments: {'mode': 'login'});
+    }
   }
 
   @override
@@ -61,10 +76,7 @@ class _LoginPageState extends State<LoginPage> {
             Text('Welcome Back', style: textTheme.titleLarge),
 
             SizedBox(height: 8.h),
-            Text(
-              'Login to continue your game',
-              style: textTheme.bodyMedium,
-            ),
+            Text('Login to continue your game', style: textTheme.bodyMedium),
 
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 20.w),
@@ -93,154 +105,20 @@ class _LoginPageState extends State<LoginPage> {
 
                   SizedBox(height: 16.h),
 
-                  // ── Email mode: show password field ──────────
-                  if (!_isPhone) ...[
-                    const Text("Password"),
-                    SizedBox(height: 8.h),
-
-                    // FIX 2: closed MyTextField properly; moved Forgot Password
-                    //        and Login Button outside of it
-                    MyTextField(
-                      controller: controller.passwordController,
-                      height: 50.h,
-                      width: 360.w,
-                      type: TextInputType.text,
-                      fillColor: colors.background,
-                      hintText: "Enter your Password",
-                      obscureText: _obscurePassword,
-                      prefixIcon:
-                          Icon(Icons.lock_outline, color: colors.textGrey),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          color: colors.textGrey,
-                        ),
-                        onPressed: () =>
-                            setState(() => _obscurePassword = !_obscurePassword),
-                      ),
-                    ), // ← FIX 2: MyTextField closes here
-
-                    /// FORGOT PASSWORD
-                    Align(
-                      alignment: Alignment.bottomRight,
-                      child: TextButton(
-                        onPressed: () {},
-                        child: const Text(
-                          "Forgot Password?",
-                          style: TextStyle(color: Color(0xFFE43434)),
-                        ),
-                      ),
-                    ),
-
-                    /// LOGIN BUTTON
-                    Obx(() => MyButtons(
-                          text: controller.isLoading.value
-                              ? "Signing in..."
-                              : "Sign in",
-                          height: 50.h,
-                          width: 360.w,
-                          onTap: controller.isLoading.value
-                              ? null
-                              : () {
-                                  controller.emailController.text =
-                                      _identityController.text.trim();
-                                  controller.login();
-                                },
-                          textStyle: textTheme.bodyMedium?.copyWith(
-                            color: Colors.white,
-                          ),
-                          backgroundColor: const Color(0xFFE43434),
-                        )),
-                  ], // ← FIX 3: email block closes here
-
-                  // ── Phone mode: show OTP flow ───────────────
-                  if (_isPhone) ...[
-                    Obx(() {
-                      final otpSent = controller.otpSent.value;
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (otpSent) ...[
-                            const Text("OTP"),
-                            SizedBox(height: 8.h),
-                            MyTextField(
-                              controller: controller.otpController,
-                              height: 50.h,
-                              width: 360.w,
-                              type: TextInputType.phone,
-                              fillColor: colors.background,
-                              hintText: "Enter the OTP sent to your phone",
-                              prefixIcon: Icon(
-                                Icons.lock_outline,
-                                color: colors.textGrey,
-                              ),
-                            ),
-                            SizedBox(height: 16.h),
-                          ],
-
-                          if (!otpSent)
-                            MyButtons(
-                              text: controller.isLoading.value
-                                  ? "Sending OTP..."
-                                  : "Send OTP",
-                              height: 50.h,
-                              width: 360.w,
-                              onTap: controller.isLoading.value
-                                  ? null
-                                  : () {
-                                      controller.phoneController.text =
-                                          _identityController.text.trim();
-                                      controller.requestPhoneOtp();
-                                    },
-                              textStyle: textTheme.bodyMedium?.copyWith(
-                                color: Colors.white,
-                              ),
-                              backgroundColor: const Color(0xFFE74C3C),
-                            )
-                          else
-                            Column(
-                              children: [
-                                MyButtons(
-                                  text: controller.isLoading.value
-                                      ? "Signing in..."
-                                      : "Sign in",
-                                  height: 50.h,
-                                  width: 360.w,
-                                  onTap: controller.isLoading.value
-                                      ? null
-                                      : () {
-                                          controller.phoneController.text =
-                                              _identityController.text.trim();
-                                          controller.loginWithPhoneOtp();
-                                        },
-                                  textStyle: textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white,
-                                  ),
-                                  backgroundColor: const Color(0xFFE74C3C),
-                                ),
-                                TextButton(
-                                  onPressed: controller.isLoading.value
-                                      ? null
-                                      : () {
-                                          controller.phoneController.text =
-                                              _identityController.text.trim();
-                                          controller.requestPhoneOtp();
-                                        },
-                                  child: Text(
-                                    "Resend OTP",
-                                    style: textTheme.bodySmall?.copyWith(
-                                      color: const Color(0xFFE74C3C),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                        ],
-                      );
-                    }),
-                  ],
+                  /// SEND OTP BUTTON
+                  Obx(() => MyButtons(
+                        text: controller.isLoading.value
+                            ? "Sending OTP..."
+                            : "Send OTP",
+                        height: 50.h,
+                        width: 360.w,
+                        onTap: controller.isLoading.value
+                            ? null
+                            : () => _handleSendOtp(controller),
+                        textStyle: textTheme.bodyMedium
+                            ?.copyWith(color: Colors.white),
+                        backgroundColor: const Color(0xFFE43434),
+                      )),
 
                   SizedBox(height: 16.h),
 
@@ -248,42 +126,33 @@ class _LoginPageState extends State<LoginPage> {
                   Row(
                     children: [
                       Expanded(
-                        child: Container(height: 1.h, color: colors.textGrey),
+                        child:
+                            Container(height: 1.h, color: colors.textGrey),
                       ),
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 12.w),
                         child: Text(
                           "Or sign in with",
-                          style: textTheme.bodySmall?.copyWith(
-                            color: colors.textTitle,
-                          ),
+                          style: textTheme.bodySmall
+                              ?.copyWith(color: colors.textTitle),
                         ),
                       ),
                       Expanded(
-                        child: Container(height: 1.h, color: colors.textGrey),
+                        child:
+                            Container(height: 1.h, color: colors.textGrey),
                       ),
                     ],
                   ),
 
                   SizedBox(height: 20.h),
 
-                  /// SOCIAL LOGIN
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      SizedBox(width: 25.w,),
-                      SocialLogin(
-                        text: "Google",
-                        asset: AppAssets.google,
-                        onTap: () {},
-                      ),
-                      SizedBox(width: 25.w),
-                      SocialLogin(
-                        text: "Facebook",
-                        asset: AppAssets.facebook,
-                        onTap: () {},
-                      ),
-                    ],
+                  /// GOOGLE LOGIN ONLY
+                  Center(
+                    child: SocialLogin(
+                      text: "Google",
+                      asset: AppAssets.google,
+                      onTap: () => controller.loginWithGoogle(),
+                    ),
                   ),
 
                   SizedBox(height: 20.h),
@@ -294,9 +163,7 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
                       const Text("Don't have an account?"),
                       TextButton(
-                        onPressed: () {
-                          Get.toNamed(RoutePaths.signup);
-                        },
+                        onPressed: () => Get.toNamed(RoutePaths.signup),
                         child: const Text(
                           "Sign Up",
                           style: TextStyle(color: Color(0xFFE43434)),
