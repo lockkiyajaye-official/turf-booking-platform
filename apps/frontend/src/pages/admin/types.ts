@@ -142,4 +142,6 @@ export interface Turf {
         lastName: string;
         email?: string;
     };
+    images: string[];
+    primaryImageIndex?: number;
 }

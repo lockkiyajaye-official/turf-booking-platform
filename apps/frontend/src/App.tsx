@@ -32,8 +32,10 @@ import AdminUsers from "./pages/admin/AdminUsers";
 
 // Turf Owner
 import OwnerBookings from "./pages/turf-owner/OwnerBookings";
+import OwnerCreateTurf from "./pages/turf-owner/OwnerCreateTurf";
 import OwnerFinances from "./pages/turf-owner/OwnerFinances";
 import OwnerOverview from "./pages/turf-owner/OwnerOverview";
+import OwnerTurfDetail from "./pages/turf-owner/OwnerTurfDetail";
 import OwnerTurfs from "./pages/turf-owner/OwnerTurfs";
 
 function App() {
@@ -99,6 +101,8 @@ function App() {
                             element={<OwnerOverview />}
                         />
                         <Route path="/owner/turfs" element={<OwnerTurfs />} />
+                        <Route path="/owner/turfs/new" element={<OwnerCreateTurf />} />
+                        <Route path="/owner/turfs/:id" element={<OwnerTurfDetail />} />
                         <Route
                             path="/owner/bookings"
                             element={<OwnerBookings />}

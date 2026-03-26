@@ -32,7 +32,7 @@ export default function OwnerOverview() {
 
     if (loading || !statistics) {
         return (
-            <div className="flex items-center justify-center p-12">
+            <div className="flex items-center justify-center p-12 min-h-screen">
                 <span className="text-gray-500 font-medium tracking-wide animate-pulse">
                     Loading overview...
                 </span>
