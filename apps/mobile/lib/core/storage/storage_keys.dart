@@ -22,4 +22,5 @@ class StorageKeys {
   static const isOnboardingRequired = 'is_onboarding_required';
   static const onboardingSteps = 'onboarding_steps';
   static const kFirstTimeUser = 'is_first_time_user';
+  static const searchHistory = 'search_history';
 }

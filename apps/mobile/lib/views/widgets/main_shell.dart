@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile/views/home/home_page.dart';
 import 'package:mobile/views/search/search_page.dart';
 import 'package:mobile/views/widgets/floating_nav_bar.dart';
-
+import 'package:mobile/views/profile/profle_page.dart';
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
   @override
@@ -16,7 +16,7 @@ class _MainShellState extends State<MainShell> {
     HomePage(),
     SearchPage(),
     Center(child: Text('Bookings')),
-    Center(child: Text('Profile')),
+ProfilePage()
   ];
 
   @override

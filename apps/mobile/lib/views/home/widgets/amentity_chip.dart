@@ -7,25 +7,32 @@ class AmenityChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[200]!),
+    return Container(
+      width: 74,
+      height: 64,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[200]!, width: 1.2),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(item.icon, size: 20, color: Colors.grey[500]),
+          const SizedBox(height: 6),
+          Text(
+            item.label,
+            style: const TextStyle(
+              fontSize: 10,
+              color: Color(0xFF8E8E93),
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          child: Icon(item.icon, size: 22, color: const Color(0xFF3A3A3C)),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          item.label,
-          style: const TextStyle(fontSize: 10, color: Color(0xFF3A3A3C)),
-          textAlign: TextAlign.center,
-        ),
-      ],
+        ],
+      ),
     );
   }
-}
+}

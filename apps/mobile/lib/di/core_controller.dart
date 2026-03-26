@@ -6,38 +6,48 @@ import 'package:mobile/core/storage/storage_keys.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/viewmodels/splash/auth_session_viewmodel.dart';
 
-/// Dependency Injection - Initialize all core controllers and services
 class CoreController {
-  /// Initialize all dependencies in the correct order
   static Future<void> init() async {
-    // Initialize Hive
+    /// 🔹 1. Init Hive
     await Hive.initFlutter();
 
-    // Open the required boxes
+    /// 🔹 2. Open Boxes
     final appBox = await Hive.openBox(StorageKeys.appBox);
     final authBox = await Hive.openBox(StorageKeys.authBox);
 
-    // Initialize storage service
-    final localStorageService = LocalStorageService(
+    /// 🔹 3. Register Storage Service
+    final localStorage = LocalStorageService(
       appBox: appBox,
       authBox: authBox,
     );
 
-    Get.put(AppTheme(storage: localStorageService), permanent: true);
+    Get.put<LocalStorageService>(localStorage, permanent: true);
 
-    // Then initialize controllers
-    Get.put(
+    /// 🔹 4. Register Repository
+    Get.put<AuthSessionRepository>(
+      AuthSessionRepository(storage: localStorage),
+      permanent: true,
+    );
+
+    /// 🔹 5. Register Theme
+    Get.put<AppTheme>(
+      AppTheme(storage: localStorage),
+      permanent: true,
+    );
+
+    /// 🔹 6. Register Session Controller
+    Get.put<AuthSessionController>(
       AuthSessionController(
-        authRepository: AuthSessionRepository(storage: localStorageService),
+        authRepository: Get.find<AuthSessionRepository>(),
       ),
       permanent: true,
     );
   }
 
-  /// Dispose all controllers (optional, for cleanup)
   static void dispose() {
     Get.delete<AuthSessionController>();
     Get.delete<AppTheme>();
-    // Get.delete<AuthRepository>();
+    Get.delete<AuthSessionRepository>();
+    Get.delete<LocalStorageService>();
   }
 }

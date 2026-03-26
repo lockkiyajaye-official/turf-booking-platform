@@ -1,41 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mobile/views/home/widgets/booking_details.dart';
+import 'package:mobile/data/models/turf_model.dart';
+import 'booking_details.dart';
 
 class VenueCard extends StatelessWidget {
-  final String name;
-  final String location;
-  final int pricePerHour;
-  final double rating;
-  final int reviewCount;
-  final String imageUrl;
+  final TurfModel turf;
   final VoidCallback? onBookNow;
 
   const VenueCard({
     super.key,
-    required this.name,
-    required this.location,
-    required this.pricePerHour,
-    required this.rating,
-    required this.reviewCount,
-    required this.imageUrl,
+    required this.turf,
     this.onBookNow,
   });
 
   @override
   Widget build(BuildContext context) {
+    final imageUrl = turf.images.isNotEmpty
+        ? turf.images.first
+        : 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=400&q=80';
+    
     return GestureDetector(
-      onTap: () {
-        Get.to(() => const TurfDetailsPage());
-      },
+      onTap: () => Get.to(() => TurfDetailsPage(turf: turf)),
       child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 16,
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 12,
               offset: const Offset(0, 4),
             ),
           ],
@@ -47,27 +41,27 @@ class VenueCard extends StatelessWidget {
             children: [
               // ── Image with rating badge ──────────────────────────
               SizedBox(
-                width: 140,
-                height: 140,
+                width: 142,
+                height: 142,
                 child: Stack(
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
                       child: Image.network(
                         imageUrl,
-                        width: 140,
-                        height: 140,
+                        width: 142,
+                        height: 142,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Container(
-                          width: 140,
-                          height: 140,
+                          width: 142,
+                          height: 142,
                           decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(12),
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(16),
                           ),
                           child: const Icon(
                             Icons.sports_soccer,
-                            size: 48,
+                            size: 40,
                             color: Colors.grey,
                           ),
                         ),
@@ -80,15 +74,15 @@ class VenueCard extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
-                          vertical: 5,
+                          vertical: 6,
                         ),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.12),
-                              blurRadius: 6,
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),
                           ],
@@ -98,15 +92,15 @@ class VenueCard extends StatelessWidget {
                           children: [
                             const Icon(
                               Icons.star,
-                              color: Color(0xFFFFC107),
-                              size: 16,
+                              color: Color(0xFFFF9500),
+                              size: 14,
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '$rating ($reviewCount)',
+                              '${turf.rating ?? 0.0} (${turf.totalReviews})',
                               style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
                                 color: Color(0xFF1C1C1E),
                               ),
                             ),
@@ -118,83 +112,97 @@ class VenueCard extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(width: 14),
+              const SizedBox(width: 16),
 
               // ── Info section ─────────────────────────────────────
               Expanded(
                 child: SizedBox(
-                  height: 140,
+                  height: 142,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       // Name
                       Text(
-                        name,
+                        turf.name,
                         style: const TextStyle(
                           fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1C1C1E),
-                          letterSpacing: -0.3,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF2C3E50),
+                          letterSpacing: -0.5,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
+                      const SizedBox(height: 4),
 
                       // Location
                       Text(
-                        location,
+                        turf.address,
                         style: const TextStyle(
                           fontSize: 13,
-                          color: Color(0xFF8E8E93),
-                          height: 1.4,
+                          color: Color(0xFF7F8C8D),
+                          fontWeight: FontWeight.w500,
+                          height: 1.3,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
+
+                      const Spacer(),
 
                       // Price
                       RichText(
                         text: TextSpan(
                           children: [
                             TextSpan(
-                              text: '₹$pricePerHour',
+                              text: '₹${turf.pricePerHour.toInt()}',
                               style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1C1C1E),
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF2C3E50),
                               ),
                             ),
                             const TextSpan(
                               text: ' /hour',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: Color(0xFF8E8E93),
-                                fontWeight: FontWeight.normal,
+                                color: Color(0xFF7F8C8D),
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
                         ),
                       ),
+                      const SizedBox(height: 10),
 
                       // Book Now button
                       SizedBox(
                         width: double.infinity,
                         height: 38,
                         child: OutlinedButton(
-                          onPressed: onBookNow,
+                          onPressed: () {
+                            if (onBookNow != null) {
+                              onBookNow!();
+                            } else {
+                              Get.to(() => TurfDetailsPage(turf: turf));
+                            }
+                          },
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(
-                              color: Color(0xFFE53935),
-                              width: 1.5,
+                              color: Color(0xFFE74C3C),
+                              width: 1.2,
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(10),
                             ),
                             padding: EdgeInsets.zero,
                           ),
                           child: const Text(
                             'Book now',
                             style: TextStyle(
-                              color: Color(0xFFE53935),
+                              color: Color(0xFFE74C3C),
                               fontSize: 14,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
