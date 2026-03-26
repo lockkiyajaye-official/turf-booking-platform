@@ -20,14 +20,24 @@ export interface Turf {
     name: string;
     description: string;
     address: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
     pricePerHour: number;
+    surfaceType?: string;
+    capacity?: number;
+    sports?: string[];
     amenities: string[];
     images: string[];
+    primaryImageIndex?: number;
     availableSlots: string[];
+    rules?: string;
     rating: number | string;
     totalReviews: number;
     contactPhone?: string;
     contactEmail?: string;
+    latitude?: number;
+    longitude?: number;
 }
 
 export interface Booking {
