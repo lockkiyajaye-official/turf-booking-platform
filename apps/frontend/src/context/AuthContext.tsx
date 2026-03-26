@@ -19,6 +19,10 @@ interface User {
     businessDescription?: string;
     taxId?: string;
     approvalNotes?: string;
+    emailBookings?: boolean;
+    emailPayments?: boolean;
+    emailPromos?: boolean;
+    profileImage?: string;
 }
 
 interface AuthContextType {

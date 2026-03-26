@@ -15,16 +15,38 @@ import {
     Users,
     Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppleLogo, PlayStoreLogo } from "../../components/Icons";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Landing() {
     const navigate = useNavigate();
+    const { user, loading } = useAuth();
     const [activeFilter, setActiveFilter] = useState("All Turfs");
     const [location, setLocation] = useState("");
     const [sport, setSport] = useState("");
     const [date, setDate] = useState("");
+
+    useEffect(() => {
+        if (!loading && user) {
+            if (user.onboardingStatus === "completed") {
+                if (user.role === "admin") navigate("/admin/overview");
+                else if (user.role === "turf_owner") navigate("/owner/overview");
+                else navigate("/home");
+            } else {
+                navigate("/onboarding");
+            }
+        }
+    }, [user, loading, navigate]);
+
+    if (loading || user) {
+        return (
+            <div className="min-h-screen bg-white flex justify-center items-center">
+                <div className="w-16 h-16 border-4 border-gray-200 border-t-[#FF4D4D] rounded-full animate-spin"></div>
+            </div>
+        );
+    }
 
     const handleSearch = () => {
         const params = new URLSearchParams();

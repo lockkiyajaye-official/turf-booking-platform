@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 import { MapPin, Search, Bell } from "lucide-react";
-import api from "../services/api";
-import TurfCard from "../components/TurfCard";
+import api from "../../services/api";
+import TurfCard from "../../components/TurfCard";
 
 interface Turf {
     id: string;
@@ -50,20 +50,28 @@ export default function UserHome() {
                 async (position) => {
                     try {
                         const res = await fetch(
-                            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}`
+                            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}`,
                         );
-                        if (!res.ok) throw new Error("Reverse geocoding failed");
+                        if (!res.ok)
+                            throw new Error("Reverse geocoding failed");
                         const data = await res.json();
-                        const city = data.address.city || data.address.town || data.address.state_district || "Andhra Pradesh";
+                        const city =
+                            data.address.city ||
+                            data.address.town ||
+                            data.address.state_district ||
+                            "Andhra Pradesh";
                         setLocation(city);
                     } catch (error) {
-                        console.error("Geocoding failed, keeping default:", error);
+                        console.error(
+                            "Geocoding failed, keeping default:",
+                            error,
+                        );
                     }
                 },
                 (error) => {
                     console.error("Geolocation error:", error.message);
                 },
-                { timeout: 10000 }
+                { timeout: 10000 },
             );
         }
     }, [user, loading, navigate]);
@@ -104,7 +112,7 @@ export default function UserHome() {
                     <MapPin className="w-5 h-5 text-red-500 mr-2" />
                     <span className="font-medium">{location}</span>
                 </div>
-                
+
                 <div className="w-full md:max-w-xl lg:max-w-2xl">
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -154,9 +162,13 @@ export default function UserHome() {
 
                     <div className="relative h-full flex flex-col md:flex-row items-center justify-between p-8 md:px-12">
                         <div className="text-white z-10 max-w-lg">
-                            <h2 className="text-3xl md:text-5xl font-extrabold mb-3 tracking-tight">Special Weekend Offer</h2>
+                            <h2 className="text-3xl md:text-5xl font-extrabold mb-3 tracking-tight">
+                                Special Weekend Offer
+                            </h2>
                             <p className="text-lg md:text-xl text-white/90 mb-7 leading-snug">
-                                Get 20% off on all<br />Bookings this weekend
+                                Get 20% off on all
+                                <br />
+                                Bookings this weekend
                             </p>
                             <button className="bg-white text-[#d63a3a] font-bold px-8 py-2.5 rounded hover:bg-gray-50 transition-colors shadow-sm tracking-wide">
                                 20% OFF
@@ -164,11 +176,14 @@ export default function UserHome() {
                         </div>
                         <div className="hidden lg:block absolute right-0 bottom-0 h-[115%] z-10 translate-x-12 translate-y-6">
                             {/* Decorative Football Player Layout matching reference banner */}
-                            <img 
-                                src="https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=600&auto=format&fit=crop" 
+                            <img
+                                src="https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=600&auto=format&fit=crop"
                                 alt="Football player celebration"
                                 className="h-full object-cover select-none mask-image-gradient drop-shadow-2xl brightness-110 contrast-125 rounded-bl-full"
-                                style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 15%)' }}
+                                style={{
+                                    WebkitMaskImage:
+                                        "linear-gradient(to right, transparent, black 15%)",
+                                }}
                             />
                         </div>
                     </div>
@@ -181,7 +196,10 @@ export default function UserHome() {
                     {turfsLoading ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {[1, 2, 3].map((i) => (
-                                <div key={i} className="animate-pulse bg-white rounded-xl h-96 border border-gray-100"></div>
+                                <div
+                                    key={i}
+                                    className="animate-pulse bg-white rounded-xl h-96 border border-gray-100"
+                                ></div>
                             ))}
                         </div>
                     ) : turfs.length > 0 ? (
@@ -192,7 +210,9 @@ export default function UserHome() {
                         </div>
                     ) : (
                         <div className="text-center py-20 bg-white rounded-xl border border-gray-100">
-                            <span className="text-4xl mb-4 block opacity-50">🌱</span>
+                            <span className="text-4xl mb-4 block opacity-50">
+                                🌱
+                            </span>
                             <p className="text-gray-500 text-lg font-medium">
                                 No turfs matched your search.
                             </p>

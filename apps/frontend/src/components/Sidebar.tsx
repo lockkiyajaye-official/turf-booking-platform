@@ -55,7 +55,7 @@ export default function Sidebar() {
             { name: "Home", path: "/home", icon: Home },
             { name: "Explore", path: "/turfs", icon: Search },
             { name: "Bookings", path: "/dashboard/bookings", icon: Calendar },
-            { name: "Payments", path: "/dashboard/payments", icon: CreditCard },
+            { name: "Payments", path: "/dashboard/payments/history", icon: CreditCard },
             { name: "Profile", path: "/dashboard/profile", icon: User },
         ];
     };
@@ -88,11 +88,10 @@ export default function Sidebar() {
                             <Link
                                 key={item.name}
                                 to={item.path}
-                                className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
-                                    isActive
+                                className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${isActive
                                         ? "bg-red-50 text-[#E33E33] font-bold"
                                         : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium"
-                                }`}
+                                    }`}
                             >
                                 <Icon className="w-5 h-5" />
                                 <span>{item.name}</span>
@@ -125,11 +124,10 @@ export default function Sidebar() {
                             <Link
                                 key={item.name}
                                 to={item.path}
-                                className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${
-                                    isActive
+                                className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive
                                         ? "text-[#E33E33]"
                                         : "text-gray-500 hover:text-gray-900"
-                                }`}
+                                    }`}
                             >
                                 <Icon className="w-6 h-6" />
                                 <span className="text-[10px] font-bold">

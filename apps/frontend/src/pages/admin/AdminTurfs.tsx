@@ -41,7 +41,7 @@ export default function AdminTurfs() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center p-12">
+            <div className="flex items-center justify-center p-12 min-h-screen">
                 <span className="text-gray-500 font-medium tracking-wide animate-pulse">
                     Loading turfs...
                 </span>
@@ -84,16 +84,23 @@ export default function AdminTurfs() {
                             className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col"
                         >
                             <div className="h-40 bg-gray-100 flex items-center justify-center relative">
-                                <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/30">
-                                    <img src="/logo.png" />
-                                </div>
+                                {turf.images && turf.images.length > 0 ? (
+                                    <img
+                                        src={turf.images[turf.primaryImageIndex ?? 0]}
+                                        alt={turf.name}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full bg-slate-100 flex items-center justify-center">
+                                        <span className="text-5xl opacity-30">🏟️</span>
+                                    </div>
+                                )}
                                 <div className="absolute top-4 right-4 flex gap-2">
                                     <span
-                                        className={`px-2.5 py-1 text-xs font-bold rounded-md shadow-sm ${
-                                            turf.isPublished
-                                                ? "bg-green-500 text-white"
-                                                : "bg-gray-400 text-white"
-                                        }`}
+                                        className={`px-2.5 py-1 text-xs font-bold rounded-md shadow-sm ${turf.isPublished
+                                            ? "bg-green-500 text-white"
+                                            : "bg-gray-400 text-white"
+                                            }`}
                                     >
                                         {turf.isPublished
                                             ? "Published"

@@ -25,8 +25,26 @@ export class Turf {
   @Column()
   address: string;
 
+  @Column({ nullable: true })
+  city: string;
+
+  @Column({ nullable: true })
+  state: string;
+
+  @Column({ nullable: true })
+  pincode: string;
+
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   pricePerHour: number;
+
+  @Column({ nullable: true })
+  surfaceType: string;
+
+  @Column({ nullable: true, default: 0 })
+  capacity: number;
+
+  @Column({ type: 'simple-array', default: '' })
+  sports: string[];
 
   @Column({ type: 'simple-array', default: '' })
   amenities: string[];
@@ -34,17 +52,24 @@ export class Turf {
   @Column({ type: 'simple-array', default: '' })
   images: string[];
 
+  // Index of the primary/cover image in the images array
+  @Column({ default: 0 })
+  primaryImageIndex: number;
+
   @Column({ type: 'simple-array', default: '' })
-  availableSlots: string[]; // e.g., ["06:00-07:00", "07:00-08:00", ...]
+  availableSlots: string[];
+
+  @Column({ type: 'text', nullable: true })
+  rules: string;
 
   @Column({ default: true })
   isActive: boolean;
 
   @Column({ default: false })
-  isPublished: boolean; // Only published turfs are visible to users
+  isPublished: boolean;
 
   @Column({ default: false })
-  isDraft: boolean; // Draft turfs are only visible to owner
+  isDraft: boolean;
 
   @Column({ nullable: true })
   publishedAt: Date;

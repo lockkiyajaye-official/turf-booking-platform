@@ -14,17 +14,13 @@ import FAQ from "./pages/public/FAQ";
 import Landing from "./pages/public/Landing";
 
 // Shared / User
-import Dashboard from "./pages/Dashboard";
-import PaymentHistory from "./pages/PaymentHistory";
-import Payments from "./pages/Payments";
-import Profile from "./pages/Profile";
-import ProfileAccount from "./pages/ProfileAccount";
-import ProfileNotifications from "./pages/ProfileNotifications";
-import ProfileSecurity from "./pages/ProfileSecurity";
-import TurfDetail from "./pages/TurfDetail";
+import Dashboard from "./pages/user/Dashboard";
+import PaymentHistory from "./pages/user/PaymentHistory";
+import Profile from "./pages/user/Profile";
+import TurfDetail from "./pages/user/TurfDetail";
 import Turfs from "./pages/Turfs";
-import UserBookings from "./pages/UserBookings";
-import UserHome from "./pages/UserHome";
+import UserBookings from "./pages/user/UserBookings";
+import UserHome from "./pages/user/UserHome";
 
 // Admin
 import AdminBookings from "./pages/admin/AdminBookings";
@@ -36,8 +32,10 @@ import AdminUsers from "./pages/admin/AdminUsers";
 
 // Turf Owner
 import OwnerBookings from "./pages/turf-owner/OwnerBookings";
+import OwnerCreateTurf from "./pages/turf-owner/OwnerCreateTurf";
 import OwnerFinances from "./pages/turf-owner/OwnerFinances";
 import OwnerOverview from "./pages/turf-owner/OwnerOverview";
+import OwnerTurfDetail from "./pages/turf-owner/OwnerTurfDetail";
 import OwnerTurfs from "./pages/turf-owner/OwnerTurfs";
 
 function App() {
@@ -69,28 +67,12 @@ function App() {
                             element={<UserBookings />}
                         />
                         <Route
-                            path="/dashboard/payments"
-                            element={<Payments />}
-                        />
-                        <Route
                             path="/dashboard/payments/history"
                             element={<PaymentHistory />}
                         />
                         <Route
                             path="/dashboard/profile"
                             element={<Profile />}
-                        />
-                        <Route
-                            path="/dashboard/profile/account"
-                            element={<ProfileAccount />}
-                        />
-                        <Route
-                            path="/dashboard/profile/security"
-                            element={<ProfileSecurity />}
-                        />
-                        <Route
-                            path="/dashboard/profile/notifications"
-                            element={<ProfileNotifications />}
                         />
 
                         {/* Admin Routes */}
@@ -119,6 +101,8 @@ function App() {
                             element={<OwnerOverview />}
                         />
                         <Route path="/owner/turfs" element={<OwnerTurfs />} />
+                        <Route path="/owner/turfs/new" element={<OwnerCreateTurf />} />
+                        <Route path="/owner/turfs/:id" element={<OwnerTurfDetail />} />
                         <Route
                             path="/owner/bookings"
                             element={<OwnerBookings />}
@@ -129,18 +113,6 @@ function App() {
                         />
                         {/* Map /owner/profile to existing Profile */}
                         <Route path="/owner/profile" element={<Profile />} />
-                        <Route
-                            path="/owner/profile/account"
-                            element={<ProfileAccount />}
-                        />
-                        <Route
-                            path="/owner/profile/security"
-                            element={<ProfileSecurity />}
-                        />
-                        <Route
-                            path="/owner/profile/notifications"
-                            element={<ProfileNotifications />}
-                        />
                     </Routes>
                 </AppLayout>
             </Router>

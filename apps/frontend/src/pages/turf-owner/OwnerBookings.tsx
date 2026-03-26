@@ -66,7 +66,7 @@ export default function OwnerBookings() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center p-12">
+            <div className="flex items-center justify-center p-12 min-h-screen">
                 <span className="text-gray-500 font-medium tracking-wide animate-pulse">
                     Loading bookings...
                 </span>
@@ -207,7 +207,7 @@ export default function OwnerBookings() {
                                                     {b.startTime} - {b.endTime}
                                                 </div>
                                                 <div className="text-sm font-black text-[#E33E33] mt-1 hover:bg-red-50 inline-block px-2 py-0.5 rounded -ml-2 transition-colors">
-                                                    ₹{b.totalPrice.toFixed(2)}
+                                                    ₹{b.totalPrice}
                                                 </div>
                                             </div>
                                         </td>

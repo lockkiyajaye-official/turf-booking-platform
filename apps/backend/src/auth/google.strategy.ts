@@ -45,6 +45,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       throw new Error('Google account does not have a public email');
     }
 
+    const googlePhotoUrl = profile.photos?.[0]?.value || null;
+
     let user = await this.userRepository.findOne({ where: { email } });
 
     if (!user) {
@@ -59,12 +61,22 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
         phoneVerified: false,
         role: UserRole.USER,
         onboardingStatus: OnboardingStatus.PENDING,
+        profileImage: googlePhotoUrl,
       });
 
       user = await this.userRepository.save(newUser);
-    } else if (!user.emailVerified) {
-      user.emailVerified = true;
-      await this.userRepository.save(user);
+    } else {
+      let changed = false;
+      if (!user.emailVerified) {
+        user.emailVerified = true;
+        changed = true;
+      }
+      // Sync Google photo only if user hasn't set a custom one
+      if (!user.profileImage && googlePhotoUrl) {
+        user.profileImage = googlePhotoUrl;
+        changed = true;
+      }
+      if (changed) await this.userRepository.save(user);
     }
 
     return user;

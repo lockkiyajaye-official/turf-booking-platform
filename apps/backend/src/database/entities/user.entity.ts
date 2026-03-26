@@ -119,6 +119,16 @@ export class User {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   walletBalance: number;
 
+  // Notification preferences
+  @Column({ default: true })
+  emailBookings: boolean;
+
+  @Column({ default: true })
+  emailPayments: boolean;
+
+  @Column({ default: false })
+  emailPromos: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 

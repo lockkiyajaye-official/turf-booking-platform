@@ -30,6 +30,8 @@ import {
   RegisterWithPhoneOtpDto,
 } from './dto/register-otp.dto';
 import { RegisterDto } from './dto/register.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UpdateNotificationsDto } from './dto/update-notifications.dto';
 
 @Injectable()
 export class AuthService {
@@ -38,7 +40,7 @@ export class AuthService {
     private userRepository: Repository<User>,
     private jwtService: JwtService,
     private otpService: OtpService,
-  ) {}
+  ) { }
 
   async register(registerDto: RegisterDto) {
     const existingUser = await this.userRepository.findOne({
@@ -396,5 +398,65 @@ export class AuthService {
       user: result,
       token,
     };
+  }
+
+  async updateProfile(userId: string, updateData: UpdateProfileDto) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Check if email is being updated and if it's already taken
+    if (updateData.email && updateData.email !== user.email) {
+      const existingUser = await this.userRepository.findOne({
+        where: { email: updateData.email },
+      });
+
+      if (existingUser) {
+        throw new ConflictException('Email already exists');
+      }
+
+      // Reset email verification status when email is updated
+      user.emailVerified = false;
+    }
+
+    // Check if phone is being updated and if it's already taken
+    if (updateData.phone && updateData.phone !== user.phone) {
+      const existingUser = await this.userRepository.findOne({
+        where: { phone: updateData.phone },
+      });
+
+      if (existingUser) {
+        throw new ConflictException('Phone number already exists');
+      }
+
+      // Reset phone verification status when phone is updated
+      user.phoneVerified = false;
+    }
+
+    // Update user fields
+    Object.assign(user, updateData);
+
+    const savedUser = await this.userRepository.save(user);
+    const { password, ...result } = savedUser;
+
+    return result;
+  }
+
+  async updateNotifications(userId: string, updateData: UpdateNotificationsDto) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Update notification preferences
+    Object.assign(user, updateData);
+
+    const savedUser = await this.userRepository.save(user);
+    const { password, ...result } = savedUser;
+
+    return result;
   }
 }
