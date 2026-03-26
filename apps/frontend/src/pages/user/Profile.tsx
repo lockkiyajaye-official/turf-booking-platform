@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
-import { User, Mail, Phone, Calendar, Building, Shield, Save, Check, X } from "lucide-react";
+import { User, Mail, Phone, Calendar, Building, Shield, Save, Check, X, Camera } from "lucide-react";
+import { FileUploaderRegular } from "@uploadcare/react-uploader";
+import "@uploadcare/react-uploader/core.css";
+
+const UPLOADCARE_PUBLIC_KEY = import.meta.env.VITE_UPLOADCARE_PUBLIC_KEY || "demopublickey";
 
 interface NotificationSettings {
     emailBookings: boolean;
@@ -18,6 +22,7 @@ export default function Profile() {
     const [firstName, setFirstName] = useState(user?.firstName ?? "");
     const [lastName, setLastName] = useState(user?.lastName ?? "");
     const [phone, setPhone] = useState(user?.phone ?? "");
+    const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
     // Notifications state
     const [notifications, setNotifications] = useState<NotificationSettings>({
@@ -45,6 +50,19 @@ export default function Profile() {
     const showMessage = (type: "success" | "error", text: string) => {
         setMessage({ type, text });
         setTimeout(() => setMessage(null), 3000);
+    };
+
+    const handlePhotoUpload = async (cdnUrl: string) => {
+        setUploadingPhoto(true);
+        try {
+            await api.patch("/auth/profile", { profileImage: cdnUrl });
+            await refreshUser();
+            showMessage("success", "Profile photo updated!");
+        } catch {
+            showMessage("error", "Failed to update profile photo");
+        } finally {
+            setUploadingPhoto(false);
+        }
     };
 
     const handleAccountUpdate = async (e: React.FormEvent) => {
@@ -109,8 +127,41 @@ export default function Profile() {
                         <h1 className="text-3xl font-bold text-gray-900 mb-8">Profile Overview</h1>
 
                         <div className="flex items-center space-x-6 pb-8 border-b border-gray-100 mb-8">
-                            <div className="w-20 h-20 bg-gradient-to-br from-[#e53935] to-red-700 rounded-full flex items-center justify-center">
-                                <User className="w-10 h-10 text-white" />
+                            <div className="relative group">
+                                {user.profileImage ? (
+                                    <img
+                                        src={user.profileImage}
+                                        alt="Profile"
+                                        className="w-20 h-20 rounded-full object-cover border-2 border-gray-100"
+                                    />
+                                ) : (
+                                    <div className="w-20 h-20 bg-gradient-to-br from-[#e53935] to-red-700 rounded-full flex items-center justify-center">
+                                        <User className="w-10 h-10 text-white" />
+                                    </div>
+                                )}
+                                <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                    <FileUploaderRegular
+                                        pubkey={UPLOADCARE_PUBLIC_KEY}
+                                        multiple={false}
+                                        imgOnly
+                                        cropPreset="1:1"
+                                        onFileUploadSuccess={(file) => {
+                                            const cdnUrl = (file as any).cdnUrl;
+                                            if (cdnUrl) handlePhotoUpload(cdnUrl);
+                                        }}
+                                        classNameUploader="uc-light"
+                                    >
+                                        <div slot="file-select-flow">
+                                            <div className="w-20 h-20 rounded-full flex items-center justify-center cursor-pointer">
+                                                {uploadingPhoto ? (
+                                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                ) : (
+                                                    <Camera className="w-6 h-6 text-white" />
+                                                )}
+                                            </div>
+                                        </div>
+                                    </FileUploaderRegular>
+                                </div>
                             </div>
                             <div>
                                 <h2 className="text-2xl font-bold text-gray-900">

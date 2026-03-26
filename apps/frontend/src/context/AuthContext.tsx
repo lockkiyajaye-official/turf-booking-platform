@@ -22,6 +22,7 @@ interface User {
     emailBookings?: boolean;
     emailPayments?: boolean;
     emailPromos?: boolean;
+    profileImage?: string;
 }
 
 interface AuthContextType {
