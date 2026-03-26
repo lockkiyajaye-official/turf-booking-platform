@@ -11,11 +11,13 @@ export const getDatabaseConfig = (
             type: 'postgres',
             url: dbUrl,
             entities: [__dirname + '/../../**/*.entity{.ts,.js}'],
-            synchronize: configService.get('NODE_ENV') !== 'production',
+            synchronize: true,
+            migrationsRun: true,
             logging: configService.get('NODE_ENV') === 'development',
             ssl: {
                 rejectUnauthorized: false, // Required for Neon DB
             },
+            migrations: [__dirname + '/../../database/migration/*{.ts,.js}'],
         };
     }
 
@@ -27,7 +29,9 @@ export const getDatabaseConfig = (
         password: configService.get('DB_PASSWORD') || 'postgres',
         database: configService.get('DB_NAME') || 'turf_booking',
         entities: [__dirname + '/../../**/*.entity{.ts,.js}'],
-        synchronize: configService.get('NODE_ENV') !== 'production',
+        synchronize: false,
+        migrationsRun: true,
         logging: configService.get('NODE_ENV') === 'development',
+        migrations: [__dirname + '/../../database/migration/*{.ts,.js}'],
     };
 };

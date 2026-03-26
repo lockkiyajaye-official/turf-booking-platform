@@ -64,7 +64,7 @@ export default function Register() {
         } catch (err: any) {
             setError(
                 err.response?.data?.message ||
-                    "Failed to send OTP. Please try again.",
+                "Failed to send OTP. Please try again.",
             );
         } finally {
             setLoading(false);
@@ -97,7 +97,7 @@ export default function Register() {
         } catch (err: any) {
             setError(
                 err.response?.data?.message ||
-                    "Registration failed. Please try again.",
+                "Registration failed. Please try again.",
             );
         } finally {
             setLoading(false);
@@ -286,19 +286,6 @@ export default function Register() {
                                         {loading
                                             ? "Verifying..."
                                             : "Verify & Register"}
-                                    </button>
-                                </div>
-
-                                <div className="text-center mt-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setOtpSent(false);
-                                            setOtp("");
-                                        }}
-                                        className="text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors"
-                                    >
-                                        Use a different method
                                     </button>
                                 </div>
                             </>

@@ -6,12 +6,16 @@ import {
   Request,
   UseGuards,
   Res,
+  Patch,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { UserOnboardingDto, TurfOwnerOnboardingDto } from './dto/onboarding.dto';
+import {
+  UserOnboardingDto,
+  TurfOwnerOnboardingDto,
+} from './dto/onboarding.dto';
 import {
   RegisterWithPhoneOtpDto,
   RegisterWithEmailOtpDto,
@@ -22,6 +26,8 @@ import {
   VerifyPhoneOtpDto,
   VerifyEmailOtpDto,
 } from './dto/otp-request.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UpdateNotificationsDto } from './dto/update-notifications.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { ConfigService } from '@nestjs/config';
 import type { Response } from 'express';
@@ -81,10 +87,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('onboarding/user')
-  async completeUserOnboarding(
-    @Request() req,
-    @Body() dto: UserOnboardingDto,
-  ) {
+  async completeUserOnboarding(@Request() req, @Body() dto: UserOnboardingDto) {
     return this.authService.completeUserOnboarding(req.user.id, dto);
   }
 
@@ -104,6 +107,18 @@ export class AuthController {
     return user;
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Patch('profile')
+  async updateProfile(@Request() req, @Body() updateData: UpdateProfileDto) {
+    return this.authService.updateProfile(req.user.id, updateData);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('notifications')
+  async updateNotifications(@Request() req, @Body() updateData: UpdateNotificationsDto) {
+    return this.authService.updateNotifications(req.user.id, updateData);
+  }
+
   // Google OAuth endpoints
   @Get('google')
   @UseGuards(AuthGuard('google'))
@@ -118,8 +133,7 @@ export class AuthController {
     const { token } = await this.authService.loginWithGoogle(req.user);
 
     const frontendUrl =
-      this.configService.get<string>('FRONTEND_URL') ||
-      'http://localhost:5173';
+      this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
 
     const redirectUrl = `${frontendUrl}/google-callback?token=${encodeURIComponent(
       token,
@@ -128,4 +142,3 @@ export class AuthController {
     return res.redirect(redirectUrl);
   }
 }
-

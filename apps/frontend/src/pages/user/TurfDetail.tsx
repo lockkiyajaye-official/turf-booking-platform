@@ -1,24 +1,10 @@
 import { MapPin, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import api from "../services/api";
-import { loadRazorpayScript } from "../utils/razorpay";
-
-interface Turf {
-    id: string;
-    name: string;
-    description: string;
-    address: string;
-    pricePerHour: number;
-    amenities: string[];
-    images: string[];
-    availableSlots: string[];
-    rating: number | string;
-    totalReviews: number;
-    contactPhone?: string;
-    contactEmail?: string;
-}
+import { useAuth } from "../../context/AuthContext";
+import api from "../../services/api";
+import { loadRazorpayScript } from "../../utils/razorpay";
+import type { Turf } from "./types";
 
 export default function TurfDetail() {
     const { id } = useParams();
