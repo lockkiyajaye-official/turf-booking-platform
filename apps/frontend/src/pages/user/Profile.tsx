@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
 import { User, Mail, Phone, Calendar, Building, Shield, Save, Check, X, Camera } from "lucide-react";
-import { FileUploaderRegular } from "@uploadcare/react-uploader";
+import { FileUploaderRegular as FileUploaderRegularBase } from "@uploadcare/react-uploader";
+
+const FileUploaderRegular = FileUploaderRegularBase as any;
 import "@uploadcare/react-uploader/core.css";
 
 const UPLOADCARE_PUBLIC_KEY = import.meta.env.VITE_UPLOADCARE_PUBLIC_KEY || "demopublickey";
@@ -143,10 +145,9 @@ export default function Profile() {
                                     <FileUploaderRegular
                                         pubkey={UPLOADCARE_PUBLIC_KEY}
                                         multiple={false}
-                                        imgOnly
                                         cropPreset="1:1"
-                                        onFileUploadSuccess={(file) => {
-                                            const cdnUrl = (file as any).cdnUrl;
+                                        onFileUploadSuccess={(file: { cdnUrl: string }) => {
+                                            const cdnUrl = file.cdnUrl;
                                             if (cdnUrl) handlePhotoUpload(cdnUrl);
                                         }}
                                         classNameUploader="uc-light"
