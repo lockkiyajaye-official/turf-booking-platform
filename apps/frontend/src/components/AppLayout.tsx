@@ -33,9 +33,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
     // Unauthenticated layout
     return (
-        <div className="min-h-screen flex flex-col bg-white">
+        <div className="min-h-screen flex flex-col">
             <Navbar />
-            <main className="flex-grow pt-[76px]">
+            <main className="flex-grow">
                 {children}
             </main>
             <Footer />

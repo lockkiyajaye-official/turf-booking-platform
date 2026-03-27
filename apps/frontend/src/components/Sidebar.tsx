@@ -4,6 +4,7 @@ import {
     Home,
     LogOut,
     MapPin,
+    MessageSquare,
     Search,
     User,
     UserCheck,
@@ -39,6 +40,7 @@ export default function Sidebar() {
                 { name: "Turfs", path: "/admin/turfs", icon: MapPin },
                 { name: "Bookings", path: "/admin/bookings", icon: Calendar },
                 { name: "Payments", path: "/admin/payments", icon: CreditCard },
+                { name: "Contact", path: "/admin/contact", icon: MessageSquare },
             ];
         }
         if (user.role === "turf_owner") {
@@ -89,8 +91,8 @@ export default function Sidebar() {
                                 key={item.name}
                                 to={item.path}
                                 className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${isActive
-                                        ? "bg-red-50 text-[#E33E33] font-bold"
-                                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium"
+                                    ? "bg-red-50 text-[#E33E33] font-bold"
+                                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium"
                                     }`}
                             >
                                 <Icon className="w-5 h-5" />
@@ -125,8 +127,8 @@ export default function Sidebar() {
                                 key={item.name}
                                 to={item.path}
                                 className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive
-                                        ? "text-[#E33E33]"
-                                        : "text-gray-500 hover:text-gray-900"
+                                    ? "text-[#E33E33]"
+                                    : "text-gray-500 hover:text-gray-900"
                                     }`}
                             >
                                 <Icon className="w-6 h-6" />
