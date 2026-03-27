@@ -1,5 +1,5 @@
+import { Calendar, HelpCircle, MessageSquare, Shield, Users, Zap } from "lucide-react";
 import { useState } from "react";
-import { ChevronDown, MessageSquare, HelpCircle, Calendar, Shield, Users, Zap, CheckCircle2 } from "lucide-react";
 
 export default function FAQ() {
     const [openIndex, setOpenIndex] = useState<number | null>(0);
@@ -156,8 +156,8 @@ export default function FAQ() {
                                     key={category}
                                     onClick={() => setActiveCategory(category)}
                                     className={`px-8 py-3 rounded-xl font-bold transition-all ${activeCategory === category
-                                            ? "bg-accent text-white shadow-lg shadow-accent/30 scale-105"
-                                            : "bg-light text-gray-500 hover:bg-gray-100"
+                                        ? "bg-accent text-white shadow-lg shadow-accent/30 scale-105"
+                                        : "bg-light text-gray-500 hover:bg-gray-100"
                                         }`}
                                 >
                                     {category}
