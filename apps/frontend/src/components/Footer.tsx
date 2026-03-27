@@ -1,58 +1,108 @@
+import { Calendar, Facebook, Instagram, Mail, MapPin, Phone, Send, Shield, Trophy, Twitter, Youtube, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Mail, Phone, Send } from "lucide-react";
 
 export default function Footer() {
     return (
-        <footer className="bg-green-900 text-white pt-16 pb-8 relative overflow-hidden">
+        <footer className="bg-primary text-white pt-20 pb-12 relative overflow-hidden">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 {/* Top Section */}
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-8 mb-12">
-                    {/* Get Exclusive Updates Offers */}
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-12 mb-16">
+                    {/* Brand Section */}
                     <div className="col-span-2">
-                        <h3 className="text-xl font-bold mb-4">
-                            Get Exclusive Updates Offers
-                        </h3>
-                        <p className="text-white/80 text-sm mb-4 leading-relaxed">
-                            Subscribe to our newsletter and be the first to know
-                            about new features and exclusive offers.
+                        <div className="flex items-center space-x-2 mb-6">
+                            <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/30">
+                                <img src="/logo.png" alt="Lock Kiya Jaye" className="w-6 h-6" />
+                            </div>
+                            <span className="text-2xl font-black tracking-tight">
+                                Lock Kiya Jaye
+                            </span>
+                        </div>
+                        <p className="text-white/70 text-lg mb-8 leading-relaxed max-w-md">
+                            Your trusted platform for booking sports facilities. Find, book, and play your favorite sports with ease.
                         </p>
-                        <div className="flex items-center bg-white/10 rounded-lg p-1 border border-white/20">
-                            <input
-                                type="email"
-                                placeholder="Enter your email..."
-                                className="bg-transparent border-none focus:ring-0 text-sm px-3 flex-grow placeholder:text-white/60 text-white"
-                            />
-                            <button className="bg-green-600 p-2 rounded-md hover:bg-green-700 transition-colors">
-                                <Send className="w-4 h-4" />
-                            </button>
+
+                        {/* Newsletter */}
+                        <div className="mb-8">
+                            <h4 className="text-lg font-bold mb-4">Stay Updated</h4>
+                            <p className="text-white/60 text-sm mb-4">
+                                Get exclusive offers and new turf updates
+                            </p>
+                            <div className="flex items-center bg-white/10 backdrop-blur-md rounded-2xl p-2 border border-white/20">
+                                <input
+                                    type="email"
+                                    placeholder="Enter your email..."
+                                    className="bg-transparent border-none focus:ring-0 text-sm px-4 flex-grow placeholder:text-white/50 text-white"
+                                />
+                                <button className="bg-accent p-3 rounded-xl hover:bg-accent-hover transition-all">
+                                    <Send className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Social Links */}
+                        <div className="flex space-x-4">
+                            <a href="#" className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 hover:bg-white/20 transition-all">
+                                <Facebook className="w-5 h-5" />
+                            </a>
+                            <a href="#" className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 hover:bg-white/20 transition-all">
+                                <Twitter className="w-5 h-5" />
+                            </a>
+                            <a href="#" className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 hover:bg-white/20 transition-all">
+                                <Instagram className="w-5 h-5" />
+                            </a>
+                            <a href="#" className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 hover:bg-white/20 transition-all">
+                                <Youtube className="w-5 h-5" />
+                            </a>
                         </div>
                     </div>
 
-                    {/* Have a question or feedback? */}
+                    {/* Quick Links */}
                     <div>
-                        <h3 className="text-xl font-bold mb-4">
-                            Have a question or feedback?
-                        </h3>
-                        <div className="space-y-3 text-sm">
-                            <div className="flex items-center space-x-2 text-white/80">
-                                <Mail className="w-4 h-4 text-green-400" />
-                                <span>hello@lockkiyajaye.com</span>
-                            </div>
-                            <div className="flex items-center space-x-2 text-white/80">
-                                <Phone className="w-4 h-4 text-green-400" />
-                                <span>+123445566789</span>
-                            </div>
-                        </div>
+                        <h4 className="text-lg font-bold mb-6">Quick Links</h4>
+                        <ul className="space-y-4">
+                            <li>
+                                <Link
+                                    to="/about"
+                                    className="text-white/70 hover:text-white transition-colors text-sm"
+                                >
+                                    About Us
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
+                                    to="/contact"
+                                    className="text-white/70 hover:text-white transition-colors text-sm"
+                                >
+                                    Contact Us
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
+                                    to="/faq"
+                                    className="text-white/70 hover:text-white transition-colors text-sm"
+                                >
+                                    FAQ
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
+                                    to="/turfs"
+                                    className="text-white/70 hover:text-white transition-colors text-sm"
+                                >
+                                    Browse Turfs
+                                </Link>
+                            </li>
+                        </ul>
                     </div>
 
-                    {/* Facilities */}
+                    {/* Sports Facilities */}
                     <div>
-                        <h3 className="text-xl font-bold mb-4">Facilities</h3>
-                        <ul className="space-y-3 text-sm">
+                        <h4 className="text-lg font-bold mb-6">Sports Facilities</h4>
+                        <ul className="space-y-4">
                             <li>
                                 <Link
                                     to="#"
-                                    className="text-white/80 hover:text-green-400 transition-colors"
+                                    className="text-white/70 hover:text-white transition-colors text-sm"
                                 >
                                     Football Turf
                                 </Link>
@@ -60,7 +110,7 @@ export default function Footer() {
                             <li>
                                 <Link
                                     to="#"
-                                    className="text-white/80 hover:text-green-400 transition-colors"
+                                    className="text-white/70 hover:text-white transition-colors text-sm"
                                 >
                                     Cricket Turf
                                 </Link>
@@ -68,7 +118,7 @@ export default function Footer() {
                             <li>
                                 <Link
                                     to="#"
-                                    className="text-white/80 hover:text-green-400 transition-colors"
+                                    className="text-white/70 hover:text-white transition-colors text-sm"
                                 >
                                     Badminton Courts
                                 </Link>
@@ -76,7 +126,7 @@ export default function Footer() {
                             <li>
                                 <Link
                                     to="#"
-                                    className="text-white/80 hover:text-green-400 transition-colors"
+                                    className="text-white/70 hover:text-white transition-colors text-sm"
                                 >
                                     Basketball Court
                                 </Link>
@@ -84,77 +134,115 @@ export default function Footer() {
                         </ul>
                     </div>
 
-                    {/* Support */}
+                    {/* Contact Info */}
                     <div>
-                        <h3 className="text-xl font-bold mb-4">Support</h3>
-                        <ul className="space-y-3 text-sm">
-                            <li>
-                                <Link
-                                    to="/faq"
-                                    className="text-white/80 hover:text-green-400 transition-colors"
-                                >
-                                    FAQ's
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    to="/contact"
-                                    className="text-white/80 hover:text-green-400 transition-colors"
-                                >
-                                    Contact Us
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    to="/help"
-                                    className="text-white/80 hover:text-green-400 transition-colors"
-                                >
-                                    Help Center
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    to="/chat"
-                                    className="text-white/80 hover:text-green-400 transition-colors"
-                                >
-                                    Live Chat Support
-                                </Link>
-                            </li>
-                        </ul>
+                        <h4 className="text-lg font-bold mb-6">Get In Touch</h4>
+                        <div className="space-y-4">
+                            <div className="flex items-center space-x-3">
+                                <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20">
+                                    <Mail className="w-5 h-5 text-accent" />
+                                </div>
+                                <div>
+                                    <p className="text-white/70 text-sm">Email</p>
+                                    <p className="text-white text-sm font-medium">hello@lockkiyajaye.com</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                                <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20">
+                                    <Phone className="w-5 h-5 text-accent" />
+                                </div>
+                                <div>
+                                    <p className="text-white/70 text-sm">Phone</p>
+                                    <p className="text-white text-sm font-medium">+91 98765 43210</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                                <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20">
+                                    <MapPin className="w-5 h-5 text-accent" />
+                                </div>
+                                <div>
+                                    <p className="text-white/70 text-sm">Address</p>
+                                    <p className="text-white text-sm font-medium">Mumbai, India</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Features Section */}
+                <div className="bg-white/5 backdrop-blur-xl rounded-[2rem] p-8 mb-16 border border-white/10">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                        <div className="text-center">
+                            <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center text-white mx-auto mb-4 border border-white/20">
+                                <Trophy className="w-6 h-6" />
+                            </div>
+                            <h5 className="font-bold text-white mb-1">Tournaments</h5>
+                            <p className="text-white/60 text-sm">Organize & join</p>
+                        </div>
+                        <div className="text-center">
+                            <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center text-white mx-auto mb-4 border border-white/20">
+                                <Calendar className="w-6 h-6" />
+                            </div>
+                            <h5 className="font-bold text-white mb-1">Easy Booking</h5>
+                            <p className="text-white/60 text-sm">Quick & simple</p>
+                        </div>
+                        <div className="text-center">
+                            <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center text-white mx-auto mb-4 border border-white/20">
+                                <Shield className="w-6 h-6" />
+                            </div>
+                            <h5 className="font-bold text-white mb-1">Secure Payment</h5>
+                            <p className="text-white/60 text-sm">100% safe</p>
+                        </div>
+                        <div className="text-center">
+                            <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center text-white mx-auto mb-4 border border-white/20">
+                                <Zap className="w-6 h-6" />
+                            </div>
+                            <h5 className="font-bold text-white mb-1">Real-time</h5>
+                            <p className="text-white/60 text-sm">Live updates</p>
+                        </div>
                     </div>
                 </div>
 
                 {/* Divider */}
-                <div className="border-t border-white/20 mb-8"></div>
+                <div className="border-t border-white/20 mb-12"></div>
 
                 {/* Bottom Section */}
-                <div className="flex flex-col md:flex-row justify-between items-center text-sm text-white/60">
-                    <p className="mb-4 md:mb-0">
-                        Lock Kiya Jaye {new Date().getFullYear()} All right
-                        reserved
-                    </p>
-                    <div className="flex space-x-8">
+                <div className="flex flex-col md:flex-row justify-between items-center">
+                    <div className="mb-6 md:mb-0">
+                        <p className="text-white/60 text-sm">
+                            © {new Date().getFullYear()} Lock Kiya Jaye. All rights reserved.
+                        </p>
+                        <p className="text-white/40 text-xs mt-1">
+                            Making sports accessible to everyone
+                        </p>
+                    </div>
+                    <div className="flex flex-wrap gap-6">
                         <Link
-                            to="/privacy"
-                            className="hover:text-white transition-colors"
+                            to="/privacy-policy"
+                            className="text-white/60 hover:text-white transition-colors text-sm"
                         >
-                            Privacy & Policy
+                            Privacy Policy
                         </Link>
                         <Link
-                            to="/terms"
-                            className="hover:text-white transition-colors"
+                            to="/terms-conditions"
+                            className="text-white/60 hover:text-white transition-colors text-sm"
                         >
                             Terms & Conditions
+                        </Link>
+                        <Link
+                            to="/refund-policy"
+                            className="text-white/60 hover:text-white transition-colors text-sm"
+                        >
+                            Refund Policy
                         </Link>
                     </div>
                 </div>
             </div>
 
-            {/* Background Watermark */}
-            <div className="pt-10 flex items-center justify-center pointer-events-none select-none opacity-5">
-                <h1 className="text-[12vw] font-black leading-none text-white">
-                    Lock Kiya Jaye
-                </h1>
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-5">
+                <div className="absolute top-10 right-10 w-64 h-64 bg-white rounded-full blur-3xl"></div>
+                <div className="absolute bottom-10 left-10 w-96 h-96 bg-accent rounded-full blur-3xl"></div>
             </div>
         </footer>
     );
