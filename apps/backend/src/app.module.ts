@@ -11,6 +11,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { SeedingModule } from './seeding/seeding.module';
 import { PaymentsModule } from './payments/payments.module';
 import { getDatabaseConfig } from 'src/database/config/database.config';
+import { BannerModule } from './banner/banner.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { getDatabaseConfig } from 'src/database/config/database.config';
     DashboardModule,
     SeedingModule,
     PaymentsModule,
+    BannerModule,
   ],
   controllers: [AppController],
   providers: [AppService],
