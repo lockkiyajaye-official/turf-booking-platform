@@ -1,4 +1,3 @@
-import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobile/core/constants/app_constants.dart';
@@ -6,11 +5,36 @@ import 'package:mobile/data/services/auth_service.dart';
 import 'package:mobile/core/storage/local_storage.dart';
 import 'package:mobile/routes/app_paths.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'dart:async';
 
 class AuthViewmodel extends GetxController {
   final AuthService _authService = AuthService();
+
+  // ──────────────────────────────────────────────
+  // Google Sign-In (v7 singleton API)
+  // ──────────────────────────────────────────────
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  bool _googleSignInInitialized = false;
+  StreamSubscription<GoogleSignInAuthenticationEvent>? _googleAuthSubscription;
+  GoogleSignInAccount? _googleAccount;
+
+  Future<void> _ensureGoogleInitialized() async {
+    if (_googleSignInInitialized) return;
+    await _googleSignIn.initialize(
+      serverClientId:
+          '961272022138-2f88mhsmpv7ch9cgk7qj7ai510g8so40.apps.googleusercontent.com',
+    );
+    _googleSignInInitialized = true;
+    _googleAuthSubscription = _googleSignIn.authenticationEvents.listen((
+      event,
+    ) {
+      _googleAccount = switch (event) {
+        GoogleSignInAuthenticationEventSignIn() => event.user,
+        GoogleSignInAuthenticationEventSignOut() => null,
+        _ => null,
+      };
+    });
+  }
 
   // ──────────────────────────────────────────────
   // Text Controllers
@@ -48,13 +72,16 @@ class AuthViewmodel extends GetxController {
     snackPosition: SnackPosition.BOTTOM,
   );
 
-  void _saveSession(Map<String, dynamic> data) {
-    token.value = data['token'] ?? '';
-    currentUser.value = Map<String, dynamic>.from(data['user'] ?? {});
-    if (token.value.isNotEmpty) {
-      Get.find<LocalStorageService>().saveToken(token: token.value);
-    }
+ void _saveSession(Map<String, dynamic> data) {
+  token.value = data['token'] ?? '';
+
+  // ✅ THIS WAS MISSING
+  currentUser.value = Map<String, dynamic>.from(data['user'] ?? {});
+
+  if (token.value.isNotEmpty) {
+    Get.find<LocalStorageService>().saveToken(token: token.value);
   }
+}
 
   @override
   void onInit() {
@@ -64,6 +91,8 @@ class AuthViewmodel extends GetxController {
       token.value = storedToken;
       fetchProfile();
     }
+    // Pre-initialize Google Sign-In in the background
+    _ensureGoogleInitialized();
   }
 
   // ──────────────────────────────────────────────
@@ -169,6 +198,60 @@ class AuthViewmodel extends GetxController {
   }
 
   // ──────────────────────────────────────────────
+  // Google Sign-In (v7 Native)
+  // ──────────────────────────────────────────────
+
+  Future<void> loginWithGoogle() async {
+    try {
+      isLoading.value = true;
+
+      await _ensureGoogleInitialized();
+
+      if (!_googleSignIn.supportsAuthenticate()) {
+        _showError('Google Sign-In is not supported on this platform');
+        return;
+      }
+
+      await _googleSignIn.authenticate();
+
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      final account = _googleAccount;
+      if (account == null) {
+        return; // User cancelled
+      }
+
+      final serverAuth = await account.authorizationClient.authorizeServer([]);
+      final serverAuthCode = serverAuth?.serverAuthCode;
+
+      if (serverAuthCode == null) {
+        _showError('Google Sign-In failed: could not get auth code');
+        return;
+      }
+
+      final response = await _authService.loginWithGoogle(
+        idToken: serverAuthCode,
+      );
+
+      if (response['success']) {
+        _saveSession(response['data']);
+        _showSuccess('Signed in with Google');
+        Get.offAllNamed(RoutePaths.home);
+      } else {
+        _showError(response['message'] ?? 'Google login failed');
+      }
+    } on GoogleSignInException catch (e) {
+      // Silently ignore user cancellation
+      if (e.code == GoogleSignInExceptionCode.canceled) return;
+      _showError('Google Sign-In error: ${e.description ?? e.code.name}');
+    } catch (e) {
+      _showError('Google Sign-In error: ${e.toString()}');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // ──────────────────────────────────────────────
   // OTP — Registration Flow
   // ──────────────────────────────────────────────
 
@@ -180,49 +263,33 @@ class AuthViewmodel extends GetxController {
     final phone = phoneController.text.trim();
     final normalizedPhone = phone.startsWith('+') ? phone : '+91$phone';
 
-    print('DEBUG: firstName=$firstName, lastName=$lastName');
-    print('DEBUG: password length=${password.length}');
-    print('DEBUG: email=$email, phone=$phone');
-
-    // ── Name ──────────────────────────────────────────────────────────────
     if (firstName.isEmpty || lastName.isEmpty) {
-      print('DEBUG: name check failed');
       _showError('Please enter your first and last name');
       return;
     }
 
-    // ── Password ──────────────────────────────────────────────────────────
     if (password.length < 6) {
-      print('DEBUG: password check failed');
       _showError('Password must be at least 6 characters');
       return;
     }
 
-    // ── At least email OR phone required ──────────────────────────────────
     final hasEmail = email.isNotEmpty;
     final hasPhone = phone.isNotEmpty;
 
     if (!hasEmail && !hasPhone) {
-      print('DEBUG: no email or phone');
       _showError('Please enter your email or phone number');
       return;
     }
 
-    // ── Validate email format only if email was provided ──────────────────
     if (hasEmail && !GetUtils.isEmail(email)) {
-      print('DEBUG: email invalid');
       _showError('Please enter a valid email address');
       return;
     }
 
-    // ── Validate phone only if phone was provided ─────────────────────────
     if (hasPhone && phone.length < 10) {
-      print('DEBUG: phone invalid, length=${phone.length}, value=$phone');
       _showError('Please enter a valid phone number');
       return;
     }
-
-    print('DEBUG: all validations passed, sending OTP...');
 
     try {
       isLoading.value = true;
@@ -249,49 +316,6 @@ class AuthViewmodel extends GetxController {
     }
   }
 
-StreamSubscription? _linkSubscription;
-Future<void> loginWithGoogle() async {
-  try {
-    isLoading.value = true;
-
-    final url = Uri.parse('${AppConstants.baseUrl}/auth/google');
-    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      _showError('Could not launch Google Sign-In');
-      isLoading.value = false;
-      return;
-    }
-
-    final appLinks = AppLinks();
-
-    _linkSubscription = appLinks.uriLinkStream.listen((Uri uri) async {
-      if (uri.scheme == 'yourapp' && uri.host == 'auth') {
-        _linkSubscription?.cancel();
-
-        final tokenStr = uri.queryParameters['token'];
-
-        if (tokenStr == null || tokenStr.isEmpty) {
-          _showError('Google login failed: no token received');
-          isLoading.value = false;
-          return;
-        }
-
-        token.value = tokenStr;
-        Get.find<LocalStorageService>().saveToken(token: tokenStr);
-        await fetchProfile();
-        _showSuccess('Signed in with Google');
-        isLoading.value = false;
-        Get.offAllNamed(RoutePaths.home);
-      }
-    }, onError: (e) {
-      _showError('Google Sign-In error: ${e.toString()}');
-      isLoading.value = false;
-    });
-
-  } catch (e) {
-    _showError('Google Sign-In error: ${e.toString()}');
-    isLoading.value = false;
-  }
-}
   Future<void> verifyOtpAndRegister(String otp) async {
     final email = emailController.text.trim();
     final rawPhone = phoneController.text.trim();
@@ -332,7 +356,6 @@ Future<void> loginWithGoogle() async {
       }
     } catch (e) {
       _showError(e.toString());
-      print(e);
     } finally {
       isLoading.value = false;
     }
@@ -643,7 +666,7 @@ Future<void> loginWithGoogle() async {
   }
 
   // ──────────────────────────────────────────────
-  // Google OAuth
+  // Google OAuth callback (kept for compatibility)
   // ──────────────────────────────────────────────
 
   void handleGoogleCallback(String googleToken) {
@@ -665,6 +688,7 @@ Future<void> loginWithGoogle() async {
     token.value = '';
     currentUser.clear();
     otpSent.value = false;
+    _googleAccount = null;
     _clearControllers();
     Get.find<LocalStorageService>().clearToken();
     Get.offAllNamed(RoutePaths.login);
@@ -685,6 +709,7 @@ Future<void> loginWithGoogle() async {
 
   @override
   void onClose() {
+    _googleAuthSubscription?.cancel();
     emailController.dispose();
     passwordController.dispose();
     firstNameController.dispose();

@@ -51,7 +51,6 @@ class _LoginPageState extends State<LoginPage> {
       await controller.requestEmailOtp();
     }
 
-    // Navigate only if OTP was sent successfully
     if (controller.otpSent.value) {
       Get.toNamed(RoutePaths.otpVerification, arguments: {'mode': 'login'});
     }
@@ -64,117 +63,186 @@ class _LoginPageState extends State<LoginPage> {
     final controller = Get.find<AuthViewmodel>();
 
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            SizedBox(height: 60.h),
+      resizeToAvoidBottomInset: true,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              keyboardDismissBehavior:
+                  ScrollViewKeyboardDismissBehavior.onDrag,
+              child: ConstrainedBox(
+                constraints:
+                    BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Spacer(flex: 2),
 
-            // Logo
-            Image.asset(AppAssets.appLogo),
+                        // ── LOGO with subtle shadow to lift it off the page ──
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFE43434).withOpacity(0.15),
+                                blurRadius: 24,
+                                spreadRadius: 2,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: Image.asset(AppAssets.appLogo),
+                        ),
 
-            SizedBox(height: 16.h),
-            Text('Welcome Back', style: textTheme.titleLarge),
+                        SizedBox(height: 20.h),
+                        Text('Welcome Back', style: textTheme.titleLarge),
+                        SizedBox(height: 6.h),
+                        Text(
+                          'Login to continue your game',
+                          style: textTheme.bodyMedium
+                              ?.copyWith(color: colors.textGrey),
+                          textAlign: TextAlign.center,
+                        ),
 
-            SizedBox(height: 8.h),
-            Text('Login to continue your game', style: textTheme.bodyMedium),
+                        const Spacer(flex: 2),
 
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 32.h),
+                        // ── FORM GROUP with a light card background ──
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.all(20.w),
+                          decoration: BoxDecoration(
+                            color: colors.background,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: colors.textGrey.withOpacity(0.15),
+                              width: 1,
+                            ),
+                            // Very subtle shadow so the form feels grounded
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.04),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Email or Phone Number",
+                                style: textTheme.bodySmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: colors.textTitle,
+                                ),
+                              ),
+                              SizedBox(height: 8.h),
 
-                  /// EMAIL OR PHONE
-                  const Text("Email or Phone Number"),
-                  SizedBox(height: 8.h),
+                              MyTextField(
+                                controller: _identityController,
+                                height: 50.h,
+                                width: double.infinity,
+                                type: TextInputType.text,
+                                fillColor: colors.background,
+                                hintText:
+                                    "Enter your email or phone number",
+                                onChanged: _onIdentityChanged,
+                                prefixIcon: Icon(
+                                  _isPhone
+                                      ? Icons.phone_outlined
+                                      : Icons.person_outline,
+                                  color: colors.textGrey,
+                                ),
+                              ),
 
-                  MyTextField(
-                    controller: _identityController,
-                    height: 50.h,
-                    width: 360.w,
-                    type: TextInputType.text,
-                    fillColor: colors.background,
-                    hintText: "Enter your email or phone number",
-                    onChanged: _onIdentityChanged,
-                    prefixIcon: Icon(
-                      _isPhone ? Icons.phone_outlined : Icons.person_outline,
-                      color: colors.textGrey,
+                              SizedBox(height: 14.h),
+
+                              Obx(() => MyButtons(
+                                    text: controller.isLoading.value
+                                        ? "Sending OTP..."
+                                        : "Send OTP",
+                                    height: 50.h,
+                                    width: double.infinity,
+                                    onTap: controller.isLoading.value
+                                        ? null
+                                        : () => _handleSendOtp(controller),
+                                    textStyle: textTheme.bodyMedium
+                                        ?.copyWith(color: Colors.white),
+                                    backgroundColor:
+                                        const Color(0xFFE43434),
+                                  )),
+                            ],
+                          ),
+                        ),
+
+                        SizedBox(height: 24.h),
+
+                        // ── DIVIDER ──
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                  height: 1.h, color: colors.textGrey.withOpacity(0.4)),
+                            ),
+                            Padding(
+                              padding:
+                                  EdgeInsets.symmetric(horizontal: 12.w),
+                              child: Text(
+                                "Or sign in with",
+                                style: textTheme.bodySmall?.copyWith(
+                                    color: colors.textTitle),
+                              ),
+                            ),
+                            Expanded(
+                              child: Container(
+                                  height: 1.h, color: colors.textGrey.withOpacity(0.4)),
+                            ),
+                          ],
+                        ),
+
+                        SizedBox(height: 20.h),
+
+                        // ── GOOGLE ──
+                        SocialLogin(
+                          text: "Google",
+                          asset: AppAssets.google,
+                          onTap: () => controller.loginWithGoogle(),
+                        ),
+
+                        const Spacer(flex: 3),
+
+                        // ── SIGN UP — anchored at bottom ──
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Don't have an account?",
+                              style: textTheme.bodySmall
+                                  ?.copyWith(color: colors.textGrey),
+                            ),
+                            TextButton(
+                              onPressed: () =>
+                                  Get.toNamed(RoutePaths.signup),
+                              child: const Text(
+                                "Sign Up",
+                                style:
+                                    TextStyle(color: Color(0xFFE43434)),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        SizedBox(height: 8.h),
+                      ],
                     ),
                   ),
-
-                  SizedBox(height: 16.h),
-
-                  /// SEND OTP BUTTON
-                  Obx(() => MyButtons(
-                        text: controller.isLoading.value
-                            ? "Sending OTP..."
-                            : "Send OTP",
-                        height: 50.h,
-                        width: 360.w,
-                        onTap: controller.isLoading.value
-                            ? null
-                            : () => _handleSendOtp(controller),
-                        textStyle: textTheme.bodyMedium
-                            ?.copyWith(color: Colors.white),
-                        backgroundColor: const Color(0xFFE43434),
-                      )),
-
-                  SizedBox(height: 16.h),
-
-                  /// DIVIDER
-                  Row(
-                    children: [
-                      Expanded(
-                        child:
-                            Container(height: 1.h, color: colors.textGrey),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12.w),
-                        child: Text(
-                          "Or sign in with",
-                          style: textTheme.bodySmall
-                              ?.copyWith(color: colors.textTitle),
-                        ),
-                      ),
-                      Expanded(
-                        child:
-                            Container(height: 1.h, color: colors.textGrey),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 20.h),
-
-                  /// GOOGLE LOGIN ONLY
-                  Center(
-                    child: SocialLogin(
-                      text: "Google",
-                      asset: AppAssets.google,
-                      onTap: () => controller.loginWithGoogle(),
-                    ),
-                  ),
-
-                  SizedBox(height: 20.h),
-
-                  /// SIGN UP
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text("Don't have an account?"),
-                      TextButton(
-                        onPressed: () => Get.toNamed(RoutePaths.signup),
-                        child: const Text(
-                          "Sign Up",
-                          style: TextStyle(color: Color(0xFFE43434)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );

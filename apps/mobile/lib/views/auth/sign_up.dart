@@ -21,6 +21,44 @@ class _SignUpState extends State<SignUp> {
 
   @override
   Widget build(BuildContext context) {
+    Widget _roleCard({
+      required String title,
+      required IconData icon,
+      required bool selected,
+      required VoidCallback onTap,
+      required AppColors colors,
+      required TextTheme textTheme,
+    }) {
+      return Expanded(
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: EdgeInsets.symmetric(vertical: 14.h),
+            decoration: BoxDecoration(
+              color: selected ? colors.primary : colors.background,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: selected ? colors.primary : const Color(0xFFE8E8E8),
+              ),
+            ),
+            child: Column(
+              children: [
+                Icon(icon, color: selected ? Colors.white : colors.textGrey),
+                SizedBox(height: 6.h),
+                Text(
+                  title,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: selected ? Colors.white : colors.textGrey,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     final colors = Theme.of(context).extension<AppColors>()!;
     final textTheme = Theme.of(context).textTheme;
     final controller = Get.find<AuthViewmodel>();
@@ -37,7 +75,42 @@ class _SignUpState extends State<SignUp> {
 
             SizedBox(height: 12.h),
             Text('Join the Community', style: textTheme.titleLarge),
+            SizedBox(height: 20.h),
 
+            Text(
+              "Select Role",
+              style: textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+
+            SizedBox(height: 10.h),
+
+            Obx(() {
+              final selected = controller.selectedRole.value;
+
+              return Row(
+                children: [
+                  _roleCard(
+                    title: "User",
+                    icon: Icons.person_outline,
+                    selected: selected == 'user',
+                    onTap: () => controller.selectedRole.value = 'user',
+                    colors: colors,
+                    textTheme: textTheme,
+                  ),
+                  SizedBox(width: 12.w),
+                  _roleCard(
+                    title: "Owner",
+                    icon: Icons.sports_soccer,
+                    selected: selected == 'turf_owner',
+                    onTap: () => controller.selectedRole.value = 'turf_owner',
+                    colors: colors,
+                    textTheme: textTheme,
+                  ),
+                ],
+              );
+            }),
             SizedBox(height: 6.h),
             Text(
               'Create your account to start playing',
@@ -54,14 +127,15 @@ class _SignUpState extends State<SignUp> {
                   /// FIRST NAME / LAST NAME
                   Row(
                     children: [
-                       Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               "First Name",
-                              style: textTheme.bodyMedium
-                                  ?.copyWith(fontWeight: FontWeight.w600),
+                              style: textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                             SizedBox(height: 8.h),
                             MyTextField(
@@ -70,8 +144,10 @@ class _SignUpState extends State<SignUp> {
                               type: TextInputType.name,
                               fillColor: colors.background,
                               hintText: "First name",
-                              prefixIcon: Icon(Icons.person_outline,
-                                  color: colors.textGrey),
+                              prefixIcon: Icon(
+                                Icons.person_outline,
+                                color: colors.textGrey,
+                              ),
                             ),
                           ],
                         ),
@@ -83,8 +159,9 @@ class _SignUpState extends State<SignUp> {
                           children: [
                             Text(
                               "Last Name",
-                              style: textTheme.bodyMedium
-                                  ?.copyWith(fontWeight: FontWeight.w600),
+                              style: textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                             SizedBox(height: 8.h),
                             MyTextField(
@@ -93,8 +170,10 @@ class _SignUpState extends State<SignUp> {
                               type: TextInputType.name,
                               fillColor: colors.background,
                               hintText: "Last name",
-                              prefixIcon: Icon(Icons.person_outline,
-                                  color: colors.textGrey),
+                              prefixIcon: Icon(
+                                Icons.person_outline,
+                                color: colors.textGrey,
+                              ),
                             ),
                           ],
                         ),
@@ -107,8 +186,9 @@ class _SignUpState extends State<SignUp> {
                   /// PHONE
                   Text(
                     "Phone Number",
-                    style: textTheme.bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.w600),
+                    style: textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   SizedBox(height: 8.h),
                   MyTextField(
@@ -118,8 +198,10 @@ class _SignUpState extends State<SignUp> {
                     type: TextInputType.phone,
                     fillColor: colors.background,
                     hintText: "Enter your phone number",
-                    prefixIcon:
-                        Icon(Icons.phone_outlined, color: colors.textGrey),
+                    prefixIcon: Icon(
+                      Icons.phone_outlined,
+                      color: colors.textGrey,
+                    ),
                   ),
 
                   SizedBox(height: 16.h),
@@ -127,8 +209,9 @@ class _SignUpState extends State<SignUp> {
                   /// EMAIL
                   Text(
                     "Email",
-                    style: textTheme.bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.w600),
+                    style: textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   SizedBox(height: 8.h),
                   MyTextField(
@@ -138,8 +221,10 @@ class _SignUpState extends State<SignUp> {
                     type: TextInputType.emailAddress,
                     fillColor: colors.background,
                     hintText: "Enter your email",
-                    prefixIcon:
-                        Icon(Icons.email_outlined, color: colors.textGrey),
+                    prefixIcon: Icon(
+                      Icons.email_outlined,
+                      color: colors.textGrey,
+                    ),
                   ),
 
                   SizedBox(height: 16.h),
@@ -147,8 +232,9 @@ class _SignUpState extends State<SignUp> {
                   /// PASSWORD
                   Text(
                     "Password",
-                    style: textTheme.bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.w600),
+                    style: textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   SizedBox(height: 8.h),
                   MyTextField(
@@ -159,8 +245,10 @@ class _SignUpState extends State<SignUp> {
                     fillColor: colors.background,
                     hintText: "Enter your password",
                     obscureText: _obscurePassword,
-                    prefixIcon:
-                        Icon(Icons.lock_outline, color: colors.textGrey),
+                    prefixIcon: Icon(
+                      Icons.lock_outline,
+                      color: colors.textGrey,
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
@@ -210,23 +298,25 @@ class _SignUpState extends State<SignUp> {
                   /// This validates the form, sends an OTP to the email,
                   /// and only on success navigates to OtpVerificationPage.
                   /// The actual account creation happens AFTER OTP is verified.
-                  Obx(() => MyButtons(
-                        text: controller.isLoading.value
-                            ? "Sending OTP..."
-                            : "Continue",
-                        height: 50.h,
-                        width: 360.w,
-                        onTap: (controller.isLoading.value || !_agreedToTerms)
-                            ? null
-                            : () => controller.requestRegistrationOtp(),
-                        textStyle: textTheme.bodyMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        backgroundColor: !_agreedToTerms
-                            ? const Color(0xFFE43434).withOpacity(0.5)
-                            : const Color(0xFFE43434),
-                      )),
+                  Obx(
+                    () => MyButtons(
+                      text: controller.isLoading.value
+                          ? "Sending OTP..."
+                          : "Continue",
+                      height: 50.h,
+                      width: 360.w,
+                      onTap: (controller.isLoading.value || !_agreedToTerms)
+                          ? null
+                          : () => controller.requestRegistrationOtp(),
+                      textStyle: textTheme.bodyMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      backgroundColor: !_agreedToTerms
+                          ? const Color(0xFFE43434).withOpacity(0.5)
+                          : const Color(0xFFE43434),
+                    ),
+                  ),
 
                   SizedBox(height: 20.h),
 
@@ -260,4 +350,4 @@ class _SignUpState extends State<SignUp> {
       ),
     );
   }
-}   
+}

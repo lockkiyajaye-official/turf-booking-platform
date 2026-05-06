@@ -3,10 +3,11 @@ import 'package:mobile/data/models/user_model.dart';
 class TurfModel {
   final String id;
   final String name;
-  final String description;
+  final String? description; // ✅ nullable
   final String address;
   final double pricePerHour;
   final List<String> amenities;
+  final List<String> sports; // ✅ added
   final List<String> images;
   final List<String> availableSlots;
   final bool isActive;
@@ -19,10 +20,11 @@ class TurfModel {
   TurfModel({
     required this.id,
     required this.name,
-    required this.description,
+    this.description, // ✅ nullable
     required this.address,
     required this.pricePerHour,
     required this.amenities,
+    required this.sports, // ✅ added
     required this.images,
     required this.availableSlots,
     required this.isActive,
@@ -37,19 +39,32 @@ class TurfModel {
     return TurfModel(
       id: json['id'] ?? '',
       name: json['name'] ?? '',
-      description: json['description'] ?? '',
+      description: json['description'], // ✅ no default ''
       address: json['address'] ?? '',
-      pricePerHour: json['pricePerHour'] != null 
-          ? double.tryParse(json['pricePerHour'].toString()) ?? 0.0 
+      pricePerHour: json['pricePerHour'] != null
+          ? double.tryParse(json['pricePerHour'].toString()) ?? 0.0
           : 0.0,
-      amenities: json['amenities'] != null ? List<String>.from(json['amenities']) : [],
-      images: json['images'] != null ? List<String>.from(json['images']) : [],
-      availableSlots: json['availableSlots'] != null ? List<String>.from(json['availableSlots']) : [],
+      amenities: json['amenities'] != null
+          ? List<String>.from(json['amenities'])
+          : [],
+      sports: json['sports'] != null
+          ? List<String>.from(json['sports'])
+          : [], // ✅ added
+      images: json['images'] != null
+          ? List<String>.from(json['images'])
+          : [],
+      availableSlots: json['availableSlots'] != null
+          ? List<String>.from(json['availableSlots'])
+          : [],
       isActive: json['isActive'] ?? true,
       isPublished: json['isPublished'] ?? false,
-      rating: json['rating'] != null ? double.tryParse(json['rating'].toString()) : 0.0,
+      rating: json['rating'] != null
+          ? double.tryParse(json['rating'].toString())
+          : null, // ✅ FIXED
       totalReviews: json['totalReviews'] ?? 0,
-      owner: json['owner'] != null ? UserModel.fromJson(json['owner']) : null,
+      owner: json['owner'] != null
+          ? UserModel.fromJson(json['owner'])
+          : null,
       ownerId: json['ownerId'] ?? '',
     );
   }
@@ -62,6 +77,7 @@ class TurfModel {
       'address': address,
       'pricePerHour': pricePerHour,
       'amenities': amenities,
+      'sports': sports, // ✅ added
       'images': images,
       'availableSlots': availableSlots,
       'isActive': isActive,

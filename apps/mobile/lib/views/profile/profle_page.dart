@@ -19,11 +19,7 @@ class ProfilePage extends StatelessWidget {
         label: 'Edit Profile',
         onTap: () => Get.toNamed('/profile/edit'),
       ),
-      _ProfileMenuItem(
-        icon: Icons.language_outlined,
-        label: 'Language settings',
-        onTap: () => Get.toNamed('/settings/language'),
-      ),
+     
       _ProfileMenuItem(
         icon: Icons.favorite_border_rounded,
         label: 'Favorite Venue',
@@ -34,11 +30,7 @@ class ProfilePage extends StatelessWidget {
         label: 'Notification settings',
         onTap: () => Get.toNamed('/settings/notifications'),
       ),
-      _ProfileMenuItem(
-        icon: Icons.edit_outlined,
-        label: 'Change Password',
-        onTap: () => Get.toNamed('/settings/change-password'),
-      ),
+     
       _ProfileMenuItem(
         icon: Icons.cancel_outlined,
         label: 'Cancellation/Reschedule',
@@ -154,7 +146,7 @@ class ProfilePage extends StatelessWidget {
               itemCount: menuItems.length + 1, // +1 for logout
               separatorBuilder: (_, __) => Divider(
                 height: 1,
-                color: const Color(0xFFF0F0F0),
+                color: colors.white
               ),
               itemBuilder: (context, index) {
                 // Last item = Logout (red)

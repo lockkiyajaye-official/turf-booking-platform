@@ -5,6 +5,7 @@ import 'package:mobile/core/responsive/screen_extensions.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/viewmodels/turf/turf_viewmodel.dart';
 import 'package:mobile/views/home/widgets/booking_card.dart';
+import 'package:mobile/views/notifications/notificaiton_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -72,8 +73,11 @@ class _HomePageState extends State<HomePage> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.location_on_rounded,
-                              color: colors.primary, size: 20),
+                          Icon(
+                            Icons.location_on_rounded,
+                            color: colors.primary,
+                            size: 20,
+                          ),
                           SizedBox(width: 8.w),
                           Expanded(
                             child: Text(
@@ -84,8 +88,11 @@ class _HomePageState extends State<HomePage> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          Icon(Icons.keyboard_arrow_down_rounded,
-                              color: colors.textGrey, size: 20),
+                          Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: colors.textGrey,
+                            size: 20,
+                          ),
                         ],
                       ),
                     ),
@@ -96,7 +103,7 @@ class _HomePageState extends State<HomePage> {
                   icon: Icons.notifications_outlined,
                   colors: colors,
                   onTap: () {
-                    // TODO: navigate to notifications
+                    Get.to(() => NotificationPage());
                   },
                 ),
               ],
@@ -131,8 +138,11 @@ class _HomePageState extends State<HomePage> {
                     color: colors.textGrey.withOpacity(0.6),
                     fontSize: 14.sp,
                   ),
-                  prefixIcon:
-                      Icon(Icons.search, color: colors.textGrey, size: 22),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: colors.textGrey,
+                    size: 22,
+                  ),
                   suffixIcon: ValueListenableBuilder<TextEditingValue>(
                     valueListenable: _searchController,
                     builder: (_, value, __) {
@@ -287,8 +297,9 @@ class _HomePageState extends State<HomePage> {
                                 SizedBox(height: 12.h),
                                 Text(
                                   'No turfs available at the moment.',
-                                  style: textTheme.bodyMedium
-                                      ?.copyWith(color: colors.textGrey),
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: colors.textGrey,
+                                  ),
                                 ),
                               ],
                             ),
@@ -298,8 +309,7 @@ class _HomePageState extends State<HomePage> {
 
                       // Cards
                       return Padding(
-                        padding:
-                            EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 24.h),
+                        padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 24.h),
                         child: Column(
                           children: [
                             for (final turf in vm.turfs)

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/views/booking/booking_page.dart';
 import 'package:mobile/views/home/home_page.dart';
 import 'package:mobile/views/search/search_page.dart';
 import 'package:mobile/views/widgets/floating_nav_bar.dart';
@@ -15,7 +16,7 @@ class _MainShellState extends State<MainShell> {
   final _pages = const [
     HomePage(),
     SearchPage(),
-    Center(child: Text('Bookings')),
+   BookingPage(),
 ProfilePage()
   ];
 

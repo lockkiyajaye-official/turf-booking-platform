@@ -5,6 +5,7 @@ import 'package:mobile/views/auth/login_page.dart';
 import 'package:mobile/views/auth/otp_verfication_page.dart';
 import 'package:mobile/views/auth/sign_up.dart';
 import 'package:mobile/views/widgets/main_shell.dart';
+import 'package:mobile/views/widgets/role_desicion_shell.dart';
 
 class AppRouter {
   static List<GetPage> router = [
@@ -26,7 +27,7 @@ class AppRouter {
 
     GetPage(
       name: RoutePaths.home,
-      page: () => const MainShell(),
+      page: () => const RoleDeciderPage(),
     ),
   ];
 }

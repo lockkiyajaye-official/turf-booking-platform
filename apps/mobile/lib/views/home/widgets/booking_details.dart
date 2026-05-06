@@ -187,7 +187,7 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
               ),
               SizedBox(height: 4.h),
               Text(
-                widget.turf.description.isNotEmpty ? widget.turf.description : 'Cricket Turf',
+                widget.turf.description?.isNotEmpty == true ? widget.turf.description! : 'Cricket Turf',
                 style: textTheme.bodyMedium?.copyWith(
                   color: Colors.grey[700],
                   fontSize: 13.sp,
