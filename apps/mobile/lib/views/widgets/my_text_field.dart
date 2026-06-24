@@ -65,7 +65,10 @@ class MyTextField extends StatelessWidget {
           hintText: hintText,
           hintStyle:
               hintStyle ??
-              TextStyle(color: colors.textMuted.withOpacity(0.5), fontSize: 16),
+              TextStyle(
+                color: colors.textMuted.withValues(alpha: 0.5),
+                fontSize: 16,
+              ),
           filled: true,
           fillColor: fillColor,
           contentPadding: const EdgeInsets.symmetric(
@@ -80,11 +83,15 @@ class MyTextField extends StatelessWidget {
 
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: colors.textMuted.withOpacity(0.5)),
+            borderSide: BorderSide(
+              color: colors.textMuted.withValues(alpha: 0.5),
+            ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: colors.textMuted.withOpacity(0.5)),
+            borderSide: BorderSide(
+              color: colors.textMuted.withValues(alpha: 0.5),
+            ),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),

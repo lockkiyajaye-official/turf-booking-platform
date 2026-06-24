@@ -15,7 +15,7 @@ class SocialLogin extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-      final colors = Theme.of(context).extension<AppColors>()!;
+    final colors = Theme.of(context).extension<AppColors>()!;
     final textTheme = Theme.of(context).textTheme;
     return Center(
       child: GestureDetector(
@@ -29,7 +29,7 @@ class SocialLogin extends StatelessWidget {
             border: Border.all(color: Colors.grey.shade300, width: 1),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
