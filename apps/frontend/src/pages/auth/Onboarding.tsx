@@ -102,8 +102,8 @@ export default function Onboarding() {
                             onClick={handleSelectUser}
                             className={`relative bg-white border-2 border-transparent hover:border-[#E33E33] hover:shadow-xl hover:shadow-[#E33E33]/10 p-8 rounded-3xl cursor-pointer transition-all duration-300 group flex flex-col items-center text-center ${loading ? "opacity-50 pointer-events-none" : ""}`}
                         >
-                            <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/30">
-                                <img src="/logo.png" />
+                            <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center">
+                                <img src="/logo-green-no-bg.png" />
                             </div>
                             <h3 className="text-xl font-bold text-gray-900 mb-2">
                                 Book Turfs

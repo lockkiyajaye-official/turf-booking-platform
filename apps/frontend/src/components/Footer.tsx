@@ -10,8 +10,8 @@ export default function Footer() {
                     {/* Brand Section */}
                     <div className="col-span-2">
                         <div className="flex items-center space-x-2 mb-6">
-                            <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/30">
-                                <img src="/logo.png" alt="Lock Kiya Jaye" className="w-6 h-6" />
+                            <div className="w-10 h-10 bg-white backdrop-blur-md rounded-lg flex items-center justify-center">
+                                <img src="/logo-green-no-bg.png" alt="Lock Kiya Jaye" className="w-10 h-10" />
                             </div>
                             <span className="text-2xl font-black tracking-tight">
                                 Lock Kiya Jaye
@@ -139,8 +139,8 @@ export default function Footer() {
                         <h4 className="text-lg font-bold mb-6">Get In Touch</h4>
                         <div className="space-y-4">
                             <div className="flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20">
-                                    <Mail className="w-5 h-5 text-accent" />
+                                <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 shrink-0">
+                                    <Mail className="w-5 h-5 text-white" />
                                 </div>
                                 <div>
                                     <p className="text-white/70 text-sm">Email</p>
@@ -149,7 +149,7 @@ export default function Footer() {
                             </div>
                             <div className="flex items-center space-x-3">
                                 <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20">
-                                    <Phone className="w-5 h-5 text-accent" />
+                                    <Phone className="w-5 h-5 text-white" />
                                 </div>
                                 <div>
                                     <p className="text-white/70 text-sm">Phone</p>
@@ -158,7 +158,7 @@ export default function Footer() {
                             </div>
                             <div className="flex items-center space-x-3">
                                 <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20">
-                                    <MapPin className="w-5 h-5 text-accent" />
+                                    <MapPin className="w-5 h-5 text-white" />
                                 </div>
                                 <div>
                                     <p className="text-white/70 text-sm">Address</p>

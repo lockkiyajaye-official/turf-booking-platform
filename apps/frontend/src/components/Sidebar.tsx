@@ -71,8 +71,8 @@ export default function Sidebar() {
             {/* Desktop Sidebar */}
             <aside className="hidden md:flex flex-col w-64 h-screen fixed inset-y-0 left-0 bg-white border-r border-gray-200 z-50">
                 <div className="p-6 flex items-center space-x-2">
-                    <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/30">
-                        <img src="/logo.png" />
+                    <div className="w-10 h-10 bg-white backdrop-blur-md rounded-lg flex items-center justify-center">
+                        <img src="/logo-green-no-bg.png" className="w-10 h-10" />
                     </div>
                     <span className="text-xl font-black tracking-tight text-gray-900">
                         Lock Kiya Jaye

@@ -18,7 +18,6 @@ extension ScreenRadius on num {
 }
 
 extension ScreenEdgeInsets on num {
-  EdgeInsets get a => EdgeInsets.all(this.w);
-  EdgeInsets get hv =>
-      EdgeInsets.symmetric(horizontal: this.w, vertical: this.h);
+  EdgeInsets get a => EdgeInsets.all(w);
+  EdgeInsets get hv => EdgeInsets.symmetric(horizontal: w, vertical: h);
 }

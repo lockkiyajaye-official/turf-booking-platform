@@ -18,8 +18,6 @@ final ThemeData lightTheme = ThemeData(
     onError: AppColorSchemes.light.textThird,
     surface: AppColorSchemes.light.surfacePrimary,
     onSurface: AppColorSchemes.light.textPrimary,
-    background: AppColorSchemes.light.background,
-    onBackground: AppColorSchemes.light.textPrimary,
     outline: AppColorSchemes.light.outline,
     shadow: AppColorSchemes.light.shadow,
   ),

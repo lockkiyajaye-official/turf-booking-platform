@@ -16,7 +16,6 @@ import 'package:mobile/core/repository/auth_session_repository.dart';
 class AuthSessionController extends GetxController {
   final AuthSessionRepository authRepository;
 
-
   // Reactive state variables
   final _initialized = false.obs;
   // final Rx<Failure?> _failure = Rx<Failure?>(null);
@@ -27,16 +26,14 @@ class AuthSessionController extends GetxController {
   final _showDialogFromLogin = false.obs;
 
   // Public getters for accessing state
+  @override
   bool get initialized => _initialized.value;
   // Failure? get failure => _failure.value;
   Future<void> Function()? get onRetry => _onRetry.value;
 
   bool get showDialogFromLogin => _showDialogFromLogin.value;
 
-  AuthSessionController({
-    required this.authRepository,
-
-  });
+  AuthSessionController({required this.authRepository});
 
   /// Initializes the authentication session on app startup.
   ///
@@ -67,21 +64,17 @@ class AuthSessionController extends GetxController {
 
     // Check if authentication token exists in local storage
     final token = authRepository.getSavedToken();
- 
+
     // Case 1: No token found → User is not authenticated
     if (token == null) {
       // _failure.value = const UnauthenticatedFailure();
       _initialized.value = true;
       _onRetry.value = null; // No retry needed for unauthenticated state
-     
-      }
-      return;
     }
+    return;
+  }
 
-   
-
-
-    // Case 2: Token exists → Validate with server
+  // Case 2: Token exists → Validate with server
   //   final result = await authRepository.validateToken(
   //     request: CheckTokenRequest(token: token),
   //   );
@@ -115,9 +108,6 @@ class AuthSessionController extends GetxController {
   //   _initialized.value = true;
   // }
 
-
-
-
   /// Marks the user as logged in and saves session data.
   ///
   /// Called after successful OTP verification or login. This method:
@@ -134,18 +124,12 @@ class AuthSessionController extends GetxController {
     authRepository.saveToken(token: response.token!);
 
     // Save user ID
-    authRepository.saveUserId(id:0);
+    authRepository.saveUserId(id: 0);
 
- 
+    // Save the doctor's name for display purposes
+    authRepository.saveUserName(name: "response.user?.name ");
 
-    
-  
-  
-
-      // Save the doctor's name for display purposes
-      authRepository.saveUserName(name: "response.user?.name ");
-
-      ///  Save country
+    ///  Save country
     //   if (response.user?.businesses[0].country != null) {
     //     authRepository.saveCountry(code: response.user!.businesses[0].country);
     //   }
@@ -182,5 +166,4 @@ class AuthSessionController extends GetxController {
     _initialized.value = true; // Keep initialized to prevent re-bootstrapping
     _onRetry.value = null;
   }
-
 }
