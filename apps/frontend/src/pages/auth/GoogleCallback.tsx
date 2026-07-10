@@ -34,8 +34,8 @@ export default function GoogleCallback() {
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
             <div className="max-w-md w-full bg-white shadow-md rounded-lg p-6 text-center">
                 <div className="flex justify-center mb-4">
-                    <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/30">
-                        <img src="/logo.png" />
+                    <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center">
+                        <img src="/logo-green-no-bg.png" />
                     </div>
                 </div>
                 <h1 className="text-xl font-semibold text-gray-900 mb-2">

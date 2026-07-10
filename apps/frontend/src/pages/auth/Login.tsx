@@ -57,7 +57,7 @@ export default function Login() {
         } catch (err: any) {
             setError(
                 err.response?.data?.message ||
-                    "Failed to send OTP. Please try again.",
+                "Failed to send OTP. Please try again.",
             );
         } finally {
             setLoading(false);
@@ -87,7 +87,7 @@ export default function Login() {
         } catch (err: any) {
             setError(
                 err.response?.data?.message ||
-                    "Login failed. Please verify your OTP.",
+                "Login failed. Please verify your OTP.",
             );
         } finally {
             setLoading(false);
@@ -98,8 +98,8 @@ export default function Login() {
         <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
             <div className="sm:mx-auto sm:w-full sm:max-w-md">
                 <div className="flex justify-center">
-                    <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/30">
-                        <img src="/logo.png" />
+                    <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center">
+                        <img src="/logo-green-no-bg.png" />
                     </div>
                 </div>
                 <h2 className="mt-6 text-center text-3xl font-black text-gray-900 tracking-tight">
