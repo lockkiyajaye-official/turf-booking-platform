@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Request, UseGuards, ForbiddenException, UseInterceptors, UploadedFile, Res } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Request, UseGuards, ForbiddenException, NotFoundException, UseInterceptors, UploadedFile, Res } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
 import { UserRole } from 'src/database/entities/user.entity';
 import { BannerService } from './banner.service';
 
@@ -20,14 +21,14 @@ export class BannerController {
 
   @Post()
   @UseInterceptors(FileInterceptor('image'))
-  create(@Request() req, @Body() dto: any, @UploadedFile() file?: Express.Multer.File) {
+  create(@Request() req, @Body() dto: any, @UploadedFile() file?: any) {
     if (req.user.role !== UserRole.ADMIN) throw new ForbiddenException();
     return this.bannerService.create(dto, file);
   }
 
   @Patch(':id')
   @UseInterceptors(FileInterceptor('image'))
-  update(@Request() req, @Param('id') id: string, @Body() dto: any, @UploadedFile() file?: Express.Multer.File) {
+  update(@Request() req, @Param('id') id: string, @Body() dto: any, @UploadedFile() file?: any) {
     if (req.user.role !== UserRole.ADMIN) throw new ForbiddenException();
     return this.bannerService.update(id, dto, file);
   }

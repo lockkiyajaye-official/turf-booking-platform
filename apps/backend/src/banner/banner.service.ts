@@ -37,16 +37,29 @@ export class BannerService {
     return this.bannerRepository.find({ order: { priority: 'DESC', createdAt: 'DESC' } });
   }
 
-  /** Admin: create a banner */
-  async create(dto: Partial<Banner>) {
+  /** Find single banner */
+  async findOne(id: string) {
+    return this.bannerRepository.findOne({ where: { id } });
+  }
+
+  /** Admin: create a banner with optional file */
+  async create(dto: Partial<Banner>, file?: any) {
+    if (file) {
+      dto.image = file.buffer;
+      dto.imageMimeType = file.mimetype;
+    }
     const banner = this.bannerRepository.create(dto);
     return this.bannerRepository.save(banner);
   }
 
-  /** Admin: update a banner */
-  async update(id: string, dto: Partial<Banner>) {
+  /** Admin: update a banner with optional file */
+  async update(id: string, dto: Partial<Banner>, file?: any) {
     const banner = await this.bannerRepository.findOne({ where: { id } });
     if (!banner) throw new NotFoundException('Banner not found');
+    if (file) {
+      dto.image = file.buffer;
+      dto.imageMimeType = file.mimetype;
+    }
     Object.assign(banner, dto);
     return this.bannerRepository.save(banner);
   }
@@ -58,4 +71,3 @@ export class BannerService {
     return this.bannerRepository.remove(banner);
   }
 }
-import { from } from 'rxjs';

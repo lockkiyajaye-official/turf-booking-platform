@@ -53,8 +53,8 @@ export class Banner {
   @UpdateDateColumn()
   updatedAt: Date;
   @Column({ type: 'bytea', nullable: true })
-image: Buffer | null;
+  image: Buffer | null;
 
-@Column({ nullable: true })
-imageMimeType: string | null;
+  @Column({ type: 'varchar', nullable: true })
+  imageMimeType: string | null;
 }
