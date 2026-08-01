@@ -125,20 +125,22 @@ export class AuthController {
   async googleAuth() {
     // This route will redirect the user to Google for authentication
   }
-
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Request() req, @Res() res: Response) {
-    // After successful Google authentication, issue our own JWT
     const { token } = await this.authService.loginWithGoogle(req.user);
 
+    // Google OAuth passes through state — check platform from session or state
+    const isMobile = req.query.platform === 'mobile';
+
+    if (isMobile) {
+      return res.redirect(`yourapp://auth/callback?token=${encodeURIComponent(token)}`);
+    }
+
     const frontendUrl =
-      this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+      this.configService.get<string>('FRONTEND_URL') ||
+      'http://localhost:5173';
 
-    const redirectUrl = `${frontendUrl}/google-callback?token=${encodeURIComponent(
-      token,
-    )}`;
-
-    return res.redirect(redirectUrl);
+    return res.redirect(`${frontendUrl}/google-callback?token=${encodeURIComponent(token)}`);
   }
 }
