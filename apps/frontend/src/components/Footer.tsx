@@ -10,8 +10,8 @@ export default function Footer() {
                     {/* Brand Section */}
                     <div className="col-span-2">
                         <div className="flex items-center space-x-2 mb-6">
-                            <div className="w-10 h-10 bg-white backdrop-blur-md rounded-lg flex items-center justify-center">
-                                <img src="/logo-green-no-bg.png" alt="Lock Kiya Jaye" className="w-10 h-10" />
+                            <div className="w-10 h-10 overflow-hidden backdrop-blur-md rounded-lg flex items-center justify-center">
+                                <img src="/logo.png" alt="Lock Kiya Jaye" className="w-10 h-10" />
                             </div>
                             <span className="text-2xl font-black tracking-tight">
                                 Lock Kiya Jaye
