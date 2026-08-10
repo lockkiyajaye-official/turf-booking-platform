@@ -133,7 +133,7 @@ class _LoginPageState extends State<LoginPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Email or Phone Number",
+                                "Email ",
                                 style: textTheme.bodySmall?.copyWith(
                                   fontWeight: FontWeight.w600,
                                   color: colors.textTitle,
@@ -148,7 +148,7 @@ class _LoginPageState extends State<LoginPage> {
                                 type: TextInputType.text,
                                 fillColor: colors.background,
                                 hintText:
-                                    "Enter your email or phone number",
+                                    "Enter your email",
                                 onChanged: _onIdentityChanged,
                                 prefixIcon: Icon(
                                   _isPhone

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:mobile/core/constants/app_strings.dart';
 import 'package:mobile/core/responsive/app_screen.dart';
@@ -12,6 +13,7 @@ import 'package:mobile/core/storage/local_storage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
 
   await CoreController.init();
    AuthBinding().dependencies();

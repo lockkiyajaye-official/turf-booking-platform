@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobile/core/responsive/screen_extensions.dart';
-import 'package:mobile/core/theme/app_colors.dart';
+import 'package:mobile/data/models/booking_model.dart';
+import 'package:mobile/viewmodels/booking/booking_viewmodel.dart';
 
 const _green = Color(0xFF2E7D32);
 const _red = Color(0xFFE43434);
@@ -19,10 +20,17 @@ class _BookingPageState extends State<BookingPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
+  // TODO: if BookingViewmodel is already registered via a Binding, swap
+  // this for Get.find<BookingViewmodel>().
+  final BookingViewmodel _vm = Get.isRegistered<BookingViewmodel>()
+      ? Get.find<BookingViewmodel>()
+      : Get.put(BookingViewmodel());
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _vm.fetchMyBookings();
   }
 
   @override
@@ -41,7 +49,6 @@ class _BookingPageState extends State<BookingPage>
         automaticallyImplyLeading: false,
         backgroundColor: Colors.white,
         elevation: 0,
-     
         title: Text(
           'My Bookings',
           style: textTheme.titleMedium?.copyWith(
@@ -58,13 +65,34 @@ class _BookingPageState extends State<BookingPage>
           ),
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: const [
-          _BookingList(isActive: true),
-          _BookingList(isActive: false),
-        ],
-      ),
+      body: Obx(() {
+        if (_vm.isLoading.value && _vm.myBookings.isEmpty) {
+          return const Center(child: CircularProgressIndicator(color: _green));
+        }
+
+        final active = _vm.myBookings.where((b) => !b.isPast).toList()
+          ..sort((a, b) => a.bookingDate.compareTo(b.bookingDate));
+        final past = _vm.myBookings.where((b) => b.isPast).toList()
+          ..sort((a, b) => b.bookingDate.compareTo(a.bookingDate));
+
+        return TabBarView(
+          controller: _tabController,
+          children: [
+            _BookingList(
+              bookings: active,
+              isActive: true,
+              onRefresh: _vm.fetchMyBookings,
+              vm: _vm,
+            ),
+            _BookingList(
+              bookings: past,
+              isActive: false,
+              onRefresh: _vm.fetchMyBookings,
+              vm: _vm,
+            ),
+          ],
+        );
+      }),
     );
   }
 }
@@ -150,96 +178,71 @@ class _TabItem extends StatelessWidget {
   }
 }
 
-/// List of booking cards
+/// List of booking cards, backed by BookingViewmodel.myBookings.
 class _BookingList extends StatelessWidget {
+  final List<BookingModel> bookings;
   final bool isActive;
-  const _BookingList({required this.isActive});
+  final Future<void> Function() onRefresh;
+  final BookingViewmodel vm;
+
+  const _BookingList({
+    required this.bookings,
+    required this.isActive,
+    required this.onRefresh,
+    required this.vm,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Replace with real data from your viewmodel
-    final items = isActive
-        ? [
-            _BookingData(
-                name: 'Grandfield',
-                type: 'Cricket Turf',
-                location: 'HSR Layout, Koramangala',
-                date: 'December 20, 2025',
-                time: '07:00 PM – 08:00 PM',
-                status: 'Confirmed'),
-            _BookingData(
-                name: 'Pro Field',
-                type: 'Cricket Turf',
-                location: 'HSR Layout, Koramangala',
-                date: 'December 24, 2025',
-                time: '07:00 PM – 08:00 PM',
-                status: 'Confirmed'),
-            _BookingData(
-                name: 'Win Field',
-                type: 'Cricket Turf',
-                location: 'HSR Layout, Koramangala',
-                date: 'December 26, 2025',
-                time: '07:00 PM – 08:00 PM',
-                status: 'Confirmed'),
-          ]
-        : [
-            _BookingData(
-                name: 'Kick Arena',
-                type: 'Cricket Turf',
-                location: 'HSR Layout, Koramangala',
-                date: 'December 14, 2025',
-                time: '07:00 PM – 08:00 PM',
-                status: 'Played'),
-            _BookingData(
-                name: 'Pro Arena',
-                type: 'Cricket Turf',
-                location: 'HSR Layout, Koramangala',
-                date: 'December 13, 2025',
-                time: '07:00 PM – 08:00 PM',
-                status: 'Played'),
-            _BookingData(
-                name: 'Win Arena',
-                type: 'Cricket Turf',
-                location: 'HSR Layout, Koramangala',
-                date: 'December 17, 2025',
-                time: '07:00 PM – 08:00 PM',
-                status: 'Played'),
-          ];
+    if (bookings.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: onRefresh,
+        child: ListView(
+          children: [
+            SizedBox(height: 120.h),
+            Center(
+              child: Text(
+                isActive ? 'No upcoming bookings yet' : 'No past bookings',
+                style: TextStyle(color: Colors.grey.shade500),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
-    return ListView.separated(
-      padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
-      itemCount: items.length,
-      separatorBuilder: (_, __) => SizedBox(height: 12.h),
-      itemBuilder: (context, index) => _BookingCard(
-        data: items[index],
-        isActive: isActive,
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: ListView.separated(
+        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
+        itemCount: bookings.length,
+        separatorBuilder: (_, __) => SizedBox(height: 12.h),
+        itemBuilder: (context, index) => _BookingCard(
+          booking: bookings[index],
+          isActive: isActive,
+          vm: vm,
+        ),
       ),
     );
   }
 }
 
-class _BookingData {
-  final String name, type, location, date, time, status;
-  const _BookingData({
-    required this.name,
-    required this.type,
-    required this.location,
-    required this.date,
-    required this.time,
-    required this.status,
-  });
-}
-
 /// Individual booking card
 class _BookingCard extends StatelessWidget {
-  final _BookingData data;
+  final BookingModel booking;
   final bool isActive;
+  final BookingViewmodel vm;
 
-  const _BookingCard({required this.data, required this.isActive});
+  const _BookingCard({
+    required this.booking,
+    required this.isActive,
+    required this.vm,
+  });
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final data = booking;
 
     return Container(
       decoration: BoxDecoration(
@@ -256,48 +259,33 @@ class _BookingCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // ── TOP: image + info ──
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Venue image
               ClipRRect(
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(16),
-                  bottomLeft: Radius.circular(0),
                 ),
-                child: Stack(
-                  children: [
-                    // Replace with real Image.network/asset
-                    Container(
-                      width: 100.w,
-                      height: 90.h,
-                      color: const Color(0xFF1a3a1a),
-                      child: const Icon(Icons.sports_cricket,
-                          color: Colors.white30, size: 32),
-                    ),
-                    // Subtle overlay so image edge blends into card
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      bottom: 0,
-                      child: Container(
-                        width: 20.w,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.white.withOpacity(0),
-                              Colors.white.withOpacity(0.08),
-                            ],
+                child: SizedBox(
+                  width: 100.w,
+                  height: 90.h,
+                  child: data.turfImage != null
+                      ? Image.network(
+                          data.turfImage!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: const Color(0xFF1a3a1a),
+                            child: const Icon(Icons.sports_cricket,
+                                color: Colors.white30, size: 32),
                           ),
+                        )
+                      : Container(
+                          color: const Color(0xFF1a3a1a),
+                          child: const Icon(Icons.sports_cricket,
+                              color: Colors.white30, size: 32),
                         ),
-                      ),
-                    ),
-                  ],
                 ),
               ),
-
-              // Info
               Expanded(
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(12.w, 10.h, 10.w, 8.h),
@@ -308,19 +296,22 @@ class _BookingCard extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              data.name,
+                              data.turfName,
                               style: textTheme.bodyMedium?.copyWith(
                                 fontWeight: FontWeight.w700,
                                 color: Colors.black87,
                               ),
                             ),
                           ),
-                          _StatusBadge(status: data.status, isActive: isActive),
+                          _StatusBadge(
+                            status: data.displayStatus,
+                            isActive: isActive,
+                          ),
                         ],
                       ),
                       SizedBox(height: 3.h),
                       Text(
-                        data.type,
+                        data.turfType,
                         style: textTheme.bodySmall
                             ?.copyWith(color: Colors.grey.shade500),
                       ),
@@ -332,7 +323,7 @@ class _BookingCard extends StatelessWidget {
                           SizedBox(width: 3.w),
                           Expanded(
                             child: Text(
-                              data.location,
+                              data.turfLocation,
                               style: textTheme.bodySmall?.copyWith(
                                   color: Colors.grey.shade600, fontSize: 11),
                               overflow: TextOverflow.ellipsis,
@@ -346,11 +337,7 @@ class _BookingCard extends StatelessWidget {
               ),
             ],
           ),
-
-          // ── DIVIDER ──
           Divider(height: 1, color: Colors.grey.shade100),
-
-          // ── META: date + time ──
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
             child: Row(
@@ -359,7 +346,7 @@ class _BookingCard extends StatelessWidget {
                     size: 13, color: Colors.grey.shade500),
                 SizedBox(width: 5.w),
                 Text(
-                  data.date,
+                  data.displayDate,
                   style: textTheme.bodySmall
                       ?.copyWith(color: Colors.grey.shade700, fontSize: 11),
                 ),
@@ -373,15 +360,13 @@ class _BookingCard extends StatelessWidget {
                     size: 13, color: Colors.grey.shade500),
                 SizedBox(width: 5.w),
                 Text(
-                  data.time,
+                  data.displayTime,
                   style: textTheme.bodySmall
                       ?.copyWith(color: Colors.grey.shade700, fontSize: 11),
                 ),
               ],
             ),
           ),
-
-          // ── ACTIONS ──
           Padding(
             padding: EdgeInsets.fromLTRB(12.w, 0, 12.w, 12.h),
             child: Row(
@@ -392,16 +377,22 @@ class _BookingCard extends StatelessWidget {
                           label: 'View Details',
                           filled: true,
                           color: _green,
-                          onTap: () {},
+                          onTap: () {
+                            // TODO: navigate to a booking-details page using data.id
+                          },
                         ),
                       ),
                       SizedBox(width: 8.w),
                       Expanded(
-                        child: _ActionButton(
-                          label: 'Cancel',
-                          filled: false,
-                          color: _red,
-                          onTap: () {},
+                        child: Obx(
+                          () => _ActionButton(
+                            label: vm.isLoading.value ? 'Cancelling…' : 'Cancel',
+                            filled: false,
+                            color: _red,
+                            onTap: vm.isLoading.value
+                                ? () {}
+                                : () => vm.cancelBooking(data.id),
+                          ),
                         ),
                       ),
                     ]
@@ -411,7 +402,9 @@ class _BookingCard extends StatelessWidget {
                           label: 'Rebook',
                           filled: true,
                           color: _green,
-                          onTap: () {},
+                          onTap: () {
+                            // TODO: navigate back to TurfDetailsPage for data.turfId
+                          },
                         ),
                       ),
                       SizedBox(width: 8.w),
