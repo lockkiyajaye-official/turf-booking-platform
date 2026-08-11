@@ -51,10 +51,19 @@ class OwnerViewmodel extends GetxController {
     }
   }
 
+  static num _parseNum(dynamic value) {
+    if (value is num) return value;
+    if (value is String) return num.tryParse(value) ?? 0;
+    return 0;
+  }
+
   void _computeStats() {
     final totalRevenue = allBookings
         .where((b) => (b['status'] as String? ?? '').toLowerCase() == 'confirmed')
-        .fold<num>(0, (sum, b) => sum + (b['totalPrice'] as num? ?? b['totalAmount'] as num? ?? b['price'] as num? ?? 0));
+        .fold<num>(0, (sum, b) {
+      final rawVal = b['totalPrice'] ?? b['totalAmount'] ?? b['price'];
+      return sum + _parseNum(rawVal);
+    });
 
     stats.value = {
       'totalTurfs': myTurfs.length,
