@@ -5,6 +5,7 @@ import {
   Body,
   Param,
   Patch,
+  Query,
   UseGuards,
   Request,
 } from '@nestjs/common';
@@ -16,6 +17,8 @@ import { RolesGuard } from '../auth/roles.guard';
 import { UserRole } from '../database/entities/user.entity';
 import { BookingStatus } from '../database/entities/booking.entity';
 
+import { CancelBookingDto } from './dto/cancel-booking.dto';
+
 @Controller('bookings')
 @UseGuards(JwtAuthGuard)
 export class BookingsController {
@@ -23,14 +26,36 @@ export class BookingsController {
 
   @Post()
   @UseGuards(RolesGuard)
-  @Roles(UserRole.USER)
+  @Roles(UserRole.USER, UserRole.TURF_OWNER, UserRole.ADMIN)
   create(@Body() createBookingDto: CreateBookingDto, @Request() req) {
     return this.bookingsService.create(createBookingDto, req.user);
   }
 
   @Get()
-  findAll(@Request() req) {
-    return this.bookingsService.findAll(req.user);
+  findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('status') status?: BookingStatus,
+    @Query('search') search?: string,
+    @Query('turfId') turfId?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Request() req?: any,
+  ) {
+    return this.bookingsService.findAll(req.user, {
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+      status,
+      search,
+      turfId,
+      startDate,
+      endDate,
+    });
+  }
+
+  @Get(':id/cancellation-preview')
+  getCancellationPreview(@Param('id') id: string, @Request() req) {
+    return this.bookingsService.getCancellationPreview(id, req.user);
   }
 
   @Get(':id')
@@ -40,7 +65,7 @@ export class BookingsController {
 
   @Patch(':id/status')
   @UseGuards(RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.TURF_OWNER)
+  @Roles(UserRole.ADMIN, UserRole.TURF_OWNER, UserRole.USER)
   updateStatus(
     @Param('id') id: string,
     @Body('status') status: BookingStatus,
@@ -50,8 +75,21 @@ export class BookingsController {
   }
 
   @Patch(':id/cancel')
-  cancel(@Param('id') id: string, @Request() req) {
-    return this.bookingsService.cancel(id, req.user);
+  cancelPatch(
+    @Param('id') id: string,
+    @Body() cancelDto: CancelBookingDto,
+    @Request() req,
+  ) {
+    return this.bookingsService.cancel(id, cancelDto, req.user);
+  }
+
+  @Post(':id/cancel')
+  cancelPost(
+    @Param('id') id: string,
+    @Body() cancelDto: CancelBookingDto,
+    @Request() req,
+  ) {
+    return this.bookingsService.cancel(id, cancelDto, req.user);
   }
 }
 

@@ -269,9 +269,22 @@ export default function TurfDetail() {
                         {/* Title & location */}
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                             <h1 className="text-3xl font-black text-gray-900 mb-2">{turf.name}</h1>
-                            <div className="flex items-start gap-2 text-gray-500 mb-4">
-                                <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-[#E33E33]" />
-                                <span className="text-sm">{turf.address}</span>
+                            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                                <div className="flex items-start gap-2 text-gray-500">
+                                    <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-[#E33E33]" />
+                                    <span className="text-sm">{turf.address}</span>
+                                </div>
+                                {(turf.googleMapUrl || (turf as any).mapUrl) && (
+                                    <a
+                                        href={turf.googleMapUrl || (turf as any).mapUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-[#E33E33] bg-red-50 hover:bg-red-100 transition-colors"
+                                    >
+                                        <MapPin className="w-3.5 h-3.5" />
+                                        View on Map
+                                    </a>
+                                )}
                             </div>
                             <p className="text-gray-600 leading-relaxed">{turf.description}</p>
                         </div>

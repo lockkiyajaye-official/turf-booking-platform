@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobile/data/models/turf_model.dart';
 import 'package:mobile/data/services/favorite_service.dart';
@@ -112,11 +111,7 @@ class FavoriteViewmodel extends GetxController {
         favoriteTurfIds.remove(turfId);
         favoriteTurfs.removeWhere((t) => t.id == turfId);
       }
-      Get.snackbar(
-        'Error',
-        e.toString(),
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Get.snackbar('Error', e.toString(), snackPosition: SnackPosition.BOTTOM);
       return false;
     }
   }

@@ -14,13 +14,44 @@ export class UsersService {
         private userRepository: Repository<User>,
     ) { }
 
-    async findAll(role?: UserRole) {
-        const where = role ? { role } : {};
-        return this.userRepository.find({
-            where,
-            relations: ['turfs', 'bookings'],
-            order: { createdAt: 'DESC' },
-        });
+    async findAll(role?: UserRole, search?: string, page?: number, limit?: number) {
+        const query = this.userRepository
+            .createQueryBuilder('user')
+            .leftJoinAndSelect('user.turfs', 'turfs')
+            .leftJoinAndSelect('user.bookings', 'bookings');
+
+        if (role) {
+            query.andWhere('user.role = :role', { role });
+        }
+
+        if (search && search.trim().length > 0) {
+            const term = `%${search.trim().toLowerCase()}%`;
+            query.andWhere(
+                '(LOWER(user.firstName) LIKE :search OR LOWER(user.lastName) LIKE :search OR LOWER(user.email) LIKE :search OR LOWER(user.phone) LIKE :search)',
+                { search: term },
+            );
+        }
+
+        query.orderBy('user.createdAt', 'DESC');
+
+        if (page) {
+            const pageNum = page > 0 ? page : 1;
+            const limitNum = limit && limit > 0 ? limit : 10;
+            const skip = (pageNum - 1) * limitNum;
+
+            const [items, total] = await query.skip(skip).take(limitNum).getManyAndCount();
+            const totalPages = Math.ceil(total / limitNum);
+            return {
+                items,
+                total,
+                page: pageNum,
+                limit: limitNum,
+                totalPages,
+                hasMore: pageNum < totalPages,
+            };
+        }
+
+        return query.getMany();
     }
 
     async findOne(id: string) {

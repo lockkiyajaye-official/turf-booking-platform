@@ -13,6 +13,7 @@ class OwnerViewmodel extends GetxController {
 
   var isLoading = false.obs;
   var isBookingsLoading = false.obs;
+  var isFetchingMore = false.obs;
   var isTurfsLoading = false.obs;
   var isFinancesLoading = false.obs;
 
@@ -20,6 +21,13 @@ class OwnerViewmodel extends GetxController {
   var allBookings = <Map<String, dynamic>>[].obs;
   var recentBookings = <Map<String, dynamic>>[].obs;
   var stats = <String, dynamic>{}.obs;
+
+  // Pagination
+  var bookingsPage = 1.obs;
+  var bookingsHasMore = true.obs;
+  // Filters (reactive — UI binds to these)
+  var bookingsStatusFilter = ''.obs;  // '' means all
+  var bookingsSearch = ''.obs;
 
   // Finances
   var walletBalance = 0.0.obs;
@@ -125,23 +133,72 @@ class OwnerViewmodel extends GetxController {
   }
 
   // ── Bookings ─────────────────────────────────────────────
-  Future<void> fetchAllBookings() async {
+
+  /// Reset filters/pagination and reload page 1.
+  Future<void> fetchAllBookings({
+    String? status,
+    String? search,
+  }) async {
+    if (status != null) bookingsStatusFilter.value = status;
+    if (search != null) bookingsSearch.value = search;
+    bookingsPage.value = 1;
+    bookingsHasMore.value = true;
+    allBookings.clear();
+    await _loadBookingsPage(1);
+  }
+
+  /// Fetch next page (called by the UI scroll listener).
+  Future<void> loadNextPage() async {
+    if (!bookingsHasMore.value || isFetchingMore.value) return;
+    await _loadBookingsPage(bookingsPage.value + 1);
+  }
+
+  Future<void> _loadBookingsPage(int page) async {
     try {
-      isBookingsLoading.value = true;
-      final res = await _bookingService.findAll(_token);
+      if (page == 1) {
+        isBookingsLoading.value = true;
+      } else {
+        isFetchingMore.value = true;
+      }
+
+      final res = await _bookingService.findAll(
+        _token,
+        page: page,
+        limit: 10,
+        status: bookingsStatusFilter.value.isEmpty ? null : bookingsStatusFilter.value,
+        search: bookingsSearch.value.isEmpty ? null : bookingsSearch.value,
+      );
+
       if (res['success']) {
         final data = res['data'];
         List<dynamic> list = [];
+        bool more = false;
+
         if (data is List) {
           list = data;
-        } else if (data is Map && data['bookings'] is List) {
-          list = data['bookings'];
+          more = false;
+        } else if (data is Map) {
+          list = (data['items'] ?? data['bookings'] ?? []) as List<dynamic>;
+          more = data['hasMore'] == true;
         }
-        allBookings.value = list.cast<Map<String, dynamic>>();
+
+        final newItems = list.cast<Map<String, dynamic>>();
+        if (page == 1) {
+          allBookings.value = newItems;
+        } else {
+          final existing = Set<String>.from(
+              allBookings.map((b) => b['_id']?.toString() ?? b['id']?.toString() ?? ''));
+          final fresh = newItems.where(
+              (b) => !existing.contains(b['_id']?.toString() ?? b['id']?.toString() ?? ''));
+          allBookings.addAll(fresh);
+        }
+        bookingsPage.value = page;
+        bookingsHasMore.value = more;
       }
     } catch (_) {
     } finally {
       isBookingsLoading.value = false;
+      isFetchingMore.value = false;
     }
   }
 
@@ -161,11 +218,12 @@ class OwnerViewmodel extends GetxController {
     }
   }
 
-  Future<void> cancelBooking(String id) async {
+  Future<void> cancelBooking(String id, {String? reason}) async {
     try {
-      final res = await _bookingService.cancelBooking(_token, id);
-      if (res['success']) {
-        _showSuccess('Booking cancelled');
+      final res = await _bookingService.cancelBooking(_token, id, reason: reason);
+      if (res['success'] == true) {
+        final msg = res['data']?['cancellation']?['message'] ?? 'Booking cancelled and customer refunded.';
+        _showSuccess(msg);
         await fetchAllBookings();
         _computeStats();
       } else {

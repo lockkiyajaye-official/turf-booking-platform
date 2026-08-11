@@ -72,6 +72,15 @@ export class Payment {
     @Column({ nullable: true })
     razorpaySignature: string;
 
+    @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+    refundAmount: number;
+
+    @Column({ nullable: true })
+    razorpayRefundId: string;
+
+    @Column({ default: 'none' })
+    refundStatus: string;
+
     @CreateDateColumn()
     createdAt: Date;
 

@@ -28,7 +28,10 @@ export interface Booking {
     endTime: string;
     totalPrice: number;
     status: BookingStatus;
-    createdAt: string;
+    cancellationReason?: string;
+    cancelledAt?: string;
+    refundAmount?: number;
+    refundStatus?: string;
     user: {
         id: string;
         firstName: string;
@@ -75,8 +78,14 @@ export interface Turf {
     primaryImageIndex?: number;
     availableSlots?: string[];
     rules?: string;
+    cancellationPolicyEnabled?: boolean;
+    fullRefundHours?: number;
+    partialRefundHours?: number;
+    partialRefundPercentage?: number;
     contactPhone?: string;
     contactEmail?: string;
+    googleMapUrl?: string;
+    mapUrl?: string;
     isActive: boolean;
     isPublished: boolean;
     isDraft: boolean;

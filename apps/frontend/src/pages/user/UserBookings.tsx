@@ -24,7 +24,9 @@ export default function UserBookings() {
                 api.get("/turfs?limit=5"),
             ]);
 
-            setBookings(bookingsRes.data);
+            const bookingsData = bookingsRes.data;
+            const items = Array.isArray(bookingsData) ? bookingsData : (bookingsData?.items || []);
+            setBookings(items);
 
             // Extract some turfs for Discover section
             const turfsData = Array.isArray(turfsRes.data)
@@ -38,7 +40,8 @@ export default function UserBookings() {
             // Fallback if turfs api fails
             try {
                 const response = await api.get("/bookings");
-                setBookings(response.data);
+                const data = response.data;
+                setBookings(Array.isArray(data) ? data : (data?.items || []));
             } catch (e) {
                 console.error("Failed to fetch bookings fallback", e);
             }
@@ -47,13 +50,41 @@ export default function UserBookings() {
         }
     };
 
-    const handleCancel = async (id: string) => {
-        if (!confirm("Are you sure you want to cancel this booking?")) return;
+    const [cancellingBooking, setCancellingBooking] = useState<Booking | null>(null);
+    const [cancellationPreview, setCancellationPreview] = useState<any>(null);
+    const [loadingPreview, setLoadingPreview] = useState(false);
+    const [cancelReason, setCancelReason] = useState("Schedule clash / Change of plans");
+    const [customReason, setCustomReason] = useState("");
+    const [cancelling, setCancelling] = useState(false);
+
+    const openCancelModal = async (booking: Booking) => {
+        setCancellingBooking(booking);
+        setLoadingPreview(true);
+        setCancellationPreview(null);
+        setCancelReason("Schedule clash / Change of plans");
+        setCustomReason("");
         try {
-            await api.patch(`/bookings/${id}/cancel`);
-            fetchData();
+            const { data } = await api.get(`/bookings/${booking.id}/cancellation-preview`);
+            setCancellationPreview(data);
         } catch (error) {
-            alert("Failed to cancel booking");
+            console.error("Failed to fetch cancellation preview", error);
+        } finally {
+            setLoadingPreview(false);
+        }
+    };
+
+    const handleConfirmCancel = async () => {
+        if (!cancellingBooking) return;
+        setCancelling(true);
+        try {
+            const reason = cancelReason === "Other" ? (customReason.trim() || "User requested cancellation") : cancelReason;
+            await api.post(`/bookings/${cancellingBooking.id}/cancel`, { reason });
+            setCancellingBooking(null);
+            fetchData();
+        } catch (error: any) {
+            alert(error.response?.data?.message || "Failed to cancel booking");
+        } finally {
+            setCancelling(false);
         }
     };
 
@@ -241,15 +272,30 @@ export default function UserBookings() {
                                         </div>
                                     </div>
 
+                                    {activeTab === "cancelled" && (booking.refundAmount !== undefined || booking.cancellationReason) && (
+                                        <div className="mt-4 p-3 bg-red-50/60 rounded-xl border border-red-100 text-xs space-y-1">
+                                            {booking.cancellationReason && (
+                                                <p className="text-gray-700">
+                                                    <span className="font-bold text-gray-900">Reason:</span> {booking.cancellationReason}
+                                                </p>
+                                            )}
+                                            {Number(booking.refundAmount || 0) > 0 ? (
+                                                <p className="text-green-700 font-bold">
+                                                    ₹{booking.refundAmount} Refund Processed via Razorpay ({booking.refundStatus || "full"})
+                                                </p>
+                                            ) : (
+                                                <p className="text-gray-500 font-medium">Non-refundable cancellation</p>
+                                            )}
+                                        </div>
+                                    )}
+
                                     <div className="flex justify-end items-center gap-4 mt-8 pt-6 border-t border-gray-50">
                                         {activeTab === "upcoming" && (
                                             <button
-                                                onClick={() =>
-                                                    handleCancel(booking.id)
-                                                }
-                                                className="text-gray-500 hover:text-red-500 font-bold px-4 py-2 transition-colors text-sm"
+                                                onClick={() => openCancelModal(booking)}
+                                                className="text-[#e53935] hover:bg-red-50 font-bold px-5 py-2.5 rounded-xl border border-red-200 transition-colors text-sm"
                                             >
-                                                Cancel
+                                                Cancel Booking
                                             </button>
                                         )}
                                         <Link
@@ -403,6 +449,109 @@ export default function UserBookings() {
                     </div>
                 </div>
             </main>
+
+            {/* Cancellation Modal */}
+            {cancellingBooking && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 space-y-5">
+                        <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-900">Cancel Booking</h3>
+                                <p className="text-xs text-gray-500">{cancellingBooking.turf.name}</p>
+                            </div>
+                            <button
+                                onClick={() => setCancellingBooking(null)}
+                                className="text-gray-400 hover:text-gray-600 text-lg font-bold p-1"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {loadingPreview ? (
+                            <div className="py-8 text-center text-sm font-medium text-gray-500">
+                                Calculating cancellation policy & refund eligibility...
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {/* Policy Breakdown Card */}
+                                {cancellationPreview && (
+                                    <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200 text-xs space-y-2">
+                                        <div className="flex justify-between text-gray-600">
+                                            <span>Booking Total:</span>
+                                            <span className="font-bold text-gray-900">₹{cancellationPreview.totalPrice}</span>
+                                        </div>
+                                        <div className="flex justify-between text-gray-600">
+                                            <span>Time remaining:</span>
+                                            <span className="font-bold text-gray-900">{cancellationPreview.hoursRemaining} hours</span>
+                                        </div>
+                                        <div className="flex justify-between text-gray-600">
+                                            <span>Eligible Refund %:</span>
+                                            <span className="font-bold text-[#e53935]">{cancellationPreview.refundPercentage}%</span>
+                                        </div>
+                                        <div className="pt-2 border-t border-gray-200 flex justify-between text-sm">
+                                            <span className="font-bold text-gray-800">Refund Amount:</span>
+                                            <span className="font-black text-green-600 text-base">₹{cancellationPreview.refundAmount}</span>
+                                        </div>
+                                        <p className="text-[11px] text-gray-500 italic mt-1">
+                                            {cancellationPreview.ruleApplied}
+                                        </p>
+                                        {cancellationPreview.refundAmount > 0 && (
+                                            <p className="text-[11px] text-blue-600 font-medium pt-1">
+                                                ✓ Eligible refund will be automatically refunded back to your original payment method via Razorpay.
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Reason Selection */}
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wider">
+                                        Reason for Cancellation *
+                                    </label>
+                                    <select
+                                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:border-[#e53935]"
+                                        value={cancelReason}
+                                        onChange={(e) => setCancelReason(e.target.value)}
+                                    >
+                                        <option value="Schedule clash / Change of plans">Schedule clash / Change of plans</option>
+                                        <option value="Booked wrong date or time slot">Booked wrong date or time slot</option>
+                                        <option value="Health or weather condition">Health or weather condition</option>
+                                        <option value="Other">Other (Please specify)</option>
+                                    </select>
+                                </div>
+
+                                {cancelReason === "Other" && (
+                                    <div>
+                                        <textarea
+                                            rows={2}
+                                            placeholder="Please describe why you are cancelling..."
+                                            className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#e53935]"
+                                            value={customReason}
+                                            onChange={(e) => setCustomReason(e.target.value)}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="flex gap-3 pt-3 border-t border-gray-100">
+                            <button
+                                onClick={handleConfirmCancel}
+                                disabled={cancelling || loadingPreview}
+                                className="flex-1 bg-[#e53935] hover:bg-red-700 text-white font-bold py-3 rounded-xl transition-all shadow-md text-sm disabled:opacity-50"
+                            >
+                                {cancelling ? "Processing Cancellation..." : "Confirm Cancellation"}
+                            </button>
+                            <button
+                                onClick={() => setCancellingBooking(null)}
+                                className="px-5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl transition-all text-sm"
+                            >
+                                Keep Booking
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

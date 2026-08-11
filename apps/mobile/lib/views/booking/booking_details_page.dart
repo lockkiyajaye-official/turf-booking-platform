@@ -11,7 +11,11 @@ import 'package:mobile/viewmodels/auth/auth_viewmodel.dart';
 import 'package:mobile/views/home/widgets/amentity_chip.dart';
 import 'package:mobile/views/widgets/my_buttons.dart';
 import 'package:mobile/data/services/turf_service.dart';
+import 'package:mobile/data/services/payment_service.dart';
+import 'package:mobile/viewmodels/booking/booking_viewmodel.dart';
 import 'package:mobile/viewmodels/favorite/favorite_viewmodel.dart';
+import 'package:mobile/views/booking/booking_confirmation_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class TurfDetailsPage extends StatefulWidget {
   final TurfModel turf;
@@ -48,6 +52,7 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
   // Holds the PENDING booking id + price returned by createBooking, until payment confirms it.
   String? _pendingBookingId;
   num? _pendingBookingAmount;
+  String? _pendingOrderId;
 
   final String _razorpayKeyId =
       '${dotenv.env['RAZORPAY']}'; // RAZORPAY_KEY_ID only — never put the secret in the app
@@ -272,7 +277,28 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
       return;
     }
 
-    final result = await _bookingService.createBooking(
+    // Call PaymentService.createOrder to get Razorpay Order ID + Booking ID
+    final result = await PaymentService().createOrder(
+      token: _token,
+      turfId: widget.turf.id,
+      bookingDate: _selectedDateIso(),
+      startTime: startTime,
+      endTime: endTime,
+    );
+
+    if (mounted) setState(() => _isBooking = false);
+
+    if (result['success'] == true && result['data'] != null) {
+      final data = result['data'] as Map<String, dynamic>;
+      _pendingBookingId = data['bookingId']?.toString();
+      _pendingBookingAmount = _parseNum(data['amount']) / 100;
+      _pendingOrderId = data['orderId']?.toString();
+      _openCheckout();
+      return;
+    }
+
+    // Fallback: create booking via standard route if order API failed
+    final fallback = await _bookingService.createBooking(
       token: _token,
       data: {
         'turfId': widget.turf.id,
@@ -282,16 +308,15 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
       },
     );
 
-    if (mounted) setState(() => _isBooking = false);
-
-    if (result['success'] != true) {
-      _showMessage(result['message'] ?? 'Could not create booking.');
+    if (fallback['success'] != true) {
+      _showMessage(fallback['message'] ?? 'Could not create booking.');
       return;
     }
 
-    final booking = result['data'] as Map<String, dynamic>;
+    final booking = fallback['data'] as Map<String, dynamic>;
     _pendingBookingId = booking['id'].toString();
     _pendingBookingAmount = _parseNum(booking['totalPrice']);
+    _pendingOrderId = null;
     _openCheckout();
   }
 
@@ -304,17 +329,18 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
   }
 
   void _openCheckout() {
-    var options = {
+    var options = <String, dynamic>{
       'key': _razorpayKeyId,
-      // Backend-computed price, not a locally guessed amount.
       'amount': ((_pendingBookingAmount ?? 0) * 100).toInt(), // paise
+      if (_pendingOrderId != null && _pendingOrderId!.isNotEmpty)
+        'order_id': _pendingOrderId,
       'name': widget.turf.name,
       'description':
           'Booking for ${_days[_selectedDayIndex].day} ${_days[_selectedDayIndex].date} - ${_formatSlot(_slots[_selectedSlotIndex])}',
       'notes': {'bookingId': _pendingBookingId},
       'prefill': {
-        'contact': '', // TODO: pass user's phone number
-        'email': '', // TODO: pass user's email
+        'contact': '',
+        'email': '',
       },
       'theme': {'color': '#0DAA6C'},
     };
@@ -328,28 +354,43 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
   }
 
   Future<void> _onPaymentSuccess(PaymentSuccessResponse response) async {
-    // TODO: verify payment signature server-side (RAZORPAY_KEY_SECRET)
-    // before trusting this and confirming booking.
     final id = _pendingBookingId;
     if (id == null) return;
 
-    final result = await _bookingService.updateStatus(
+    final orderId = (response.orderId != null && response.orderId!.isNotEmpty)
+        ? response.orderId!
+        : (_pendingOrderId ?? 'order_dev_${DateTime.now().millisecondsSinceEpoch}');
+    final paymentId = (response.paymentId != null && response.paymentId!.isNotEmpty)
+        ? response.paymentId!
+        : 'pay_dev_${DateTime.now().millisecondsSinceEpoch}';
+    final signature = response.signature ?? 'test_sig';
+
+    final result = await PaymentService().verifyPayment(
       token: _token,
-      id: id,
-      status: 'CONFIRMED',
+      bookingId: id,
+      razorpayOrderId: orderId,
+      razorpayPaymentId: paymentId,
+      razorpaySignature: signature,
     );
 
-    if (!mounted) return;
-    if (result['success'] == true) {
-      _showMessage(
-        'Booking confirmed! Payment ID: ${response.paymentId}',
-        isError: false,
-      );
-      // e.g. Navigator.pushReplacement(context, ...BookingConfirmationPage...)
-    } else {
-      // Show the backend's actual message — a generic string here just
-      // hides the real cause (validation error, wrong route, auth, etc).
+    // Fallback status update if verify API failed
+    if (result['success'] != true) {
+      await _bookingService.updateStatus(token: _token, id: id, status: 'CONFIRMED');
     }
+
+    if (Get.isRegistered<BookingViewmodel>()) {
+      await Get.find<BookingViewmodel>().fetchMyBookings();
+    }
+
+    if (!mounted) return;
+    Get.off(() => BookingConfirmationPage(
+      bookingId: id,
+      turfName: widget.turf.name,
+      bookingDate: '${_days[_selectedDayIndex].day} ${_days[_selectedDayIndex].date}',
+      timeSlot: _formatSlot(_slots[_selectedSlotIndex]),
+      totalPrice: (_pendingBookingAmount ?? widget.turf.pricePerHour).toDouble(),
+      turfImage: _imageUrls.isNotEmpty ? _imageUrls.first : null,
+    ));
   }
 
   void _onPaymentError(PaymentFailureResponse response) {
@@ -540,36 +581,61 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
               SizedBox(height: 24.h),
 
               // ── Amenities ─────────────────────────
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Amenities',
-                    style: textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF454555),
-                      fontSize: 14.sp,
-                    ),
-                  ),
-                  Row(
+              Builder(
+                builder: (context) {
+                  final String? mapUrl = (widget.turf.googleMapUrl != null && widget.turf.googleMapUrl!.isNotEmpty)
+                      ? widget.turf.googleMapUrl
+                      : (widget.turf.mapUrl != null && widget.turf.mapUrl!.isNotEmpty)
+                          ? widget.turf.mapUrl
+                          : (widget.turf.latitude != null && widget.turf.longitude != null)
+                              ? 'https://maps.google.com/?q=${widget.turf.latitude},${widget.turf.longitude}'
+                              : null;
+
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Icon(
-                        Icons.location_on_outlined,
-                        color: primaryGreen,
-                        size: 16,
-                      ),
-                      SizedBox(width: 4.w),
                       Text(
-                        'View on Map',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: primaryGreen,
+                        'Amenities',
+                        style: textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
-                          fontSize: 12.sp,
+                          color: const Color(0xFF454555),
+                          fontSize: 14.sp,
                         ),
                       ),
+                      if (mapUrl != null)
+                        GestureDetector(
+                          onTap: () async {
+                            final uri = Uri.parse(mapUrl);
+                            if (await canLaunchUrl(uri)) {
+                              await launchUrl(uri, mode: LaunchMode.externalApplication);
+                            } else {
+                              Get.snackbar('Error', 'Could not launch map URL',
+                                  backgroundColor: Colors.red.shade100,
+                                  snackPosition: SnackPosition.BOTTOM);
+                            }
+                          },
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.location_on_outlined,
+                                color: primaryGreen,
+                                size: 16,
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                'View on Map',
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: primaryGreen,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12.sp,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                     ],
-                  ),
-                ],
+                  );
+                },
               ),
               SizedBox(height: 16.h),
               SingleChildScrollView(

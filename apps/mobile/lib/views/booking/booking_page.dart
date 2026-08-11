@@ -3,9 +3,9 @@ import 'package:get/get.dart';
 import 'package:mobile/core/responsive/screen_extensions.dart';
 import 'package:mobile/data/models/booking_model.dart';
 import 'package:mobile/viewmodels/booking/booking_viewmodel.dart';
+import 'package:mobile/views/booking/user_booking_detail_page.dart';
 
 const _green = Color(0xFF2E7D32);
-const _red = Color(0xFFE43434);
 const _lightGreen = Color(0xFFE8F5E9);
 const _lightGray = Color(0xFFF5F5F5);
 
@@ -20,8 +20,6 @@ class _BookingPageState extends State<BookingPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  // TODO: if BookingViewmodel is already registered via a Binding, swap
-  // this for Get.find<BookingViewmodel>().
   final BookingViewmodel _vm = Get.isRegistered<BookingViewmodel>()
       ? Get.find<BookingViewmodel>()
       : Get.put(BookingViewmodel());
@@ -217,11 +215,8 @@ class _BookingList extends StatelessWidget {
         padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
         itemCount: bookings.length,
         separatorBuilder: (_, __) => SizedBox(height: 12.h),
-        itemBuilder: (context, index) => _BookingCard(
-          booking: bookings[index],
-          isActive: isActive,
-          vm: vm,
-        ),
+        itemBuilder: (context, index) =>
+            _BookingCard(booking: bookings[index], isActive: isActive, vm: vm),
       ),
     );
   }
@@ -244,182 +239,163 @@ class _BookingCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final data = booking;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade100),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                ),
-                child: SizedBox(
-                  width: 100.w,
-                  height: 90.h,
-                  child: data.turfImage != null
-                      ? Image.network(
-                          data.turfImage!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            color: const Color(0xFF1a3a1a),
-                            child: const Icon(Icons.sports_cricket,
-                                color: Colors.white30, size: 32),
-                          ),
-                        )
-                      : Container(
-                          color: const Color(0xFF1a3a1a),
-                          child: const Icon(Icons.sports_cricket,
-                              color: Colors.white30, size: 32),
-                        ),
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(12.w, 10.h, 10.w, 8.h),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              data.turfName,
-                              style: textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: Colors.black87,
+    return GestureDetector(
+      onTap: () {
+        Get.to(() => UserBookingDetailPage(booking: data));
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade100),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                  ),
+                  child: SizedBox(
+                    width: 100.w,
+                    height: 90.h,
+                    child: data.turfImage != null
+                        ? Image.network(
+                            data.turfImage!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              color: const Color(0xFF1a3a1a),
+                              child: const Icon(
+                                Icons.sports_cricket,
+                                color: Colors.white30,
+                                size: 32,
                               ),
                             ),
-                          ),
-                          _StatusBadge(
-                            status: data.displayStatus,
-                            isActive: isActive,
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 3.h),
-                      Text(
-                        data.turfType,
-                        style: textTheme.bodySmall
-                            ?.copyWith(color: Colors.grey.shade500),
-                      ),
-                      SizedBox(height: 5.h),
-                      Row(
-                        children: [
-                          Icon(Icons.location_on_outlined,
-                              size: 12, color: Colors.grey.shade500),
-                          SizedBox(width: 3.w),
-                          Expanded(
-                            child: Text(
-                              data.turfLocation,
-                              style: textTheme.bodySmall?.copyWith(
-                                  color: Colors.grey.shade600, fontSize: 11),
-                              overflow: TextOverflow.ellipsis,
+                          )
+                        : Container(
+                            color: const Color(0xFF1a3a1a),
+                            child: const Icon(
+                              Icons.sports_cricket,
+                              color: Colors.white30,
+                              size: 32,
                             ),
                           ),
-                        ],
-                      ),
-                    ],
                   ),
                 ),
-              ),
-            ],
-          ),
-          Divider(height: 1, color: Colors.grey.shade100),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-            child: Row(
-              children: [
-                Icon(Icons.calendar_today_outlined,
-                    size: 13, color: Colors.grey.shade500),
-                SizedBox(width: 5.w),
-                Text(
-                  data.displayDate,
-                  style: textTheme.bodySmall
-                      ?.copyWith(color: Colors.grey.shade700, fontSize: 11),
-                ),
-                Container(
-                  width: 1,
-                  height: 12.h,
-                  color: Colors.grey.shade300,
-                  margin: EdgeInsets.symmetric(horizontal: 10.w),
-                ),
-                Icon(Icons.access_time_outlined,
-                    size: 13, color: Colors.grey.shade500),
-                SizedBox(width: 5.w),
-                Text(
-                  data.displayTime,
-                  style: textTheme.bodySmall
-                      ?.copyWith(color: Colors.grey.shade700, fontSize: 11),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(12.w, 10.h, 10.w, 8.h),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                data.turfName,
+                                style: textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ),
+                            _StatusBadge(
+                              status: data.displayStatus,
+                              isActive: isActive,
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 3.h),
+                        Text(
+                          data.turfType,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                        SizedBox(height: 5.h),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on_outlined,
+                              size: 12,
+                              color: Colors.grey.shade500,
+                            ),
+                            SizedBox(width: 3.w),
+                            Expanded(
+                              child: Text(
+                                data.turfLocation,
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 11,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
-          ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(12.w, 0, 12.w, 12.h),
-            child: Row(
-              children: isActive
-                  ? [
-                      Expanded(
-                        child: _ActionButton(
-                          label: 'View Details',
-                          filled: true,
-                          color: _green,
-                          onTap: () {
-                            // TODO: navigate to a booking-details page using data.id
-                          },
-                        ),
-                      ),
-                      SizedBox(width: 8.w),
-                      Expanded(
-                        child: Obx(
-                          () => _ActionButton(
-                            label: vm.isLoading.value ? 'Cancelling…' : 'Cancel',
-                            filled: false,
-                            color: _red,
-                            onTap: vm.isLoading.value
-                                ? () {}
-                                : () => vm.cancelBooking(data.id),
-                          ),
-                        ),
-                      ),
-                    ]
-                  : [
-                      Expanded(
-                        child: _ActionButton(
-                          label: 'Rebook',
-                          filled: true,
-                          color: _green,
-                          onTap: () {
-                            // TODO: navigate back to TurfDetailsPage for data.turfId
-                          },
-                        ),
-                      ),
-                      SizedBox(width: 8.w),
-                      Expanded(
-                        child: _ActionButton(
-                          label: 'View Receipt',
-                          filled: false,
-                          color: Colors.grey.shade400,
-                          onTap: () {},
-                        ),
-                      ),
-                    ],
+            Divider(height: 1, color: Colors.grey.shade100),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today_outlined,
+                    size: 13,
+                    color: Colors.grey.shade500,
+                  ),
+                  SizedBox(width: 5.w),
+                  Text(
+                    data.displayDate,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: Colors.grey.shade700,
+                      fontSize: 11,
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 12.h,
+                    color: Colors.grey.shade300,
+                    margin: EdgeInsets.symmetric(horizontal: 10.w),
+                  ),
+                  Icon(
+                    Icons.access_time_outlined,
+                    size: 13,
+                    color: Colors.grey.shade500,
+                  ),
+                  SizedBox(width: 5.w),
+                  Text(
+                    data.displayTime,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: Colors.grey.shade700,
+                      fontSize: 11,
+                    ),
+                  ),
+                  const Spacer(),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 18,
+                    color: Colors.grey.shade400,
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -462,45 +438,6 @@ class _StatusBadge extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Reusable action button
-class _ActionButton extends StatelessWidget {
-  final String label;
-  final bool filled;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _ActionButton({
-    required this.label,
-    required this.filled,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 36,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: filled ? color : Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: filled ? null : Border.all(color: color),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: filled ? Colors.white : color,
-          ),
-        ),
       ),
     );
   }

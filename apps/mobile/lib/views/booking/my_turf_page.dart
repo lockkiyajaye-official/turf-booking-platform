@@ -7,7 +7,6 @@ import 'package:mobile/viewmodels/turf/owner_viewmodel.dart';
 import 'package:mobile/views/booking/add_turf_page.dart';
 import 'package:mobile/views/booking/owner_detail_page.dart';
 
-
 class MyTurfsPage extends StatelessWidget {
   const MyTurfsPage({super.key});
 
@@ -22,11 +21,7 @@ class MyTurfsPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-          color: colors.textTitle,
-          onPressed: () => Get.back(),
-        ),
+        automaticallyImplyLeading: false,
         title: Text(
           'My Turfs',
           style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
@@ -45,7 +40,8 @@ class MyTurfsPage extends StatelessWidget {
       body: Obx(() {
         if (vm.isTurfsLoading.value && vm.myTurfs.isEmpty) {
           return Center(
-              child: CircularProgressIndicator(color: colors.primary));
+            child: CircularProgressIndicator(color: colors.primary),
+          );
         }
         if (vm.myTurfs.isEmpty) {
           return _EmptyTurfs(colors: colors, textTheme: textTheme);
@@ -105,7 +101,7 @@ class _OwnerTurfCard extends StatelessWidget {
         ? turf.images.first
         : 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=400&q=80';
 
-    final isPublished = turf.isPublished ?? false;
+    final isPublished = turf.isPublished;
 
     return GestureDetector(
       onTap: () => Get.to(() => OwnerTurfDetailPage(turf: turf)),
@@ -130,7 +126,8 @@ class _OwnerTurfCard extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(14)),
+                    top: Radius.circular(14),
+                  ),
                   child: Image.network(
                     imageUrl,
                     height: 160.h,
@@ -139,8 +136,11 @@ class _OwnerTurfCard extends StatelessWidget {
                     errorBuilder: (_, __, ___) => Container(
                       height: 160.h,
                       color: Colors.grey[200],
-                      child: const Icon(Icons.sports_soccer,
-                          color: Colors.grey, size: 40),
+                      child: const Icon(
+                        Icons.sports_soccer,
+                        color: Colors.grey,
+                        size: 40,
+                      ),
                     ),
                   ),
                 ),
@@ -148,8 +148,10 @@ class _OwnerTurfCard extends StatelessWidget {
                   top: 10,
                   right: 10,
                   child: Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 5.h,
+                    ),
                     decoration: BoxDecoration(
                       color: isPublished
                           ? const Color(0xFF059669)
@@ -200,14 +202,18 @@ class _OwnerTurfCard extends StatelessWidget {
                   SizedBox(height: 4.h),
                   Row(
                     children: [
-                      Icon(Icons.location_on_rounded,
-                          size: 14, color: colors.textGrey),
+                      Icon(
+                        Icons.location_on_rounded,
+                        size: 14,
+                        color: colors.textGrey,
+                      ),
                       SizedBox(width: 4.w),
                       Expanded(
                         child: Text(
                           turf.address,
-                          style: textTheme.bodySmall
-                              ?.copyWith(color: colors.textGrey),
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colors.textGrey,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -223,8 +229,11 @@ class _OwnerTurfCard extends StatelessWidget {
                         child: OutlinedButton.icon(
                           onPressed: () =>
                               Get.to(() => OwnerTurfDetailPage(turf: turf)),
-                          icon: Icon(Icons.edit_outlined,
-                              size: 15, color: colors.primary),
+                          icon: Icon(
+                            Icons.edit_outlined,
+                            size: 15,
+                            color: colors.primary,
+                          ),
                           label: Text(
                             'Edit',
                             style: textTheme.bodySmall?.copyWith(
@@ -235,7 +244,8 @@ class _OwnerTurfCard extends StatelessWidget {
                           style: OutlinedButton.styleFrom(
                             side: BorderSide(color: colors.primary),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8)),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                             padding: EdgeInsets.symmetric(vertical: 8.h),
                           ),
                         ),
@@ -269,7 +279,8 @@ class _OwnerTurfCard extends StatelessWidget {
                                 ? Colors.grey[600]
                                 : const Color(0xFF059669),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8)),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                             elevation: 0,
                             padding: EdgeInsets.symmetric(vertical: 8.h),
                           ),
@@ -299,13 +310,18 @@ class _EmptyTurfs extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.sports_soccer_outlined,
-              size: 64, color: colors.textGrey.withOpacity(0.4)),
+          Icon(
+            Icons.sports_soccer_outlined,
+            size: 64,
+            color: colors.textGrey.withOpacity(0.4),
+          ),
           SizedBox(height: 16.h),
           Text(
             'No turfs yet',
             style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700, color: colors.textTitle),
+              fontWeight: FontWeight.w700,
+              color: colors.textTitle,
+            ),
           ),
           SizedBox(height: 6.h),
           Text(

@@ -48,6 +48,8 @@ export class TurfsService {
     maxPrice?: number;
     amenities?: string[];
     includeDrafts?: boolean; // For turf owners to see their drafts
+    page?: number;
+    limit?: number;
   }, ownerId?: string) {
     const query = this.turfRepository
       .createQueryBuilder('turf')
@@ -67,21 +69,21 @@ export class TurfsService {
 
     if (filters?.search) {
       query.andWhere(
-        '(turf.name LIKE :search OR turf.description LIKE :search OR turf.address LIKE :search OR turf.sports LIKE :search)',
-        { search: `%${filters.search}%` },
+        '(LOWER(turf.name) LIKE :search OR LOWER(turf.description) LIKE :search OR LOWER(turf.address) LIKE :search OR LOWER(turf.sports) LIKE :search)',
+        { search: `%${filters.search.toLowerCase()}%` },
       );
     }
 
     if (filters?.sport) {
       query.andWhere(
-        '(turf.sports LIKE :sport OR turf.name LIKE :sport OR turf.description LIKE :sport)',
-        { sport: `%${filters.sport}%` },
+        '(LOWER(turf.sports) LIKE :sport OR LOWER(turf.name) LIKE :sport OR LOWER(turf.description) LIKE :sport)',
+        { sport: `%${filters.sport.toLowerCase()}%` },
       );
     }
 
     if (filters?.sports && filters.sports.length > 0) {
-      const sportConditions = filters.sports.map((_, i) => `turf.sports LIKE :sport_${i}`).join(' OR ');
-      const sportParams = filters.sports.reduce((acc, s, i) => ({ ...acc, [`sport_${i}`]: `%${s}%` }), {});
+      const sportConditions = filters.sports.map((_, i) => `LOWER(turf.sports) LIKE :sport_${i}`).join(' OR ');
+      const sportParams = filters.sports.reduce((acc, s, i) => ({ ...acc, [`sport_${i}`]: `%${s.toLowerCase()}%` }), {});
       query.andWhere(`(${sportConditions})`, sportParams);
     }
 
@@ -95,6 +97,25 @@ export class TurfsService {
       query.andWhere('turf.pricePerHour <= :maxPrice', {
         maxPrice: filters.maxPrice,
       });
+    }
+
+    query.orderBy('turf.createdAt', 'DESC');
+
+    if (filters?.page) {
+      const page = filters.page > 0 ? filters.page : 1;
+      const limit = filters.limit && filters.limit > 0 ? filters.limit : 10;
+      const skip = (page - 1) * limit;
+
+      const [items, total] = await query.skip(skip).take(limit).getManyAndCount();
+      const totalPages = Math.ceil(total / limit);
+      return {
+        items,
+        total,
+        page,
+        limit,
+        totalPages,
+        hasMore: page < totalPages,
+      };
     }
 
     return query.getMany();
@@ -113,16 +134,33 @@ export class TurfsService {
     return turf;
   }
 
-  async findByOwner(ownerId: string, includeDrafts: boolean = true) {
-    const where: any = { ownerId };
+  async findByOwner(ownerId: string, includeDrafts: boolean = true, page?: number, limit?: number) {
+    const query = this.turfRepository.createQueryBuilder('turf')
+      .where('turf.ownerId = :ownerId', { ownerId })
+      .orderBy('turf.createdAt', 'DESC');
+
     if (!includeDrafts) {
-      where.isDraft = false;
+      query.andWhere('turf.isDraft = :isDraft', { isDraft: false });
     }
-    return this.turfRepository.find({
-      where,
-      relations: ['bookings'],
-      order: { createdAt: 'DESC' },
-    });
+
+    if (page) {
+      const pageNum = page > 0 ? page : 1;
+      const limitNum = limit && limit > 0 ? limit : 10;
+      const skip = (pageNum - 1) * limitNum;
+
+      const [items, total] = await query.skip(skip).take(limitNum).getManyAndCount();
+      const totalPages = Math.ceil(total / limitNum);
+      return {
+        items,
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages,
+        hasMore: pageNum < totalPages,
+      };
+    }
+
+    return query.getMany();
   }
 
   async publishTurf(id: string, owner: User) {

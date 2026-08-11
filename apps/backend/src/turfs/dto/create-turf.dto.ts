@@ -86,6 +86,14 @@ export class CreateTurfDto {
 
   @IsOptional()
   @IsString()
+  googleMapUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  mapUrl?: string;
+
+  @IsOptional()
+  @IsString()
   contactPhone?: string;
 
   @IsOptional()
@@ -95,4 +103,26 @@ export class CreateTurfDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  cancellationPolicyEnabled?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Type(() => Number)
+  fullRefundHours?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Type(() => Number)
+  partialRefundHours?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Type(() => Number)
+  partialRefundPercentage?: number;
 }

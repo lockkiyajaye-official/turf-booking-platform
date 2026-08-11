@@ -81,4 +81,54 @@ class PaymentService {
       return {'success': false, 'message': e.toString()};
     }
   }
+
+  /// Create Razorpay payment order
+  Future<Map<String, dynamic>> createOrder({
+    required String token,
+    required String turfId,
+    required String bookingDate,
+    required String startTime,
+    required String endTime,
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$_base/create'),
+        headers: _headers(token),
+        body: jsonEncode({
+          'turfId': turfId,
+          'bookingDate': bookingDate,
+          'startTime': startTime,
+          'endTime': endTime,
+        }),
+      );
+      return _handleResponse(res);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Verify Razorpay payment and confirm booking
+  Future<Map<String, dynamic>> verifyPayment({
+    required String token,
+    required String bookingId,
+    required String razorpayOrderId,
+    required String razorpayPaymentId,
+    required String razorpaySignature,
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$_base/verify'),
+        headers: _headers(token),
+        body: jsonEncode({
+          'bookingId': bookingId,
+          'razorpay_order_id': razorpayOrderId,
+          'razorpay_payment_id': razorpayPaymentId,
+          'razorpay_signature': razorpaySignature,
+        }),
+      );
+      return _handleResponse(res);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
 }

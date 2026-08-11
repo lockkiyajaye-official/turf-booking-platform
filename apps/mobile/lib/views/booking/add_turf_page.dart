@@ -28,11 +28,17 @@ class _AddTurfPageState extends State<AddTurfPage> {
   final _capacityController = TextEditingController();
   final _latitudeController = TextEditingController();
   final _longitudeController = TextEditingController();
+  final _mapUrlController = TextEditingController();
 
   final _contactPhoneController = TextEditingController();
   final _contactEmailController = TextEditingController();
   final _rulesController = TextEditingController();
   final _slotSearchController = TextEditingController();
+
+  bool _cancellationPolicyEnabled = true;
+  final _fullRefundHoursController = TextEditingController(text: '24');
+  final _partialRefundHoursController = TextEditingController(text: '6');
+  final _partialRefundPercentageController = TextEditingController(text: '50');
 
   final List<String> _allSports = [
     'Football',
@@ -171,10 +177,14 @@ class _AddTurfPageState extends State<AddTurfPage> {
     _capacityController.dispose();
     _latitudeController.dispose();
     _longitudeController.dispose();
+    _mapUrlController.dispose();
     _contactPhoneController.dispose();
     _contactEmailController.dispose();
     _rulesController.dispose();
     _slotSearchController.dispose();
+    _fullRefundHoursController.dispose();
+    _partialRefundHoursController.dispose();
+    _partialRefundPercentageController.dispose();
     super.dispose();
   }
 
@@ -357,10 +367,18 @@ class _AddTurfPageState extends State<AddTurfPage> {
         'rules': _rulesController.text.trim(),
         'contactPhone': _contactPhoneController.text.trim(),
         'contactEmail': _contactEmailController.text.trim(),
+        'cancellationPolicyEnabled': _cancellationPolicyEnabled,
+        'fullRefundHours': int.tryParse(_fullRefundHoursController.text.trim()) ?? 24,
+        'partialRefundHours': int.tryParse(_partialRefundHoursController.text.trim()) ?? 6,
+        'partialRefundPercentage': double.tryParse(_partialRefundPercentageController.text.trim()) ?? 50.0,
         if (_latitudeController.text.isNotEmpty)
           'latitude': double.tryParse(_latitudeController.text.trim()),
         if (_longitudeController.text.isNotEmpty)
           'longitude': double.tryParse(_longitudeController.text.trim()),
+        if (_mapUrlController.text.trim().isNotEmpty) ...{
+          'googleMapUrl': _mapUrlController.text.trim(),
+          'mapUrl': _mapUrlController.text.trim(),
+        },
       };
 
       final res = await _turfService.createTurf(token: token, data: data);
@@ -742,6 +760,16 @@ class _AddTurfPageState extends State<AddTurfPage> {
                   ),
                 ),
               ],
+            ),
+            SizedBox(height: 16.h),
+            _FieldLabel(label: 'Google Maps Link / Map URL (optional)', textTheme: textTheme, colors: colors),
+            SizedBox(height: 8.h),
+            MyTextField(
+              controller: _mapUrlController,
+              height: 50.h,
+              type: TextInputType.url,
+              fillColor: colors.white,
+              hintText: 'e.g. https://maps.google.com/?q=12.9716,77.5946',
             ),
 
             SizedBox(height: 24.h),

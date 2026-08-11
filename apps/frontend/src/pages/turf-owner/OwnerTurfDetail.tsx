@@ -77,7 +77,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     );
 }
 
-function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value?: string | number | null }) {
+function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value?: React.ReactNode }) {
     if (!value) return null;
     return (
         <div className="flex items-start gap-3">
@@ -111,6 +111,11 @@ export default function OwnerTurfDetail() {
         pricePerHour: "", contactPhone: "", contactEmail: "", capacity: "",
         surfaceType: "", sports: [] as string[], amenities: [] as string[],
         availableSlots: [] as string[], rules: "", latitude: "", longitude: "",
+        googleMapUrl: "",
+        cancellationPolicyEnabled: true,
+        fullRefundHours: 24,
+        partialRefundHours: 6,
+        partialRefundPercentage: 50,
     });
     const [images, setImages] = useState<UploadedImage[]>([]);
     const [primaryIndex, setPrimaryIndex] = useState(0);
@@ -150,6 +155,11 @@ export default function OwnerTurfDetail() {
             rules: t.rules ?? "",
             latitude: (t as any).latitude ? String((t as any).latitude) : "",
             longitude: (t as any).longitude ? String((t as any).longitude) : "",
+            googleMapUrl: t.googleMapUrl ?? (t as any).mapUrl ?? "",
+            cancellationPolicyEnabled: t.cancellationPolicyEnabled ?? true,
+            fullRefundHours: t.fullRefundHours ?? 24,
+            partialRefundHours: t.partialRefundHours ?? 6,
+            partialRefundPercentage: t.partialRefundPercentage ?? 50,
         });
         // Represent existing images as UploadedImage objects for the uploader
         const existingImages: UploadedImage[] = (t.images ?? []).map((url) => ({
@@ -202,6 +212,12 @@ export default function OwnerTurfDetail() {
                 contactEmail: formData.contactEmail || undefined,
                 latitude: formData.latitude ? parseFloat(formData.latitude) : undefined,
                 longitude: formData.longitude ? parseFloat(formData.longitude) : undefined,
+                googleMapUrl: formData.googleMapUrl || undefined,
+                mapUrl: formData.googleMapUrl || undefined,
+                cancellationPolicyEnabled: formData.cancellationPolicyEnabled,
+                fullRefundHours: Number(formData.fullRefundHours),
+                partialRefundHours: Number(formData.partialRefundHours),
+                partialRefundPercentage: Number(formData.partialRefundPercentage),
             });
             setTurf(data);
             setEditing(false);
@@ -334,6 +350,14 @@ export default function OwnerTurfDetail() {
                             <div className="space-y-3 pt-2">
                                 <InfoRow icon={<MapPin className="w-4 h-4" />} label="Address"
                                     value={[turf.address, turf.city, turf.state, turf.pincode].filter(Boolean).join(", ")} />
+                                {(turf.googleMapUrl || (turf as any).mapUrl) && (
+                                    <InfoRow icon={<MapPin className="w-4 h-4" />} label="Map Location"
+                                        value={
+                                            <a href={turf.googleMapUrl || (turf as any).mapUrl} target="_blank" rel="noopener noreferrer" className="text-[#E33E33] hover:underline font-bold flex items-center gap-1">
+                                                View on Google Maps
+                                            </a>
+                                        } />
+                                )}
                                 <InfoRow icon={<Star className="w-4 h-4" />} label="Price"
                                     value={`₹${turf.pricePerHour}/hour`} />
                                 <InfoRow icon={<Star className="w-4 h-4" />} label="Surface"
@@ -463,6 +487,12 @@ export default function OwnerTurfDetail() {
                                     <input type="number" step="any" className={inputCls} value={formData.longitude}
                                         onChange={(e) => set("longitude", e.target.value)} />
                                 </Field>
+                                <div className="md:col-span-2">
+                                    <Field label="Google Maps Link / Map URL (optional)">
+                                        <input type="url" placeholder="e.g., https://maps.google.com/?q=12.9716,77.5946" className={inputCls} value={formData.googleMapUrl}
+                                            onChange={(e) => set("googleMapUrl", e.target.value)} />
+                                    </Field>
+                                </div>
                             </div>
                         </section>
 
@@ -579,6 +609,65 @@ export default function OwnerTurfDetail() {
                                             onChange={(e) => set("contactEmail", e.target.value)} />
                                     </div>
                                 </Field>
+                            </div>
+                        </section>
+
+                        <section>
+                            <SectionTitle icon={<Clock className="w-5 h-5" />} title="Cancellation & Refund Policy" />
+                            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h4 className="text-sm font-bold text-gray-800">Enable User Cancellations & Refunds</h4>
+                                        <p className="text-xs text-gray-500">Allow users to cancel bookings according to your set refund windows.</p>
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        className="w-5 h-5 accent-[#E33E33] rounded cursor-pointer"
+                                        checked={formData.cancellationPolicyEnabled}
+                                        onChange={(e) => set("cancellationPolicyEnabled", e.target.checked)}
+                                    />
+                                </div>
+
+                                {formData.cancellationPolicyEnabled && (
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-3 border-t border-gray-200">
+                                        <Field label="100% Full Refund Window (Hours)">
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                placeholder="e.g. 24"
+                                                className={inputCls}
+                                                value={formData.fullRefundHours}
+                                                onChange={(e) => set("fullRefundHours", Number(e.target.value))}
+                                            />
+                                            <p className="text-xs text-gray-400 mt-1">Hours before booking slot start time</p>
+                                        </Field>
+
+                                        <Field label="Partial Refund Window (Hours)">
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                placeholder="e.g. 6"
+                                                className={inputCls}
+                                                value={formData.partialRefundHours}
+                                                onChange={(e) => set("partialRefundHours", Number(e.target.value))}
+                                            />
+                                            <p className="text-xs text-gray-400 mt-1">Hours before booking slot start time</p>
+                                        </Field>
+
+                                        <Field label="Partial Refund Percentage (%)">
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                max="100"
+                                                placeholder="e.g. 50"
+                                                className={inputCls}
+                                                value={formData.partialRefundPercentage}
+                                                onChange={(e) => set("partialRefundPercentage", Number(e.target.value))}
+                                            />
+                                            <p className="text-xs text-gray-400 mt-1">Percentage of total price refunded</p>
+                                        </Field>
+                                    </div>
+                                )}
                             </div>
                         </section>
 

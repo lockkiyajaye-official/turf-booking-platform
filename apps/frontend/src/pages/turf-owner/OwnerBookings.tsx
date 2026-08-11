@@ -1,33 +1,110 @@
 import { Calendar as CalendarIcon, Clock, MapPin, Search } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import api from "../../services/api";
 import type { Booking, BookingStatus } from "./types";
 
 export default function OwnerBookings() {
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
     const [search, setSearch] = useState("");
-    const [statusFilter, setStatusFilter] = useState<BookingStatus | "all">(
-        "all",
-    );
-    const [updatingBookingId, setUpdatingBookingId] = useState<string | null>(
-        null,
-    );
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [statusFilter, setStatusFilter] = useState<BookingStatus | "all">("all");
+    const [updatingBookingId, setUpdatingBookingId] = useState<string | null>(null);
 
+    const isFetchingRef = useRef(false);
+
+    // Debounce search input
     useEffect(() => {
-        fetchBookings();
-    }, []);
+        const timer = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [search]);
 
-    const fetchBookings = async () => {
+    const fetchBookings = useCallback(async (pageNum: number, isReset = false) => {
+        if (isFetchingRef.current) return;
+        isFetchingRef.current = true;
+
         try {
-            const res = await api.get("/bookings");
-            setBookings(res.data);
+            if (pageNum === 1) {
+                setLoading(true);
+            } else {
+                setLoadingMore(true);
+            }
+
+            const params: Record<string, any> = {
+                page: pageNum,
+                limit: 10,
+            };
+
+            if (statusFilter !== "all") {
+                params.status = statusFilter;
+            }
+
+            if (debouncedSearch.trim()) {
+                params.search = debouncedSearch.trim();
+            }
+
+            const res = await api.get("/bookings", { params });
+            const data = res.data;
+
+            let newItems: Booking[] = [];
+            let moreAvailable = false;
+
+            if (Array.isArray(data)) {
+                newItems = data;
+                moreAvailable = false;
+            } else if (data && Array.isArray(data.items)) {
+                newItems = data.items;
+                moreAvailable = Boolean(data.hasMore);
+            }
+
+            if (isReset || pageNum === 1) {
+                setBookings(newItems);
+            } else {
+                setBookings((prev) => {
+                    const existingIds = new Set(prev.map((b) => b.id));
+                    const filteredNew = newItems.filter((b) => !existingIds.has(b.id));
+                    return [...prev, ...filteredNew];
+                });
+            }
+
+            setHasMore(moreAvailable);
+            setPage(pageNum);
         } catch (error) {
             console.error("Failed to fetch bookings:", error);
         } finally {
             setLoading(false);
+            setLoadingMore(false);
+            isFetchingRef.current = false;
         }
-    };
+    }, [statusFilter, debouncedSearch]);
+
+    // Reset and fetch page 1 on filter/search change
+    useEffect(() => {
+        fetchBookings(1, true);
+    }, [statusFilter, debouncedSearch, fetchBookings]);
+
+    // Infinite scroll listener
+    useEffect(() => {
+        const handleScroll = () => {
+            if (
+                window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 300 &&
+                hasMore &&
+                !loadingMore &&
+                !loading &&
+                !isFetchingRef.current
+            ) {
+                fetchBookings(page + 1, false);
+            }
+        };
+
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, [hasMore, loadingMore, loading, page, fetchBookings]);
 
     const handleUpdateStatus = async (
         bookingId: string,
@@ -35,8 +112,20 @@ export default function OwnerBookings() {
     ) => {
         try {
             setUpdatingBookingId(bookingId);
-            await api.patch(`/bookings/${bookingId}/status`, { status });
-            await fetchBookings();
+            if (status === "cancelled") {
+                const reason = prompt(
+                    "Please enter reason for cancellation (customer will receive a 100% full refund):",
+                    "Slot unavailable / Turf maintenance",
+                );
+                if (reason === null) return; // Owner cancelled prompt
+                await api.post(`/bookings/${bookingId}/cancel`, {
+                    reason: reason.trim() || "Cancelled by Turf Owner",
+                });
+                alert("Booking cancelled successfully and 100% full refund initiated to customer via Razorpay.");
+            } else {
+                await api.patch(`/bookings/${bookingId}/status`, { status });
+            }
+            await fetchBookings(1, true);
         } catch (error: any) {
             alert(
                 error.response?.data?.message ||
@@ -46,33 +135,6 @@ export default function OwnerBookings() {
             setUpdatingBookingId(null);
         }
     };
-
-    const filteredBookings = useMemo(() => {
-        return bookings.filter((b) => {
-            if (statusFilter !== "all" && b.status !== statusFilter)
-                return false;
-
-            if (!search.trim()) return true;
-            const term = search.toLowerCase();
-            const userName =
-                `${b.user.firstName} ${b.user.lastName}`.toLowerCase();
-            return (
-                userName.includes(term) ||
-                (b.user.email && b.user.email.toLowerCase().includes(term)) ||
-                b.turf.name.toLowerCase().includes(term)
-            );
-        });
-    }, [bookings, statusFilter, search]);
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center p-12 min-h-screen">
-                <span className="text-gray-500 font-medium tracking-wide animate-pulse">
-                    Loading bookings...
-                </span>
-            </div>
-        );
-    }
 
     const getStatusStyle = (status: BookingStatus) => {
         switch (status) {
@@ -149,7 +211,16 @@ export default function OwnerBookings() {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredBookings.length === 0 ? (
+                            {loading && bookings.length === 0 ? (
+                                <tr>
+                                    <td
+                                        colSpan={4}
+                                        className="py-12 text-center text-gray-500 font-medium animate-pulse"
+                                    >
+                                        Loading bookings...
+                                    </td>
+                                </tr>
+                            ) : bookings.length === 0 ? (
                                 <tr>
                                     <td
                                         colSpan={4}
@@ -159,7 +230,7 @@ export default function OwnerBookings() {
                                     </td>
                                 </tr>
                             ) : (
-                                filteredBookings.map((b) => (
+                                bookings.map((b) => (
                                     <tr
                                         key={b.id}
                                         className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors"
@@ -218,36 +289,35 @@ export default function OwnerBookings() {
                                                 >
                                                     {b.status}
                                                 </span>
-                                                <select
-                                                    disabled={
-                                                        updatingBookingId ===
-                                                        b.id
-                                                    }
-                                                    value={b.status}
-                                                    onChange={(e) =>
-                                                        handleUpdateStatus(
-                                                            b.id,
-                                                            e.target
-                                                                .value as BookingStatus,
-                                                        )
-                                                    }
-                                                    className={`text-sm font-bold rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-100 disabled:opacity-50 border border-gray-200 bg-white shadow-sm cursor-pointer hover:bg-gray-50 transition-colors
-                                                        ${updatingBookingId === b.id ? "animate-pulse" : ""}
-                                                    `}
-                                                >
-                                                    <option value="pending">
-                                                        Mark Pending
-                                                    </option>
-                                                    <option value="confirmed">
-                                                        Confirm Slot
-                                                    </option>
-                                                    <option value="completed">
-                                                        Mark Completed
-                                                    </option>
-                                                    <option value="cancelled">
-                                                        Cancel Booking
-                                                    </option>
-                                                </select>
+                                                {b.status !== "cancelled" && (
+                                                    <select
+                                                        disabled={
+                                                            updatingBookingId ===
+                                                            b.id
+                                                        }
+                                                        value={b.status}
+                                                        onChange={(e) =>
+                                                            handleUpdateStatus(
+                                                                b.id,
+                                                                e.target
+                                                                    .value as BookingStatus,
+                                                            )
+                                                        }
+                                                        className={`text-sm font-bold rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-100 disabled:opacity-50 border border-gray-200 bg-white shadow-sm cursor-pointer hover:bg-gray-50 transition-colors
+                                                            ${updatingBookingId === b.id ? "animate-pulse" : ""}
+                                                        `}
+                                                    >
+                                                        <option value="confirmed">
+                                                            Confirmed (Paid)
+                                                        </option>
+                                                        <option value="completed">
+                                                            Mark Completed
+                                                        </option>
+                                                        <option value="cancelled">
+                                                            Cancel & Refund Booking
+                                                        </option>
+                                                    </select>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -256,6 +326,11 @@ export default function OwnerBookings() {
                         </tbody>
                     </table>
                 </div>
+                {loadingMore && (
+                    <div className="py-4 text-center text-xs font-bold text-gray-500 bg-gray-50/50 border-t border-gray-100 animate-pulse">
+                        Loading more bookings...
+                    </div>
+                )}
             </div>
         </div>
     );

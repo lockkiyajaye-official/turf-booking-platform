@@ -22,8 +22,18 @@ export class UsersController {
     constructor(private readonly usersService: UsersService) { }
 
     @Get()
-    findAll(@Query('role') role?: UserRole) {
-        return this.usersService.findAll(role);
+    findAll(
+        @Query('role') role?: UserRole,
+        @Query('search') search?: string,
+        @Query('page') page?: string,
+        @Query('limit') limit?: string,
+    ) {
+        return this.usersService.findAll(
+            role,
+            search,
+            page ? parseInt(page, 10) : undefined,
+            limit ? parseInt(limit, 10) : undefined,
+        );
     }
 
     @Get('statistics')

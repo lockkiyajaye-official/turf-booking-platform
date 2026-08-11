@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobile/core/responsive/screen_extensions.dart';
@@ -14,19 +15,55 @@ class OwnerBookingsPage extends StatefulWidget {
 class _OwnerBookingsPageState extends State<OwnerBookingsPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final TextEditingController _searchCtrl = TextEditingController();
+  final ScrollController _scrollCtrl = ScrollController();
+  Timer? _debounce;
+
+  static const _tabStatuses = ['', 'pending', 'confirmed', 'cancelled'];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+
+    // Infinite scroll
+    _scrollCtrl.addListener(_onScroll);
+
+    // Tab change → refetch with correct status
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) return;
+      final vm = Get.find<OwnerViewmodel>();
+      final status = _tabStatuses[_tabController.index];
+      vm.fetchAllBookings(status: status, search: _searchCtrl.text.trim());
+    });
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Get.find<OwnerViewmodel>().fetchAllBookings();
+    });
+  }
+
+  void _onScroll() {
+    if (_scrollCtrl.position.pixels >=
+        _scrollCtrl.position.maxScrollExtent - 200) {
+      Get.find<OwnerViewmodel>().loadNextPage();
+    }
+  }
+
+  void _onSearchChanged(String val) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      final vm = Get.find<OwnerViewmodel>();
+      final status = _tabStatuses[_tabController.index];
+      vm.fetchAllBookings(status: status, search: val.trim());
     });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _searchCtrl.dispose();
+    _scrollCtrl.dispose();
+    _debounce?.cancel();
     super.dispose();
   }
 
@@ -41,72 +78,108 @@ class _OwnerBookingsPageState extends State<OwnerBookingsPage>
       appBar: AppBar(
         backgroundColor: colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-          color: colors.textTitle,
-          onPressed: () => Get.back(),
-        ),
+        automaticallyImplyLeading: false,
         title: Text(
           'Bookings',
           style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
         ),
         centerTitle: true,
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: colors.primary,
-          labelColor: colors.primary,
-          unselectedLabelColor: colors.textGrey,
-          labelStyle: textTheme.bodySmall
-              ?.copyWith(fontWeight: FontWeight.w600, fontSize: 12.sp),
-          tabs: const [
-            Tab(text: 'All'),
-            Tab(text: 'Pending'),
-            Tab(text: 'Confirmed'),
-            Tab(text: 'Cancelled'),
-          ],
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(100.h),
+          child: Column(
+            children: [
+              // Search bar
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                child: TextField(
+                  controller: _searchCtrl,
+                  onChanged: _onSearchChanged,
+                  decoration: InputDecoration(
+                    hintText: 'Search customer or turf...',
+                    hintStyle: textTheme.bodySmall?.copyWith(
+                      color: colors.textGrey,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search_rounded,
+                      size: 18,
+                      color: colors.textGrey,
+                    ),
+                    filled: true,
+                    fillColor: colors.background,
+                    contentPadding: EdgeInsets.symmetric(
+                      vertical: 0,
+                      horizontal: 12.w,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: colors.borderSecondary),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: colors.borderSecondary),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: colors.primary, width: 1.5),
+                    ),
+                  ),
+                ),
+              ),
+              // Status tabs
+              TabBar(
+                controller: _tabController,
+                indicatorColor: colors.primary,
+                labelColor: colors.primary,
+                unselectedLabelColor: colors.textGrey,
+                labelStyle: textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12.sp,
+                ),
+                tabs: const [
+                  Tab(text: 'All'),
+                  Tab(text: 'Pending'),
+                  Tab(text: 'Confirmed'),
+                  Tab(text: 'Cancelled'),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
       body: Obx(() {
         if (vm.isBookingsLoading.value && vm.allBookings.isEmpty) {
           return Center(
-              child: CircularProgressIndicator(color: colors.primary));
+            child: CircularProgressIndicator(color: colors.primary),
+          );
         }
 
-        final all = vm.allBookings.toList();
-        final pending =
-            all.where((b) => b['status'] == 'pending').toList();
-        final confirmed =
-            all.where((b) => b['status'] == 'confirmed').toList();
-        final cancelled =
-            all.where((b) => b['status'] == 'cancelled').toList();
+        final bookings = vm.allBookings.toList();
 
         return RefreshIndicator(
           color: colors.primary,
-          onRefresh: () => vm.fetchAllBookings(),
+          onRefresh: () {
+            final status = _tabStatuses[_tabController.index];
+            return vm.fetchAllBookings(
+              status: status,
+              search: _searchCtrl.text.trim(),
+            );
+          },
           child: TabBarView(
             controller: _tabController,
-            children: [
-              _BookingList(
-                  bookings: all,
-                  colors: colors,
-                  textTheme: textTheme,
-                  vm: vm),
-              _BookingList(
-                  bookings: pending,
-                  colors: colors,
-                  textTheme: textTheme,
-                  vm: vm),
-              _BookingList(
-                  bookings: confirmed,
-                  colors: colors,
-                  textTheme: textTheme,
-                  vm: vm),
-              _BookingList(
-                  bookings: cancelled,
-                  colors: colors,
-                  textTheme: textTheme,
-                  vm: vm),
-            ],
+            // Each tab shows the same list — filtering is done server-side.
+            // Only the "All" tab attaches the scroll controller; the other
+            // tabs each reload via the tab-change listener.
+            children: List.generate(4, (i) {
+              return _BookingList(
+                bookings: bookings,
+                colors: colors,
+                textTheme: textTheme,
+                vm: vm,
+                scrollController: i == _tabController.index
+                    ? _scrollCtrl
+                    : null,
+              );
+            }),
           ),
         );
       }),
@@ -120,43 +193,72 @@ class _BookingList extends StatelessWidget {
   final AppColors colors;
   final TextTheme textTheme;
   final OwnerViewmodel vm;
+  final ScrollController? scrollController;
 
   const _BookingList({
     required this.bookings,
     required this.colors,
     required this.textTheme,
     required this.vm,
+    this.scrollController,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (bookings.isEmpty) {
+    if (bookings.isEmpty && !vm.isBookingsLoading.value) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.calendar_today_outlined,
-                size: 48, color: colors.textGrey.withOpacity(0.4)),
+            Icon(
+              Icons.calendar_today_outlined,
+              size: 48,
+              color: colors.textGrey.withValues(alpha: 0.4),
+            ),
             SizedBox(height: 12.h),
             Text(
               'No bookings here',
-              style:
-                  textTheme.bodyMedium?.copyWith(color: colors.textGrey),
+              style: textTheme.bodyMedium?.copyWith(color: colors.textGrey),
             ),
           ],
         ),
       );
     }
+
+    final hasMore = vm.bookingsHasMore.value;
+    final isFetchingMore = vm.isFetchingMore.value;
+
     return ListView.separated(
+      controller: scrollController,
       padding: EdgeInsets.all(16.w),
-      itemCount: bookings.length,
-      separatorBuilder: (_, __) => SizedBox(height: 12.h),
-      itemBuilder: (context, i) => _BookingCard(
-        booking: bookings[i],
-        colors: colors,
-        textTheme: textTheme,
-        vm: vm,
-      ),
+      // +1 for the loading footer when more data exists
+      itemCount: bookings.length + (hasMore ? 1 : 0),
+      separatorBuilder: (_, _a) => SizedBox(height: 12.h),
+      itemBuilder: (context, i) {
+        if (i == bookings.length) {
+          // Loading footer
+          return Padding(
+            padding: EdgeInsets.symmetric(vertical: 16.h),
+            child: Center(
+              child: isFetchingMore
+                  ? CircularProgressIndicator(
+                      color: colors.primary,
+                      strokeWidth: 2,
+                    )
+                  : Text(
+                      'Scroll for more',
+                      style: TextStyle(color: colors.textGrey, fontSize: 12.sp),
+                    ),
+            ),
+          );
+        }
+        return _BookingCard(
+          booking: bookings[i],
+          colors: colors,
+          textTheme: textTheme,
+          vm: vm,
+        );
+      },
     );
   }
 }
@@ -194,15 +296,20 @@ class _BookingCard extends StatelessWidget {
     final status = (booking['status'] as String? ?? 'pending').toLowerCase();
 
     final turfObj = booking['turf'];
-    final turfName = (turfObj is Map ? turfObj['name'] as String? : null) ??
+    final turfName =
+        (turfObj is Map ? turfObj['name'] as String? : null) ??
         booking['turfName'] as String? ??
         'Unknown Turf';
 
     final userObj = booking['user'];
-    final userName = (userObj is Map ? userObj['name'] as String? : null) ??
+    final userName =
+        (userObj is Map ? userObj['name'] as String? : null) ??
         booking['userName'] as String? ??
         'Player';
-    final userPhone = (userObj is Map ? (userObj['phone'] ?? userObj['contactPhone']) as String? : null) ??
+    final userPhone =
+        (userObj is Map
+            ? (userObj['phone'] ?? userObj['contactPhone']) as String?
+            : null) ??
         booking['userPhone'] as String? ??
         '';
 
@@ -214,8 +321,11 @@ class _BookingCard extends StatelessWidget {
 
     final startTime = booking['startTime'] as String? ?? '';
     final endTime = booking['endTime'] as String? ?? '';
-    final amount = booking['totalPrice'] ?? booking['totalAmount'] ?? booking['price'] ?? 0;
-    final isPending = status == 'pending';
+    final amount =
+        booking['totalPrice'] ??
+        booking['totalAmount'] ??
+        booking['price'] ??
+        0;
 
     return Container(
       padding: EdgeInsets.all(16.w),
@@ -249,8 +359,7 @@ class _BookingCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding:
-                    EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                 decoration: BoxDecoration(
                   color: _statusColor(status).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -307,10 +416,9 @@ class _BookingCard extends StatelessWidget {
               _InfoItem(
                 icon: Icons.access_time_rounded,
                 label: 'Time',
-                value:
-                    (startTime.isNotEmpty && endTime.isNotEmpty)
-                        ? '$startTime – $endTime'
-                        : '—',
+                value: (startTime.isNotEmpty && endTime.isNotEmpty)
+                    ? '$startTime – $endTime'
+                    : '—',
                 colors: colors,
                 textTheme: textTheme,
               ),
@@ -327,8 +435,10 @@ class _BookingCard extends StatelessWidget {
                 children: [
                   Text(
                     'Total Amount',
-                    style: textTheme.bodySmall
-                        ?.copyWith(color: colors.textGrey, fontSize: 11.sp),
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colors.textGrey,
+                      fontSize: 11.sp,
+                    ),
                   ),
                   Text(
                     '₹$amount',
@@ -340,39 +450,23 @@ class _BookingCard extends StatelessWidget {
                 ],
               ),
               const Spacer(),
-              if (isPending) ...[
+              if (status != 'cancelled') ...[
                 OutlinedButton(
                   onPressed: () => _confirmCancel(context, id),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Color(0xFFE43434)),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     padding: EdgeInsets.symmetric(
-                        horizontal: 14.w, vertical: 8.h),
-                  ),
-                  child: Text(
-                    'Decline',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFFE43434),
-                      fontWeight: FontWeight.w600,
+                      horizontal: 14.w,
+                      vertical: 8.h,
                     ),
                   ),
-                ),
-                SizedBox(width: 8.w),
-                ElevatedButton(
-                  onPressed: () => vm.confirmBooking(id),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF059669),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
-                    elevation: 0,
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 14.w, vertical: 8.h),
-                  ),
                   child: Text(
-                    'Confirm',
+                    'Cancel & Refund',
                     style: textTheme.bodySmall?.copyWith(
-                      color: Colors.white,
+                      color: const Color(0xFFE43434),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -386,23 +480,63 @@ class _BookingCard extends StatelessWidget {
   }
 
   void _confirmCancel(BuildContext context, String id) {
+    final reasonController = TextEditingController(
+      text: 'Slot unavailable / Turf maintenance',
+    );
+
     Get.dialog(
       AlertDialog(
-        title: const Text('Cancel Booking'),
-        content:
-            const Text('Are you sure you want to cancel this booking?'),
+        title: const Text('Cancel & Refund Booking'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Cancelling this booking will issue a 100% full refund back to the customer via Razorpay.',
+              style: TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Reason for Cancellation:',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+            const SizedBox(height: 6),
+            TextField(
+              controller: reasonController,
+              decoration: const InputDecoration(
+                hintText: 'Enter reason...',
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
+              ),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: const Text('No'),
+            child: const Text('Keep Booking'),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () {
+              final reason = reasonController.text.trim().isNotEmpty
+                  ? reasonController.text.trim()
+                  : 'Cancelled by Turf Owner';
               Get.back();
-              vm.cancelBooking(id);
+              vm.cancelBooking(id, reason: reason);
             },
-            child: const Text('Yes, Cancel',
-                style: TextStyle(color: Color(0xFFE43434))),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE43434),
+            ),
+            child: const Text(
+              'Confirm Cancel & Refund',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),

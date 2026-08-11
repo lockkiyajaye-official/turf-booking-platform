@@ -43,6 +43,8 @@ export class TurfsController {
         ? query.amenities.split(',').filter((a: string) => a)
         : undefined,
       includeDrafts: query.includeDrafts === 'true',
+      page: query.page ? parseInt(query.page, 10) : undefined,
+      limit: query.limit ? parseInt(query.limit, 10) : undefined,
     };
     // If user is authenticated and is a turf owner, they can see their drafts
     const ownerId = req?.user?.id && req?.user?.role === UserRole.TURF_OWNER ? req.user.id : undefined;
@@ -52,8 +54,17 @@ export class TurfsController {
   @Get('my-turfs')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.TURF_OWNER)
-  findMyTurfs(@Request() req) {
-    return this.turfsService.findByOwner(req.user.id);
+  findMyTurfs(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Request() req?: any,
+  ) {
+    return this.turfsService.findByOwner(
+      req.user.id,
+      true,
+      page ? parseInt(page, 10) : undefined,
+      limit ? parseInt(limit, 10) : undefined,
+    );
   }
 
   @Get('availability/:id')
