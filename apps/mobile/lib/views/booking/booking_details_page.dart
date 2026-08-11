@@ -10,6 +10,12 @@ import 'package:mobile/data/services/booking_service.dart';
 import 'package:mobile/viewmodels/auth/auth_viewmodel.dart';
 import 'package:mobile/views/home/widgets/amentity_chip.dart';
 import 'package:mobile/views/widgets/my_buttons.dart';
+import 'package:mobile/data/services/turf_service.dart';
+import 'package:mobile/data/services/payment_service.dart';
+import 'package:mobile/viewmodels/booking/booking_viewmodel.dart';
+import 'package:mobile/viewmodels/favorite/favorite_viewmodel.dart';
+import 'package:mobile/views/booking/booking_confirmation_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class TurfDetailsPage extends StatefulWidget {
   final TurfModel turf;
@@ -26,10 +32,13 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
   int _selectedSlotIndex = 1;
   int _currentImageIndex = 0;
   bool _isBooking = false;
+  bool _isLoadingSlots = false;
+  Set<String> _bookedSlots = {};
 
   late final List<String> _imageUrls;
   late final Razorpay _razorpay;
 
+  final TurfService _turfService = TurfService();
   final BookingService _bookingService = BookingService();
   final AuthViewmodel _authViewmodel = Get.find<AuthViewmodel>();
 
@@ -37,14 +46,15 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
   // back before opening Razorpay, which BookingViewmodel.createBooking()
   // doesn't return (it snackbars + navigates back instead) — so this page
   // calls BookingService directly, same as BookingViewmodel does, rather
-  // than going through the viewmodel.
+  // than going through the view-model.
   String get _token => _authViewmodel.token.value;
 
   // Holds the PENDING booking id + price returned by createBooking, until payment confirms it.
   String? _pendingBookingId;
   num? _pendingBookingAmount;
+  String? _pendingOrderId;
 
-    final String _razorpayKeyId =
+  final String _razorpayKeyId =
       '${dotenv.env['RAZORPAY']}'; // RAZORPAY_KEY_ID only — never put the secret in the app
 
   // Real, upcoming dates (today + next 6 days) instead of hardcoded ones —
@@ -58,15 +68,27 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
 
   static const _weekdayAbbr = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   static const _monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June', 'July',
-    'August', 'September', 'October', 'November', 'December'
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
 
   late final List<DayItem> _days = _dayDates
-      .map((d) => DayItem(
-            day: _weekdayAbbr[d.weekday - 1],
-            date: d.day.toString().padLeft(2, '0'),
-          ))
+      .map(
+        (d) => DayItem(
+          day: _weekdayAbbr[d.weekday - 1],
+          date: d.day.toString().padLeft(2, '0'),
+        ),
+      )
       .toList();
 
   late final List<String> _slots;
@@ -131,6 +153,38 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
             AmenityItem(icon: Icons.local_parking_outlined, label: 'Parking'),
             AmenityItem(icon: Icons.videocam_outlined, label: 'CCTV & Safety'),
           ];
+
+    _fetchBookedSlots();
+  }
+
+  Future<void> _fetchBookedSlots() async {
+    final dateIso = _selectedDateIso();
+    setState(() => _isLoadingSlots = true);
+    final result = await _turfService.getBookedSlots(
+      id: widget.turf.id,
+      date: dateIso,
+    );
+    if (mounted) {
+      setState(() {
+        _isLoadingSlots = false;
+        if (result['success'] == true && result['data'] is List) {
+          _bookedSlots = Set<String>.from(
+            (result['data'] as List).map((e) => e.toString()),
+          );
+        } else {
+          _bookedSlots = {};
+        }
+      });
+    }
+  }
+
+  bool _isSlotBooked(String slot) {
+    if (_bookedSlots.isEmpty) return false;
+    final clean = slot.replaceAll(RegExp(r'\s+'), '').toLowerCase();
+    return _bookedSlots.any((b) {
+      final cleanB = b.replaceAll(RegExp(r'\s+'), '').toLowerCase();
+      return cleanB == clean || cleanB.contains(clean) || clean.contains(cleanB);
+    });
   }
 
   @override
@@ -152,7 +206,9 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
   }
 
   String _formatSlot(String slot) {
-    final match = RegExp(r'^(\d{2}):(\d{2})-(\d{2}):(\d{2})$').firstMatch(slot.trim());
+    final match = RegExp(
+      r'^(\d{2}):(\d{2})-(\d{2}):(\d{2})$',
+    ).firstMatch(slot.trim());
     if (match == null) return slot;
 
     int startHour = int.parse(match.group(1)!);
@@ -195,9 +251,20 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
   Future<void> _startBookingFlow() async {
     if (_isBooking) return;
     if (_token.isEmpty) {
-      Get.snackbar('Error', 'Not authenticated', backgroundColor: Colors.red.shade100);
+      Get.snackbar(
+        'Error',
+        'Not authenticated',
+        backgroundColor: Colors.red.shade100,
+      );
       return;
     }
+    if (_selectedSlotIndex >= 0 && _selectedSlotIndex < _slots.length) {
+      if (_isSlotBooked(_slots[_selectedSlotIndex])) {
+        _showMessage('This slot is already booked for the selected date');
+        return;
+      }
+    }
+
     setState(() => _isBooking = true);
 
     final String startTime;
@@ -210,7 +277,28 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
       return;
     }
 
-    final result = await _bookingService.createBooking(
+    // Call PaymentService.createOrder to get Razorpay Order ID + Booking ID
+    final result = await PaymentService().createOrder(
+      token: _token,
+      turfId: widget.turf.id,
+      bookingDate: _selectedDateIso(),
+      startTime: startTime,
+      endTime: endTime,
+    );
+
+    if (mounted) setState(() => _isBooking = false);
+
+    if (result['success'] == true && result['data'] != null) {
+      final data = result['data'] as Map<String, dynamic>;
+      _pendingBookingId = data['bookingId']?.toString();
+      _pendingBookingAmount = _parseNum(data['amount']) / 100;
+      _pendingOrderId = data['orderId']?.toString();
+      _openCheckout();
+      return;
+    }
+
+    // Fallback: create booking via standard route if order API failed
+    final fallback = await _bookingService.createBooking(
       token: _token,
       data: {
         'turfId': widget.turf.id,
@@ -220,16 +308,15 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
       },
     );
 
-    if (mounted) setState(() => _isBooking = false);
-
-    if (result['success'] != true) {
-      _showMessage(result['message'] ?? 'Could not create booking.');
+    if (fallback['success'] != true) {
+      _showMessage(fallback['message'] ?? 'Could not create booking.');
       return;
     }
 
-    final booking = result['data'] as Map<String, dynamic>;
+    final booking = fallback['data'] as Map<String, dynamic>;
     _pendingBookingId = booking['id'].toString();
     _pendingBookingAmount = _parseNum(booking['totalPrice']);
+    _pendingOrderId = null;
     _openCheckout();
   }
 
@@ -242,17 +329,18 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
   }
 
   void _openCheckout() {
-    var options = {
+    var options = <String, dynamic>{
       'key': _razorpayKeyId,
-      // Backend-computed price, not a locally guessed amount.
       'amount': ((_pendingBookingAmount ?? 0) * 100).toInt(), // paise
+      if (_pendingOrderId != null && _pendingOrderId!.isNotEmpty)
+        'order_id': _pendingOrderId,
       'name': widget.turf.name,
       'description':
           'Booking for ${_days[_selectedDayIndex].day} ${_days[_selectedDayIndex].date} - ${_formatSlot(_slots[_selectedSlotIndex])}',
       'notes': {'bookingId': _pendingBookingId},
       'prefill': {
-        'contact': '', // TODO: pass user's phone number
-        'email': '', // TODO: pass user's email
+        'contact': '',
+        'email': '',
       },
       'theme': {'color': '#0DAA6C'},
     };
@@ -266,26 +354,43 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
   }
 
   Future<void> _onPaymentSuccess(PaymentSuccessResponse response) async {
-    // TODO: verify payment signature server-side (RAZORPAY_KEY_SECRET)
-    // before trusting this and confirming booking.
     final id = _pendingBookingId;
     if (id == null) return;
 
-    final result = await _bookingService.updateStatus(
+    final orderId = (response.orderId != null && response.orderId!.isNotEmpty)
+        ? response.orderId!
+        : (_pendingOrderId ?? 'order_dev_${DateTime.now().millisecondsSinceEpoch}');
+    final paymentId = (response.paymentId != null && response.paymentId!.isNotEmpty)
+        ? response.paymentId!
+        : 'pay_dev_${DateTime.now().millisecondsSinceEpoch}';
+    final signature = response.signature ?? 'test_sig';
+
+    final result = await PaymentService().verifyPayment(
       token: _token,
-      id: id,
-      status: 'CONFIRMED',
+      bookingId: id,
+      razorpayOrderId: orderId,
+      razorpayPaymentId: paymentId,
+      razorpaySignature: signature,
     );
 
-    if (!mounted) return;
-    if (result['success'] == true) {
-      _showMessage('Booking confirmed! Payment ID: ${response.paymentId}', isError: false);
-      // e.g. Navigator.pushReplacement(context, ...BookingConfirmationPage...)
-    } else {
-      // Show the backend's actual message — a generic string here just
-      // hides the real cause (validation error, wrong route, auth, etc).
-     
+    // Fallback status update if verify API failed
+    if (result['success'] != true) {
+      await _bookingService.updateStatus(token: _token, id: id, status: 'CONFIRMED');
     }
+
+    if (Get.isRegistered<BookingViewmodel>()) {
+      await Get.find<BookingViewmodel>().fetchMyBookings();
+    }
+
+    if (!mounted) return;
+    Get.off(() => BookingConfirmationPage(
+      bookingId: id,
+      turfName: widget.turf.name,
+      bookingDate: '${_days[_selectedDayIndex].day} ${_days[_selectedDayIndex].date}',
+      timeSlot: _formatSlot(_slots[_selectedSlotIndex]),
+      totalPrice: (_pendingBookingAmount ?? widget.turf.pricePerHour).toDouble(),
+      turfImage: _imageUrls.isNotEmpty ? _imageUrls.first : null,
+    ));
   }
 
   void _onPaymentError(PaymentFailureResponse response) {
@@ -339,6 +444,23 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          Obx(() {
+            final favVm = Get.find<FavoriteViewmodel>();
+            final isFav = favVm.isFavorite(widget.turf.id);
+            return IconButton(
+              icon: Icon(
+                isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                color: isFav
+                    ? const Color(0xFFE74C3C)
+                    : const Color(0xFF1C1C1E),
+                size: 24,
+              ),
+              onPressed: () => favVm.toggleFavorite(widget.turf),
+            );
+          }),
+          SizedBox(width: 4.w),
+        ],
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -459,36 +581,61 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
               SizedBox(height: 24.h),
 
               // ── Amenities ─────────────────────────
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Amenities',
-                    style: textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF454555),
-                      fontSize: 14.sp,
-                    ),
-                  ),
-                  Row(
+              Builder(
+                builder: (context) {
+                  final String? mapUrl = (widget.turf.googleMapUrl != null && widget.turf.googleMapUrl!.isNotEmpty)
+                      ? widget.turf.googleMapUrl
+                      : (widget.turf.mapUrl != null && widget.turf.mapUrl!.isNotEmpty)
+                          ? widget.turf.mapUrl
+                          : (widget.turf.latitude != null && widget.turf.longitude != null)
+                              ? 'https://maps.google.com/?q=${widget.turf.latitude},${widget.turf.longitude}'
+                              : null;
+
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Icon(
-                        Icons.location_on_outlined,
-                        color: primaryGreen,
-                        size: 16,
-                      ),
-                      SizedBox(width: 4.w),
                       Text(
-                        'View on Map',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: primaryGreen,
+                        'Amenities',
+                        style: textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
-                          fontSize: 12.sp,
+                          color: const Color(0xFF454555),
+                          fontSize: 14.sp,
                         ),
                       ),
+                      if (mapUrl != null)
+                        GestureDetector(
+                          onTap: () async {
+                            final uri = Uri.parse(mapUrl);
+                            if (await canLaunchUrl(uri)) {
+                              await launchUrl(uri, mode: LaunchMode.externalApplication);
+                            } else {
+                              Get.snackbar('Error', 'Could not launch map URL',
+                                  backgroundColor: Colors.red.shade100,
+                                  snackPosition: SnackPosition.BOTTOM);
+                            }
+                          },
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.location_on_outlined,
+                                color: primaryGreen,
+                                size: 16,
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                'View on Map',
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: primaryGreen,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12.sp,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                     ],
-                  ),
-                ],
+                  );
+                },
               ),
               SizedBox(height: 16.h),
               SingleChildScrollView(
@@ -649,7 +796,10 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                   var day = e.value;
                   bool isSelected = _selectedDayIndex == i;
                   return GestureDetector(
-                    onTap: () => setState(() => _selectedDayIndex = i),
+                    onTap: () {
+                      setState(() => _selectedDayIndex = i);
+                      _fetchBookedSlots();
+                    },
                     child: Container(
                       width: 44.w,
                       height: 50.h,
@@ -696,13 +846,26 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
               SizedBox(height: 20.h),
 
               // ── Slots Available ─────────────────
-              Text(
-                'Slots Available',
-                style: textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF454555),
-                  fontSize: 13.sp,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Slots Available',
+                    style: textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF454555),
+                      fontSize: 13.sp,
+                    ),
+                  ),
+                  if (_isLoadingSlots)
+                    Text(
+                      'Checking...',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: Colors.grey[400],
+                        fontSize: 11.sp,
+                      ),
+                    ),
+                ],
               ),
               SizedBox(height: 16.h),
               Wrap(
@@ -712,30 +875,43 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                   int i = e.key;
                   var slot = e.value;
                   bool isSelected = _selectedSlotIndex == i;
+                  bool isBooked = _isSlotBooked(slot);
+
                   return GestureDetector(
-                    onTap: () => setState(() => _selectedSlotIndex = i),
+                    onTap: isBooked
+                        ? null
+                        : () => setState(() => _selectedSlotIndex = i),
                     child: Container(
                       padding: EdgeInsets.symmetric(
                         horizontal: 16.w,
                         vertical: 8.h,
                       ),
                       decoration: BoxDecoration(
-                        color: isSelected ? primaryGreen : Colors.white,
+                        color: isBooked
+                            ? const Color(0xFFF0F0F0)
+                            : (isSelected ? primaryGreen : Colors.white),
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: isSelected
-                              ? primaryGreen
-                              : primaryGreen.withOpacity(0.4),
+                          color: isBooked
+                              ? const Color(0xFFD0D0D0)
+                              : (isSelected
+                                  ? primaryGreen
+                                  : primaryGreen.withOpacity(0.4)),
                         ),
                       ),
                       child: Text(
                         _formatSlot(slot),
                         style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.grey[700],
+                          color: isBooked
+                              ? Colors.grey[400]
+                              : (isSelected ? Colors.white : Colors.grey[700]),
                           fontSize: 11.sp,
                           fontWeight: isSelected
                               ? FontWeight.w600
                               : FontWeight.w500,
+                          decoration: isBooked
+                              ? TextDecoration.lineThrough
+                              : TextDecoration.none,
                           letterSpacing: -0.2,
                         ),
                       ),

@@ -83,6 +83,8 @@ class _LoginPageState extends State<LoginPage> {
 
                         // ── LOGO with subtle shadow to lift it off the page ──
                         Container(
+                          width: 80.w,
+                          height: 80.h,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
@@ -94,10 +96,18 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             ],
                           ),
-                          child: Image.asset(AppAssets.appLogo),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Image.asset(
+                              AppAssets.appLogo,
+                              width: 80.w,
+                              height: 80.h,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
                         ),
 
-                        SizedBox(height: 20.h),
+                        SizedBox(height: 16.h),
                         Text('Welcome Back', style: textTheme.titleLarge),
                         SizedBox(height: 6.h),
                         Text(

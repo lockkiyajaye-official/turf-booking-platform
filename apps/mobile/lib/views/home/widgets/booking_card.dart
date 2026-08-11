@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobile/data/models/turf_model.dart';
-import 'booking_details.dart';
+import 'package:mobile/viewmodels/favorite/favorite_viewmodel.dart';
+import 'package:mobile/views/booking/booking_details_page.dart';
 
 class VenueCard extends StatelessWidget {
   final TurfModel turf;
   final VoidCallback? onBookNow;
+  final double? distanceKm;
 
   const VenueCard({
     super.key,
     required this.turf,
     this.onBookNow,
+    this.distanceKm,
   });
 
   @override
@@ -39,7 +42,7 @@ class VenueCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Image with rating badge ──────────────────────────
+              // ── Image with rating badge & Favorite Button ────────
               SizedBox(
                 width: 142,
                 height: 142,
@@ -52,7 +55,7 @@ class VenueCard extends StatelessWidget {
                         width: 142,
                         height: 142,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
+                        errorBuilder: (context, error, stackTrace) => Container(
                           width: 142,
                           height: 142,
                           decoration: BoxDecoration(
@@ -108,6 +111,41 @@ class VenueCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                    // Favorite button
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Obx(() {
+                        final favVm = Get.find<FavoriteViewmodel>();
+                        final isFav = favVm.isFavorite(turf.id);
+                        return GestureDetector(
+                          onTap: () => favVm.toggleFavorite(turf),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              isFav
+                                  ? Icons.favorite_rounded
+                                  : Icons.favorite_border_rounded,
+                              size: 18,
+                              color: isFav
+                                  ? const Color(0xFFE74C3C)
+                                  : const Color(0xFF7F8C8D),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
                   ],
                 ),
               ),
@@ -135,17 +173,46 @@ class VenueCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
 
-                      // Location
-                      Text(
-                        turf.address,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF7F8C8D),
-                          fontWeight: FontWeight.w500,
-                          height: 1.3,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                      // Location & Distance
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              turf.address,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF7F8C8D),
+                                fontWeight: FontWeight.w500,
+                                height: 1.3,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (distanceKm != null) ...[
+                            const SizedBox(width: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE8F5E9),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                distanceKm! < 1
+                                    ? '${(distanceKm! * 1000).round()} m'
+                                    : '${distanceKm!.toStringAsFixed(1)} km',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2E7D32),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
 
                       const Spacer(),

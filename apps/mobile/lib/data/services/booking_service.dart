@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:mobile/core/constants/app_constants.dart';
 
 class BookingService {
-  static const String _base = '${AppConstants.baseUrl}/bookings';
+  static String get _base => '${AppConstants.baseUrl}/bookings';
 
   Map<String, String> _headers(String token) {
     return {
@@ -58,9 +58,23 @@ class BookingService {
     }
   }
 
-  Future<Map<String, dynamic>> findAll(String token) async {
+  Future<Map<String, dynamic>> findAll(
+    String token, {
+    int page = 1,
+    int limit = 10,
+    String? status,
+    String? search,
+  }) async {
     try {
-      final response = await http.get(Uri.parse(_base), headers: _headers(token));
+      final queryParams = <String, String>{
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
+      if (status != null && status.isNotEmpty) queryParams['status'] = status;
+      if (search != null && search.isNotEmpty) queryParams['search'] = search;
+
+      final uri = Uri.parse(_base).replace(queryParameters: queryParams);
+      final response = await http.get(uri, headers: _headers(token));
       return _handleResponse(response);
     } catch (e) {
       return {'success': false, 'message': e.toString()};
@@ -125,11 +139,24 @@ class BookingService {
     }
   }
 
-  Future<Map<String, dynamic>> cancelBooking(String token, String id) async {
+  Future<Map<String, dynamic>> getCancellationPreview(String token, String id) async {
     try {
-      final response = await http.patch(
+      final response = await http.get(
+        Uri.parse('$_base/$id/cancellation-preview'),
+        headers: _headers(token),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>> cancelBooking(String token, String id, {String? reason}) async {
+    try {
+      final response = await http.post(
         Uri.parse('$_base/$id/cancel'),
         headers: _headers(token),
+        body: jsonEncode({'reason': reason ?? 'User requested cancellation'}),
       );
       return _handleResponse(response);
     } catch (e) {

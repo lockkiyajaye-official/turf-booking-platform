@@ -21,7 +21,9 @@ export default function AdminBookings() {
     const fetchBookings = async () => {
         try {
             const res = await api.get("/bookings");
-            setBookings(res.data);
+            const data = res.data;
+            const items = Array.isArray(data) ? data : (data?.items || []);
+            setBookings(items);
         } catch (error) {
             console.error("Failed to fetch bookings:", error);
         } finally {

@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:mobile/data/models/turf_model.dart';
 import 'package:mobile/data/services/turf_service.dart';
+import 'package:mobile/data/services/location_service.dart';
 import 'package:mobile/viewmodels/auth/auth_viewmodel.dart';
 import 'package:flutter/material.dart';
 
@@ -12,6 +14,57 @@ class TurfViewmodel extends GetxController {
   var turfs = <TurfModel>[].obs;
   var myTurfs = <TurfModel>[].obs;
   var selectedTurf = Rxn<TurfModel>();
+
+  // Location state
+  var isLocationLoading = false.obs;
+  var currentPosition = Rxn<Position>();
+  var selectedLocationName = 'Select Location'.obs;
+  var isUsingCurrentLocation = false.obs;
+
+  final LocationService _locationService = LocationService();
+
+  /// Request device location and update current location state
+  Future<void> fetchAndSetCurrentLocation() async {
+    isLocationLoading.value = true;
+    try {
+      final pos = await _locationService.getCurrentPosition();
+      if (pos != null) {
+        currentPosition.value = pos;
+        isUsingCurrentLocation.value = true;
+        
+        final placeName = await _locationService.getAddressFromCoordinates(
+          pos.latitude,
+          pos.longitude,
+        );
+        selectedLocationName.value = placeName ?? 'Current Location';
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to get device location', backgroundColor: Colors.red.shade100);
+    } finally {
+      isLocationLoading.value = false;
+    }
+  }
+
+  /// Manually select a city/location name
+  void setSelectedCity(String cityName) {
+    selectedLocationName.value = cityName;
+    isUsingCurrentLocation.value = false;
+    currentPosition.value = null;
+  }
+
+  /// Calculate distance in km from user's current location to a turf
+  double? getDistanceToTurf(TurfModel turf) {
+    final pos = currentPosition.value;
+    if (pos == null || turf.latitude == null || turf.longitude == null) {
+      return null;
+    }
+    return LocationService.calculateDistanceKm(
+      pos.latitude,
+      pos.longitude,
+      turf.latitude!,
+      turf.longitude!,
+    );
+  }
 
   // Fetch all available turfs (e.g. for User Home)
   Future<void> fetchAllTurfs({String? search}) async {

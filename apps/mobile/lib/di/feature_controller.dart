@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:mobile/viewmodels/auth/auth_viewmodel.dart';
+import 'package:mobile/viewmodels/favorite/favorite_viewmodel.dart';
 import 'package:mobile/viewmodels/turf/owner_viewmodel.dart';
 import 'package:mobile/viewmodels/turf/turf_viewmodel.dart';
 import 'package:mobile/viewmodels/booking/booking_viewmodel.dart';
@@ -14,7 +15,8 @@ class AuthBinding extends Bindings {
     Get.put<BookingViewmodel>(BookingViewmodel(), permanent: true);
     Get.put<PaymentViewmodel>(PaymentViewmodel(), permanent: true);
     Get.put<DashboardViewmodel>(DashboardViewmodel(), permanent: true);
-        Get.lazyPut<OwnerViewmodel>(() => OwnerViewmodel());
-
+    Get.put<FavoriteViewmodel>(FavoriteViewmodel(), permanent: true);
+    Get.lazyPut<OwnerViewmodel>(() => OwnerViewmodel());
   }
 }
+

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mobile/core/constants/app_constants.dart';
 import 'package:mobile/data/services/auth_service.dart';
 import 'package:mobile/core/storage/local_storage.dart';
 import 'package:mobile/routes/app_paths.dart';
@@ -31,7 +30,6 @@ class AuthViewmodel extends GetxController {
       _googleAccount = switch (event) {
         GoogleSignInAuthenticationEventSignIn() => event.user,
         GoogleSignInAuthenticationEventSignOut() => null,
-        _ => null,
       };
     });
   }
@@ -72,21 +70,28 @@ class AuthViewmodel extends GetxController {
     snackPosition: SnackPosition.BOTTOM,
   );
 
- void _saveSession(Map<String, dynamic> data) {
-  token.value = data['token'] ?? '';
+  void _saveSession(Map<String, dynamic> data) {
+    token.value = data['token'] ?? '';
+    currentUser.value = Map<String, dynamic>.from(data['user'] ?? {});
 
-  // ✅ THIS WAS MISSING
-  currentUser.value = Map<String, dynamic>.from(data['user'] ?? {});
+    final role = currentUser['role'];
+    if (role != null) {
+      Get.find<LocalStorageService>().saveUserRole(role.toString());
+    }
 
-  if (token.value.isNotEmpty) {
-    Get.find<LocalStorageService>().saveToken(token: token.value);
+    if (token.value.isNotEmpty) {
+      Get.find<LocalStorageService>().saveToken(token: token.value);
+    }
   }
-}
 
   @override
   void onInit() {
     super.onInit();
     final storedToken = Get.find<LocalStorageService>().getToken();
+    final storedRole = Get.find<LocalStorageService>().getUserRole();
+    if (storedRole != null && storedRole.isNotEmpty) {
+      currentUser.value = {'role': storedRole};
+    }
     if (storedToken != null && storedToken.isNotEmpty) {
       token.value = storedToken;
       fetchProfile();
@@ -655,11 +660,73 @@ class AuthViewmodel extends GetxController {
 
       if (response['success']) {
         currentUser.value = Map<String, dynamic>.from(response['data'] ?? {});
+        final role = currentUser['role'];
+        if (role != null) {
+          Get.find<LocalStorageService>().saveUserRole(role.toString());
+        }
       } else {
         _showError(response['message'] ?? 'Failed to fetch profile');
       }
     } catch (e) {
       _showError(e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<bool> updateProfile(Map<String, dynamic> data) async {
+    if (token.value.isEmpty) {
+      _showError('Not authenticated');
+      return false;
+    }
+
+    try {
+      isLoading.value = true;
+      final response = await _authService.updateProfile(
+        token: token.value,
+        data: data,
+      );
+
+      if (response['success'] == true) {
+        currentUser.value = Map<String, dynamic>.from(response['data'] ?? {});
+        _showSuccess('Profile updated successfully');
+        return true;
+      } else {
+        _showError(response['message'] ?? 'Failed to update profile');
+        return false;
+      }
+    } catch (e) {
+      _showError(e.toString());
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<bool> updateNotifications(Map<String, dynamic> data) async {
+    if (token.value.isEmpty) {
+      _showError('Not authenticated');
+      return false;
+    }
+
+    try {
+      isLoading.value = true;
+      final response = await _authService.updateNotifications(
+        token: token.value,
+        data: data,
+      );
+
+      if (response['success'] == true) {
+        currentUser.value = Map<String, dynamic>.from(response['data'] ?? {});
+        _showSuccess('Notification settings updated');
+        return true;
+      } else {
+        _showError(response['message'] ?? 'Failed to update settings');
+        return false;
+      }
+    } catch (e) {
+      _showError(e.toString());
+      return false;
     } finally {
       isLoading.value = false;
     }
@@ -690,7 +757,7 @@ class AuthViewmodel extends GetxController {
     otpSent.value = false;
     _googleAccount = null;
     _clearControllers();
-    Get.find<LocalStorageService>().clearToken();
+    Get.find<LocalStorageService>().clearAll();
     Get.offAllNamed(RoutePaths.login);
   }
 

@@ -4,9 +4,13 @@ import { BookingsService } from './bookings.service';
 import { BookingsController } from './bookings.controller';
 import { Booking } from '../database/entities/booking.entity';
 import { Turf } from '../database/entities/turf.entity';
+import { PaymentsModule } from '../payments/payments.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Booking, Turf])],
+  imports: [
+    TypeOrmModule.forFeature([Booking, Turf]),
+    PaymentsModule,
+  ],
   controllers: [BookingsController],
   providers: [BookingsService],
 })

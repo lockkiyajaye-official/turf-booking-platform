@@ -1,4 +1,4 @@
-import { Star } from "lucide-react";
+import { Heart, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export interface TurfCardProps {
@@ -11,6 +11,8 @@ export interface TurfCardProps {
     images: string[];
     rating: number | string;
     totalReviews: number;
+    isFavorite?: boolean;
+    onToggleFavorite?: (e: React.MouseEvent) => void;
     onClick?: () => void;
 }
 
@@ -22,6 +24,8 @@ export default function TurfCard({
     images,
     rating,
     totalReviews,
+    isFavorite,
+    onToggleFavorite,
     onClick,
 }: TurfCardProps) {
     const navigate = useNavigate();
@@ -67,6 +71,27 @@ export default function TurfCard({
                         </span>
                     )}
                 </div>
+
+                {/* Favorite Heart Button on top right of image */}
+                {onToggleFavorite && (
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleFavorite(e);
+                        }}
+                        className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 backdrop-blur-md flex items-center justify-center shadow-md hover:bg-white transition-all transform hover:scale-110 active:scale-95"
+                        title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                    >
+                        <Heart
+                            className={`w-4 h-4 transition-colors ${
+                                isFavorite
+                                    ? "text-red-500 fill-red-500"
+                                    : "text-gray-600 hover:text-red-500"
+                            }`}
+                        />
+                    </button>
+                )}
             </div>
 
             <div className="p-5 flex-grow flex flex-col">

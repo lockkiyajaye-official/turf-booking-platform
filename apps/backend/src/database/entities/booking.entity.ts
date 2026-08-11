@@ -58,6 +58,18 @@ export class Booking {
   @Column({ nullable: true, type: 'text' })
   notes: string;
 
+  @Column({ nullable: true, type: 'text' })
+  cancellationReason: string;
+
+  @Column({ nullable: true, type: 'timestamp' })
+  cancelledAt: Date;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  refundAmount: number;
+
+  @Column({ default: 'none' })
+  refundStatus: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

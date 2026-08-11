@@ -12,6 +12,10 @@ class BookingModel {
   final String endTime; // "20:00"
   final double totalPrice;
   final String status; // PENDING | CONFIRMED | CANCELLED | COMPLETED
+  final String? cancellationReason;
+  final DateTime? cancelledAt;
+  final double refundAmount;
+  final String? refundStatus;
 
   const BookingModel({
     required this.id,
@@ -25,6 +29,10 @@ class BookingModel {
     required this.endTime,
     required this.totalPrice,
     required this.status,
+    this.cancellationReason,
+    this.cancelledAt,
+    this.refundAmount = 0.0,
+    this.refundStatus,
   });
 
   factory BookingModel.fromJson(Map<String, dynamic> json) {
@@ -43,6 +51,10 @@ class BookingModel {
       endTime: json['endTime'] as String,
       totalPrice: _parseDouble(json['totalPrice']),
       status: json['status'] as String,
+      cancellationReason: json['cancellationReason'] as String?,
+      cancelledAt: json['cancelledAt'] != null ? DateTime.tryParse(json['cancelledAt'].toString()) : null,
+      refundAmount: _parseDouble(json['refundAmount']),
+      refundStatus: json['refundStatus'] as String?,
     );
   }
 
@@ -63,20 +75,21 @@ class BookingModel {
     final now = DateTime.now();
     final endOfBookingDay =
         DateTime(bookingDate.year, bookingDate.month, bookingDate.day, 23, 59);
-    return status == 'COMPLETED' ||
-        status == 'CANCELLED' ||
+    final s = status.toLowerCase();
+    return s == 'completed' ||
+        s == 'cancelled' ||
         endOfBookingDay.isBefore(now);
   }
 
   String get displayStatus {
-    switch (status) {
-      case 'CONFIRMED':
+    switch (status.toLowerCase()) {
+      case 'confirmed':
         return 'Confirmed';
-      case 'PENDING':
+      case 'pending':
         return 'Pending';
-      case 'CANCELLED':
+      case 'cancelled':
         return 'Cancelled';
-      case 'COMPLETED':
+      case 'completed':
         return 'Played';
       default:
         return status;

@@ -4,9 +4,10 @@ import {
   UnauthorizedException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Booking, BookingStatus } from '../database/entities/booking.entity';
 import { Turf } from '../database/entities/turf.entity';
 import { User, UserRole } from '../database/entities/user.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { CreateTurfDto } from './dto/create-turf.dto';
 import { UpdateTurfDto } from './dto/update-turf.dto';
 
@@ -15,6 +16,8 @@ export class TurfsService {
   constructor(
     @InjectRepository(Turf)
     private turfRepository: Repository<Turf>,
+    @InjectRepository(Booking)
+    private bookingRepository: Repository<Booking>,
   ) { }
 
   async create(createTurfDto: CreateTurfDto, owner: User) {
@@ -39,10 +42,14 @@ export class TurfsService {
 
   async findAll(filters?: {
     search?: string;
+    sport?: string;
+    sports?: string[];
     minPrice?: number;
     maxPrice?: number;
     amenities?: string[];
     includeDrafts?: boolean; // For turf owners to see their drafts
+    page?: number;
+    limit?: number;
   }, ownerId?: string) {
     const query = this.turfRepository
       .createQueryBuilder('turf')
@@ -62,9 +69,22 @@ export class TurfsService {
 
     if (filters?.search) {
       query.andWhere(
-        '(turf.name LIKE :search OR turf.description LIKE :search OR turf.address LIKE :search)',
-        { search: `%${filters.search}%` },
+        '(LOWER(turf.name) LIKE :search OR LOWER(turf.description) LIKE :search OR LOWER(turf.address) LIKE :search OR LOWER(turf.sports) LIKE :search)',
+        { search: `%${filters.search.toLowerCase()}%` },
       );
+    }
+
+    if (filters?.sport) {
+      query.andWhere(
+        '(LOWER(turf.sports) LIKE :sport OR LOWER(turf.name) LIKE :sport OR LOWER(turf.description) LIKE :sport)',
+        { sport: `%${filters.sport.toLowerCase()}%` },
+      );
+    }
+
+    if (filters?.sports && filters.sports.length > 0) {
+      const sportConditions = filters.sports.map((_, i) => `LOWER(turf.sports) LIKE :sport_${i}`).join(' OR ');
+      const sportParams = filters.sports.reduce((acc, s, i) => ({ ...acc, [`sport_${i}`]: `%${s.toLowerCase()}%` }), {});
+      query.andWhere(`(${sportConditions})`, sportParams);
     }
 
     if (filters?.minPrice) {
@@ -79,9 +99,23 @@ export class TurfsService {
       });
     }
 
-    if (filters?.amenities && filters.amenities.length > 0) {
-      // SQLite doesn't support array operations well, so we'll filter in memory
-      // For production, use PostgreSQL with proper array support
+    query.orderBy('turf.createdAt', 'DESC');
+
+    if (filters?.page) {
+      const page = filters.page > 0 ? filters.page : 1;
+      const limit = filters.limit && filters.limit > 0 ? filters.limit : 10;
+      const skip = (page - 1) * limit;
+
+      const [items, total] = await query.skip(skip).take(limit).getManyAndCount();
+      const totalPages = Math.ceil(total / limit);
+      return {
+        items,
+        total,
+        page,
+        limit,
+        totalPages,
+        hasMore: page < totalPages,
+      };
     }
 
     return query.getMany();
@@ -100,16 +134,33 @@ export class TurfsService {
     return turf;
   }
 
-  async findByOwner(ownerId: string, includeDrafts: boolean = true) {
-    const where: any = { ownerId };
+  async findByOwner(ownerId: string, includeDrafts: boolean = true, page?: number, limit?: number) {
+    const query = this.turfRepository.createQueryBuilder('turf')
+      .where('turf.ownerId = :ownerId', { ownerId })
+      .orderBy('turf.createdAt', 'DESC');
+
     if (!includeDrafts) {
-      where.isDraft = false;
+      query.andWhere('turf.isDraft = :isDraft', { isDraft: false });
     }
-    return this.turfRepository.find({
-      where,
-      relations: ['bookings'],
-      order: { createdAt: 'DESC' },
-    });
+
+    if (page) {
+      const pageNum = page > 0 ? page : 1;
+      const limitNum = limit && limit > 0 ? limit : 10;
+      const skip = (pageNum - 1) * limitNum;
+
+      const [items, total] = await query.skip(skip).take(limitNum).getManyAndCount();
+      const totalPages = Math.ceil(total / limitNum);
+      return {
+        items,
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages,
+        hasMore: pageNum < totalPages,
+      };
+    }
+
+    return query.getMany();
   }
 
   async publishTurf(id: string, owner: User) {
@@ -133,7 +184,7 @@ export class TurfsService {
     const turf = await this.findOne(id);
 
     if (turf.ownerId !== owner.id && owner.role !== UserRole.ADMIN) {
-      throw new UnauthorizedException('You can only unpublish your own turfs');
+      throw new UnauthorizedException('You can only un-publish your own turfs');
     }
 
     turf.isPublished = false;
@@ -163,18 +214,60 @@ export class TurfsService {
     return { message: 'Turf deleted successfully' };
   }
 
+  async getBookedSlots(turfId: string, date: string): Promise<string[]> {
+    const targetDate = date ? date.split('T')[0] : '';
+    if (!targetDate) return [];
+
+    const activeBookings = await this.bookingRepository.find({
+      where: {
+        turfId,
+        status: In([BookingStatus.CONFIRMED, BookingStatus.PENDING]),
+      },
+    });
+
+    const bookedSlotsSet = new Set<string>();
+
+    for (const b of activeBookings) {
+      const bDate = b.bookingDate instanceof Date
+        ? b.bookingDate.toISOString().split('T')[0]
+        : String(b.bookingDate).split('T')[0];
+
+      if (bDate === targetDate) {
+        if (b.startTime && b.endTime) {
+          bookedSlotsSet.add(`${b.startTime}-${b.endTime}`);
+          bookedSlotsSet.add(`${b.startTime} - ${b.endTime}`);
+        }
+        if (b.startTime) {
+          bookedSlotsSet.add(b.startTime);
+        }
+      }
+    }
+
+    return Array.from(bookedSlotsSet);
+  }
+
   async checkAvailability(turfId: string, date: string, startTime: string, endTime: string) {
     const turf = await this.findOne(turfId);
 
     // Check if the slot is in available slots
-    const slotString = `${startTime}-${endTime}`;
-    if (!turf.availableSlots.includes(slotString)) {
+    const slotString = startTime && endTime ? `${startTime}-${endTime}` : startTime;
+    const exists = turf.availableSlots.some((s) => {
+      if (s === slotString || s === startTime) return true;
+      if (startTime && endTime && (s.includes(startTime) || s.replace(/\s/g, '').includes(slotString.replace(/\s/g, '')))) return true;
+      return false;
+    });
+
+    if (!exists && turf.availableSlots.length > 0) {
       return { available: false, reason: 'Slot not available' };
     }
 
-    // In a real app, you'd check against existing bookings
-    // For now, we'll just check if the slot exists
+    const bookedSlots = await this.getBookedSlots(turfId, date);
+    if (bookedSlots.includes(slotString) || (startTime && bookedSlots.includes(startTime))) {
+      return { available: false, reason: 'Slot already booked' };
+    }
+
     return { available: true };
   }
 }
+
 

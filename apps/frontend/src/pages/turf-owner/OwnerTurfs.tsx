@@ -18,7 +18,7 @@ export default function OwnerTurfs() {
     const fetchTurfs = async () => {
         try {
             const response = await api.get("/turfs/my-turfs");
-            setTurfs(response.data);
+            setTurfs(Array.isArray(response.data) ? response.data : (response.data?.items || []));
         } catch (error) {
             console.error("Failed to fetch turfs:", error);
         } finally {

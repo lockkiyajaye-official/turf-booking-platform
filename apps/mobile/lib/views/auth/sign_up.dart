@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:mobile/core/constants/app_assets.dart';
 import 'package:mobile/core/responsive/screen_extensions.dart';
 import 'package:mobile/core/theme/app_colors.dart';
-import 'package:mobile/routes/app_paths.dart';
 import 'package:mobile/viewmodels/auth/auth_viewmodel.dart';
 import 'package:mobile/views/widgets/my_buttons.dart';
 import 'package:mobile/views/widgets/my_text_field.dart';
@@ -19,111 +18,153 @@ class _SignUpState extends State<SignUp> {
   bool _obscurePassword = true;
   bool _agreedToTerms = false;
 
-  @override
-  Widget build(BuildContext context) {
-    Widget _roleCard({
-      required String title,
-      required IconData icon,
-      required bool selected,
-      required VoidCallback onTap,
-      required AppColors colors,
-      required TextTheme textTheme,
-    }) {
-      return Expanded(
-        child: GestureDetector(
-          onTap: onTap,
-          child: Container(
-            padding: EdgeInsets.symmetric(vertical: 14.h),
-            decoration: BoxDecoration(
-              color: selected ? colors.primary : colors.background,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: selected ? colors.primary : const Color(0xFFE8E8E8),
-              ),
+  Widget _roleCard({
+    required String title,
+    required IconData icon,
+    required bool selected,
+    required VoidCallback onTap,
+    required AppColors colors,
+    required TextTheme textTheme,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: EdgeInsets.symmetric(vertical: 14.h),
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFFE43434) : colors.background,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selected ? const Color(0xFFE43434) : colors.textGrey.withOpacity(0.2),
+              width: 1.5,
             ),
-            child: Column(
-              children: [
-                Icon(icon, color: selected ? Colors.white : colors.textGrey),
-                SizedBox(height: 6.h),
-                Text(
-                  title,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: selected ? Colors.white : colors.textGrey,
-                    fontWeight: FontWeight.w600,
-                  ),
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFFE43434).withOpacity(0.25),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : [],
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: selected ? Colors.white : colors.textGrey, size: 22.sp),
+              SizedBox(height: 6.h),
+              Text(
+                title,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: selected ? Colors.white : colors.textGrey,
+                  fontWeight: FontWeight.w600,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
-      );
-    }
+      ),
+    );
+  }
 
+  @override
+  Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final textTheme = Theme.of(context).textTheme;
     final controller = Get.find<AuthViewmodel>();
 
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            SizedBox(height: 60.h),
+      resizeToAvoidBottomInset: true,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(height: 12.h),
 
-            Image.asset(AppAssets.appLogo),
-
-            SizedBox(height: 12.h),
-            Text('Join the Community', style: textTheme.titleLarge),
-            SizedBox(height: 20.h),
-
-            Text(
-              "Select Role",
-              style: textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
+              // ── LOGO with subtle shadow ──
+              Container(
+                width: 80.w,
+                height: 80.h,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFE43434).withOpacity(0.15),
+                      blurRadius: 24,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Image.asset(
+                    AppAssets.appLogo,
+                    width: 80.w,
+                    height: 80.h,
+                    fit: BoxFit.contain,
+                  ),
+                ),
               ),
-            ),
 
-            SizedBox(height: 10.h),
+              SizedBox(height: 16.h),
+              Text('Join the Community', style: textTheme.titleLarge),
+              SizedBox(height: 4.h),
+              Text(
+                'Create your account to start playing',
+                style: textTheme.bodyMedium?.copyWith(color: colors.textGrey),
+                textAlign: TextAlign.center,
+              ),
 
-            Obx(() {
-              final selected = controller.selectedRole.value;
+              SizedBox(height: 24.h),
 
-              return Row(
-                children: [
-                  _roleCard(
-                    title: "User",
-                    icon: Icons.person_outline,
-                    selected: selected == 'user',
-                    onTap: () => controller.selectedRole.value = 'user',
-                    colors: colors,
-                    textTheme: textTheme,
+              // ── SELECT ROLE HEADER & CARDS (WITH HORIZONTAL PADDING) ──
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Select Role",
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colors.textTitle,
                   ),
-                  SizedBox(width: 12.w),
-                  _roleCard(
-                    title: "Owner",
-                    icon: Icons.sports_soccer,
-                    selected: selected == 'turf_owner',
-                    onTap: () => controller.selectedRole.value = 'turf_owner',
-                    colors: colors,
-                    textTheme: textTheme,
-                  ),
-                ],
-              );
-            }),
-            SizedBox(height: 6.h),
-            Text(
-              'Create your account to start playing',
-              style: textTheme.bodyMedium,
-            ),
+                ),
+              ),
+              SizedBox(height: 10.h),
+              Obx(() {
+                final selected = controller.selectedRole.value;
 
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.sp),
-              child: Column(
+                return Row(
+                  children: [
+                    _roleCard(
+                      title: "User",
+                      icon: Icons.person_outline,
+                      selected: selected == 'user',
+                      onTap: () => controller.selectedRole.value = 'user',
+                      colors: colors,
+                      textTheme: textTheme,
+                    ),
+                    SizedBox(width: 12.w),
+                    _roleCard(
+                      title: "Owner",
+                      icon: Icons.sports_soccer,
+                      selected: selected == 'turf_owner',
+                      onTap: () => controller.selectedRole.value = 'turf_owner',
+                      colors: colors,
+                      textTheme: textTheme,
+                    ),
+                  ],
+                );
+              }),
+
+              SizedBox(height: 20.h),
+
+              // ── FORM GROUP ──
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: 32.h),
-
                   /// FIRST NAME / LAST NAME
                   Row(
                     children: [
@@ -133,8 +174,9 @@ class _SignUpState extends State<SignUp> {
                           children: [
                             Text(
                               "First Name",
-                              style: textTheme.bodyMedium?.copyWith(
+                              style: textTheme.bodySmall?.copyWith(
                                 fontWeight: FontWeight.w600,
+                                color: colors.textTitle,
                               ),
                             ),
                             SizedBox(height: 8.h),
@@ -159,8 +201,9 @@ class _SignUpState extends State<SignUp> {
                           children: [
                             Text(
                               "Last Name",
-                              style: textTheme.bodyMedium?.copyWith(
+                              style: textTheme.bodySmall?.copyWith(
                                 fontWeight: FontWeight.w600,
+                                color: colors.textTitle,
                               ),
                             ),
                             SizedBox(height: 8.h),
@@ -186,15 +229,16 @@ class _SignUpState extends State<SignUp> {
                   /// PHONE
                   Text(
                     "Phone Number",
-                    style: textTheme.bodyMedium?.copyWith(
+                    style: textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w600,
+                      color: colors.textTitle,
                     ),
                   ),
                   SizedBox(height: 8.h),
                   MyTextField(
                     controller: controller.phoneController,
                     height: 50.h,
-                    width: 360.w,
+                    width: double.infinity,
                     type: TextInputType.phone,
                     fillColor: colors.background,
                     hintText: "Enter your phone number",
@@ -209,15 +253,16 @@ class _SignUpState extends State<SignUp> {
                   /// EMAIL
                   Text(
                     "Email",
-                    style: textTheme.bodyMedium?.copyWith(
+                    style: textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w600,
+                      color: colors.textTitle,
                     ),
                   ),
                   SizedBox(height: 8.h),
                   MyTextField(
                     controller: controller.emailController,
                     height: 50.h,
-                    width: 360.w,
+                    width: double.infinity,
                     type: TextInputType.emailAddress,
                     fillColor: colors.background,
                     hintText: "Enter your email",
@@ -232,15 +277,16 @@ class _SignUpState extends State<SignUp> {
                   /// PASSWORD
                   Text(
                     "Password",
-                    style: textTheme.bodyMedium?.copyWith(
+                    style: textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w600,
+                      color: colors.textTitle,
                     ),
                   ),
                   SizedBox(height: 8.h),
                   MyTextField(
                     controller: controller.passwordController,
                     height: 50.h,
-                    width: 360.w,
+                    width: double.infinity,
                     type: TextInputType.visiblePassword,
                     fillColor: colors.background,
                     hintText: "Enter your password",
@@ -268,20 +314,20 @@ class _SignUpState extends State<SignUp> {
                     children: [
                       Checkbox(
                         value: _agreedToTerms,
-                        activeColor: colors.primary,
+                        activeColor: const Color(0xFFE43434),
                         onChanged: (value) =>
                             setState(() => _agreedToTerms = value ?? false),
                       ),
                       Expanded(
                         child: RichText(
                           text: TextSpan(
-                            style: textTheme.bodySmall,
+                            style: textTheme.bodySmall?.copyWith(color: colors.textGrey),
                             children: [
                               const TextSpan(text: "I agree to the "),
                               TextSpan(
                                 text: "Terms and Conditions",
                                 style: TextStyle(
-                                  color: colors.primary,
+                                  color: const Color(0xFFE43434),
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -294,17 +340,14 @@ class _SignUpState extends State<SignUp> {
 
                   SizedBox(height: 16.h),
 
-                  /// SEND OTP BUTTON
-                  /// This validates the form, sends an OTP to the email,
-                  /// and only on success navigates to OtpVerificationPage.
-                  /// The actual account creation happens AFTER OTP is verified.
+                  /// CONTINUE BUTTON
                   Obx(
                     () => MyButtons(
                       text: controller.isLoading.value
                           ? "Sending OTP..."
                           : "Continue",
                       height: 50.h,
-                      width: 360.w,
+                      width: double.infinity,
                       onTap: (controller.isLoading.value || !_agreedToTerms)
                           ? null
                           : () => controller.requestRegistrationOtp(),
@@ -326,14 +369,14 @@ class _SignUpState extends State<SignUp> {
                     children: [
                       Text(
                         "Already have an account?",
-                        style: textTheme.bodyMedium,
+                        style: textTheme.bodySmall?.copyWith(color: colors.textGrey),
                       ),
                       TextButton(
                         onPressed: () => Get.back(),
                         child: Text(
                           "Login",
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: colors.primary,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: const Color(0xFFE43434),
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -341,11 +384,11 @@ class _SignUpState extends State<SignUp> {
                     ],
                   ),
 
-                  SizedBox(height: 24.h),
+                  SizedBox(height: 16.h),
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

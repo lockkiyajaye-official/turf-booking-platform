@@ -24,7 +24,8 @@ class BookingViewmodel extends GetxController {
       final response = await _bookingService.findAll(token);
 
       if (response['success']) {
-        final List data = response['data'] ?? [];
+        final responseData = response['data'];
+        final List data = (responseData is Map ? responseData['items'] : responseData) ?? [];
         myBookings.value = data.map((json) => BookingModel.fromJson(json)).toList();
       } else {
         Get.snackbar('Error', response['message'] ?? 'Failed to fetch bookings', backgroundColor: Colors.red.shade100);
@@ -61,22 +62,42 @@ class BookingViewmodel extends GetxController {
     }
   }
 
-  Future<void> cancelBooking(String id) async {
+  Future<Map<String, dynamic>?> getCancellationPreview(String id) async {
     final token = _authViewmodel.token.value;
-    if (token.isEmpty) return;
+    if (token.isEmpty) return null;
+
+    try {
+      final response = await _bookingService.getCancellationPreview(token, id);
+      if (response['success'] == true) {
+        return response['data'] as Map<String, dynamic>;
+      } else {
+        debugPrint('getCancellationPreview error: ${response['message']}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('getCancellationPreview exception: $e');
+      return null;
+    }
+  }
+
+  Future<bool> cancelBooking(String id, {String? reason}) async {
+    final token = _authViewmodel.token.value;
+    if (token.isEmpty) return false;
 
     try {
       isLoading.value = true;
-      final response = await _bookingService.cancelBooking(token, id);
+      final response = await _bookingService.cancelBooking(token, id, reason: reason);
 
-      if (response['success']) {
-        Get.snackbar('Success', 'Booking cancelled', backgroundColor: Colors.green.shade100);
+      if (response['success'] == true) {
         await fetchMyBookings();
+        return true;
       } else {
-        Get.snackbar('Error', response['message'] ?? 'Failed to cancel', backgroundColor: Colors.red.shade100);
+        debugPrint('cancelBooking error: ${response['message']}');
+        return false;
       }
     } catch (e) {
-      Get.snackbar('Error', e.toString(), backgroundColor: Colors.red.shade100);
+      debugPrint('cancelBooking exception: $e');
+      return false;
     } finally {
       isLoading.value = false;
     }

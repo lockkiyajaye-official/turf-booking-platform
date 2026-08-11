@@ -29,6 +29,18 @@ class LocalStorageService {
     authBox.delete(StorageKeys.token);
   }
 
+  void saveUserRole(String role) {
+    authBox.put(StorageKeys.userRole, role);
+  }
+
+  String? getUserRole() {
+    return authBox.get(StorageKeys.userRole);
+  }
+
+  void clearUserRole() {
+    authBox.delete(StorageKeys.userRole);
+  }
+
   // ================= THEME =================
 
   void saveThemeMode({required ThemeMode mode}) {
@@ -139,6 +151,7 @@ class LocalStorageService {
 
   void clearAll() {
     clearToken();
+    clearUserRole();
     clearPhoneNumber();
     clearOnboardingCompleted();
     clearOnboardingSteps();

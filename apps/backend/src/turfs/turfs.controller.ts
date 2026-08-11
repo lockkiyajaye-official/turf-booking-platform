@@ -33,12 +33,18 @@ export class TurfsController {
   findAll(@Query() query: any, @Request() req?: any) {
     const filters = {
       search: query.search,
+      sport: query.sport,
+      sports: query.sports
+        ? query.sports.split(',').filter((s: string) => s)
+        : undefined,
       minPrice: query.minPrice ? parseFloat(query.minPrice) : undefined,
       maxPrice: query.maxPrice ? parseFloat(query.maxPrice) : undefined,
       amenities: query.amenities
         ? query.amenities.split(',').filter((a: string) => a)
         : undefined,
       includeDrafts: query.includeDrafts === 'true',
+      page: query.page ? parseInt(query.page, 10) : undefined,
+      limit: query.limit ? parseInt(query.limit, 10) : undefined,
     };
     // If user is authenticated and is a turf owner, they can see their drafts
     const ownerId = req?.user?.id && req?.user?.role === UserRole.TURF_OWNER ? req.user.id : undefined;
@@ -48,8 +54,17 @@ export class TurfsController {
   @Get('my-turfs')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.TURF_OWNER)
-  findMyTurfs(@Request() req) {
-    return this.turfsService.findByOwner(req.user.id);
+  findMyTurfs(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Request() req?: any,
+  ) {
+    return this.turfsService.findByOwner(
+      req.user.id,
+      true,
+      page ? parseInt(page, 10) : undefined,
+      limit ? parseInt(limit, 10) : undefined,
+    );
   }
 
   @Get('availability/:id')
@@ -60,6 +75,14 @@ export class TurfsController {
     @Query('endTime') endTime: string,
   ) {
     return this.turfsService.checkAvailability(id, date, startTime, endTime);
+  }
+
+  @Get(':id/booked-slots')
+  getBookedSlots(
+    @Param('id') id: string,
+    @Query('date') date: string,
+  ) {
+    return this.turfsService.getBookedSlots(id, date);
   }
 
   @Get(':id')

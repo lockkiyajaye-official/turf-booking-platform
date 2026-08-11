@@ -3,8 +3,12 @@ import 'package:get/get.dart';
 import 'package:mobile/core/constants/app_assets.dart';
 import 'package:mobile/core/responsive/screen_extensions.dart';
 import 'package:mobile/core/theme/app_colors.dart';
+import 'package:mobile/data/models/turf_model.dart';
 import 'package:mobile/viewmodels/turf/turf_viewmodel.dart';
+import 'package:mobile/views/booking/booking_details_page.dart';
+import 'package:mobile/views/home/all_turfs_page.dart';
 import 'package:mobile/views/home/widgets/booking_card.dart';
+import 'package:mobile/views/home/widgets/location_selection_sheet.dart';
 import 'package:mobile/views/notifications/notificaiton_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -24,6 +28,14 @@ class _HomePageState extends State<HomePage> {
     'Badminton',
   ];
   int _selectedFilter = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Get.find<TurfViewmodel>().fetchAllTurfs();
+    });
+  }
 
   @override
   void dispose() {
@@ -51,7 +63,12 @@ class _HomePageState extends State<HomePage> {
                 Expanded(
                   child: GestureDetector(
                     onTap: () {
-                      // TODO: open location picker
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => const LocationSelectionSheet(),
+                      );
                     },
                     child: Container(
                       height: 46.h,
@@ -65,7 +82,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 6,
                             offset: const Offset(0, 2),
                           ),
@@ -80,12 +97,22 @@ class _HomePageState extends State<HomePage> {
                           ),
                           SizedBox(width: 8.w),
                           Expanded(
-                            child: Text(
-                              'Itanagar, Arunachal Pradesh',
-                              style: textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w500,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                            child: GetX<TurfViewmodel>(
+                              builder: (vm) {
+                                final locName = vm.selectedLocationName.value;
+                                final isLocating = vm.isLocationLoading.value;
+                                return Text(
+                                  isLocating
+                                      ? 'Locating...'
+                                      : (locName.isNotEmpty
+                                          ? locName
+                                          : 'Select Location'),
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                );
+                              },
                             ),
                           ),
                           Icon(
@@ -131,6 +158,7 @@ class _HomePageState extends State<HomePage> {
               ),
               child: TextField(
                 controller: _searchController,
+                onChanged: (_) => setState(() {}),
                 style: textTheme.bodyMedium,
                 decoration: InputDecoration(
                   hintText: 'Search turf by name, location or sport',
@@ -248,9 +276,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         TextButton(
-                          onPressed: () {
-                            // TODO: navigate to all turfs
-                          },
+                          onPressed: () => Get.to(() => const AllTurfsPage()),
                           child: Text(
                             'See all',
                             style: textTheme.bodySmall?.copyWith(
@@ -267,7 +293,6 @@ class _HomePageState extends State<HomePage> {
                 // Turf list
                 SliverToBoxAdapter(
                   child: GetX<TurfViewmodel>(
-                    init: Get.find<TurfViewmodel>()..fetchAllTurfs(),
                     builder: (vm) {
                       // Loading
                       if (vm.isLoading.value && vm.turfs.isEmpty) {
@@ -281,8 +306,76 @@ class _HomePageState extends State<HomePage> {
                         );
                       }
 
+                      // Filter list by selected sport filter, search text, and location selection
+                      final selectedSport = _filters[_selectedFilter];
+                      final searchQuery = _searchController.text.trim().toLowerCase();
+                      final activeLocation = vm.selectedLocationName.value;
+                      final isUsingGps = vm.isUsingCurrentLocation.value;
+
+                      List<TurfModel> filteredTurfs = vm.turfs.where((turf) {
+                        final matchesSearch = searchQuery.isEmpty ||
+                            turf.name.toLowerCase().contains(searchQuery) ||
+                            turf.address.toLowerCase().contains(searchQuery);
+
+                        final matchesSport = selectedSport == 'All' ||
+                            turf.sports.any((s) =>
+                                s.toLowerCase().contains(selectedSport.toLowerCase())) ||
+                            turf.amenities.any((a) =>
+                                a.toLowerCase().contains(selectedSport.toLowerCase())) ||
+                            (turf.description ?? '')
+                                .toLowerCase()
+                                .contains(selectedSport.toLowerCase());
+
+                        bool matchesLocation = true;
+                        if (!isUsingGps &&
+                            activeLocation.isNotEmpty &&
+                            activeLocation != 'Select Location' &&
+                            activeLocation != 'All Locations') {
+                          final locLower = activeLocation.toLowerCase();
+                          final cityMatch = (turf.city ?? '').toLowerCase().contains(locLower);
+                          final stateMatch = (turf.state ?? '').toLowerCase().contains(locLower);
+                          final addressMatch = turf.address.toLowerCase().contains(locLower);
+                          matchesLocation = cityMatch || stateMatch || addressMatch;
+                        }
+
+                        return matchesSearch && matchesSport && matchesLocation;
+                      }).toList();
+
+                      // If location filter resulted in empty list, fall back to showing all available turfs matching search & sport
+                      if (filteredTurfs.isEmpty &&
+                          !isUsingGps &&
+                          activeLocation.isNotEmpty &&
+                          activeLocation != 'Select Location' &&
+                          activeLocation != 'All Locations') {
+                        filteredTurfs = vm.turfs.where((turf) {
+                          final matchesSearch = searchQuery.isEmpty ||
+                              turf.name.toLowerCase().contains(searchQuery) ||
+                              turf.address.toLowerCase().contains(searchQuery);
+
+                          final matchesSport = selectedSport == 'All' ||
+                              turf.sports.any((s) =>
+                                  s.toLowerCase().contains(selectedSport.toLowerCase())) ||
+                              turf.amenities.any((a) =>
+                                  a.toLowerCase().contains(selectedSport.toLowerCase())) ||
+                              (turf.description ?? '')
+                                  .toLowerCase()
+                                  .contains(selectedSport.toLowerCase());
+
+                          return matchesSearch && matchesSport;
+                        }).toList();
+                      }
+
+                      // If using GPS location, sort turfs by distance (closest first)
+                      if (isUsingGps && vm.currentPosition.value != null) {
+                        filteredTurfs.sort((a, b) {
+                          final distA = vm.getDistanceToTurf(a) ?? double.infinity;
+                          final distB = vm.getDistanceToTurf(b) ?? double.infinity;
+                          return distA.compareTo(distB);
+                        });
+                      }
+
                       // Empty
-                      if (vm.turfs.isEmpty) {
+                      if (filteredTurfs.isEmpty) {
                         return SizedBox(
                           height: 200.h,
                           child: Center(
@@ -296,7 +389,7 @@ class _HomePageState extends State<HomePage> {
                                 ),
                                 SizedBox(height: 12.h),
                                 Text(
-                                  'No turfs available at the moment.',
+                                  'No turfs available for the selected filter.',
                                   style: textTheme.bodyMedium?.copyWith(
                                     color: colors.textGrey,
                                   ),
@@ -312,13 +405,14 @@ class _HomePageState extends State<HomePage> {
                         padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 24.h),
                         child: Column(
                           children: [
-                            for (final turf in vm.turfs)
+                            for (final turf in filteredTurfs)
                               Padding(
                                 padding: EdgeInsets.only(bottom: 12.h),
                                 child: VenueCard(
                                   turf: turf,
-                                  onBookNow: () => debugPrint(
-                                    'Book Now tapped for ${turf.name}',
+                                  distanceKm: vm.getDistanceToTurf(turf),
+                                  onBookNow: () => Get.to(
+                                    () => TurfDetailsPage(turf: turf),
                                   ),
                                 ),
                               ),

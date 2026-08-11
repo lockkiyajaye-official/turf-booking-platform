@@ -1,6 +1,7 @@
 import {
     Calendar,
     CreditCard,
+    Heart,
     Home,
     LogOut,
     MapPin,
@@ -56,6 +57,7 @@ export default function Sidebar() {
         return [
             { name: "Home", path: "/home", icon: Home },
             { name: "Explore", path: "/turfs", icon: Search },
+            { name: "Favorites", path: "/dashboard/favorites", icon: Heart },
             { name: "Bookings", path: "/dashboard/bookings", icon: Calendar },
             { name: "Payments", path: "/dashboard/payments/history", icon: CreditCard },
             { name: "Profile", path: "/dashboard/profile", icon: User },

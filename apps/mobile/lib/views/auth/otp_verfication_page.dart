@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:mobile/core/responsive/screen_extensions.dart';
 import 'package:mobile/core/theme/app_colors.dart';
@@ -42,10 +43,31 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
   }
 
   void _onOtpChanged(String value, int index) {
-    if (value.isNotEmpty && index < 5) {
-      _focusNodes[index + 1].requestFocus();
-    } else if (value.isEmpty && index > 0) {
-      _focusNodes[index - 1].requestFocus();
+    if (value.length > 1) {
+      // User pasted multiple characters (or autofilled)
+      final digits = value.replaceAll(RegExp(r'\D'), '');
+      for (int i = 0; i < 6; i++) {
+        if (index + i < 6) {
+          if (i < digits.length) {
+            _otpControllers[index + i].text = digits[i];
+          } else {
+            _otpControllers[index + i].clear();
+          }
+        }
+      }
+      final nextIndex = (index + digits.length).clamp(0, 5);
+      _focusNodes[nextIndex].requestFocus();
+      return;
+    }
+
+    if (value.isNotEmpty) {
+      if (index < 5) {
+        _focusNodes[index + 1].requestFocus();
+      }
+    } else {
+      if (index > 0) {
+        _focusNodes[index - 1].requestFocus();
+      }
     }
   }
 
@@ -131,39 +153,51 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                 return SizedBox(
                   width: 44.w,
                   height: 54.h,
-                  child: TextField(
-                    controller: _otpControllers[index],
-                    focusNode: _focusNodes[index],
-                    keyboardType: TextInputType.number,
-                    textAlign: TextAlign.center,
-                    maxLength: 1,
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textTitle,
+                  child: KeyboardListener(
+                    focusNode: FocusNode(),
+                    onKeyEvent: (event) {
+                      if (event.logicalKey.keyLabel == 'Backspace' ||
+                          event.logicalKey == LogicalKeyboardKey.backspace) {
+                        if (_otpControllers[index].text.isEmpty && index > 0) {
+                          _otpControllers[index - 1].clear();
+                          _focusNodes[index - 1].requestFocus();
+                        }
+                      }
+                    },
+                    child: TextField(
+                      controller: _otpControllers[index],
+                      focusNode: _focusNodes[index],
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.center,
+                      maxLength: 6,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textTitle,
+                      ),
+                      decoration: InputDecoration(
+                        counterText: '',
+                        contentPadding: EdgeInsets.zero,
+                        filled: true,
+                        fillColor: Colors.grey.shade100,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide:
+                              BorderSide(color: Colors.grey.shade300),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide:
+                              BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                              color: Color(0xFFE43434), width: 2),
+                        ),
+                      ),
+                      onChanged: (value) => _onOtpChanged(value, index),
                     ),
-                    decoration: InputDecoration(
-                      counterText: '',
-                      contentPadding: EdgeInsets.zero,
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide:
-                            BorderSide(color: Colors.grey.shade300),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide:
-                            BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(
-                            color: Color(0xFFE43434), width: 2),
-                      ),
-                    ),
-                    onChanged: (value) => _onOtpChanged(value, index),
                   ),
                 );
               }),

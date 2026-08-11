@@ -63,6 +63,18 @@ export class Turf {
   rules: string;
 
   @Column({ default: true })
+  cancellationPolicyEnabled: boolean;
+
+  @Column({ default: 24 })
+  fullRefundHours: number;
+
+  @Column({ default: 6 })
+  partialRefundHours: number;
+
+  @Column({ default: 50 })
+  partialRefundPercentage: number;
+
+  @Column({ default: true })
   isActive: boolean;
 
   @Column({ default: false })
@@ -79,6 +91,12 @@ export class Turf {
 
   @Column({ type: 'decimal', precision: 8, scale: 6, nullable: true })
   longitude: number;
+
+  @Column({ nullable: true })
+  googleMapUrl: string;
+
+  @Column({ nullable: true })
+  mapUrl: string;
 
   @Column({ nullable: true })
   contactPhone: string;

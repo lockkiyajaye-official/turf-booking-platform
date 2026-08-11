@@ -32,12 +32,18 @@ export interface Turf {
     primaryImageIndex?: number;
     availableSlots: string[];
     rules?: string;
+    cancellationPolicyEnabled?: boolean;
+    fullRefundHours?: number;
+    partialRefundHours?: number;
+    partialRefundPercentage?: number;
     rating: number | string;
     totalReviews: number;
     contactPhone?: string;
     contactEmail?: string;
     latitude?: number;
     longitude?: number;
+    googleMapUrl?: string;
+    mapUrl?: string;
 }
 
 export interface Booking {
@@ -47,5 +53,9 @@ export interface Booking {
     endTime: string;
     totalPrice: number;
     status: string;
+    cancellationReason?: string;
+    cancelledAt?: string;
+    refundAmount?: number;
+    refundStatus?: string;
     turf: Turf;
 }

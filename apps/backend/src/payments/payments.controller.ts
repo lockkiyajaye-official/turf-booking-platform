@@ -25,14 +25,14 @@ export class PaymentsController {
 
     @Post('create')
     @UseGuards(RolesGuard)
-    @Roles(UserRole.USER)
+    @Roles(UserRole.USER, UserRole.TURF_OWNER, UserRole.ADMIN)
     async createOrder(@Body() dto: CreatePaymentDto, @Request() req) {
         return this.paymentsService.createOrder(dto, req.user);
     }
 
     @Post('verify')
     @UseGuards(RolesGuard)
-    @Roles(UserRole.USER, UserRole.ADMIN)
+    @Roles(UserRole.USER, UserRole.TURF_OWNER, UserRole.ADMIN)
     async verify(@Body() dto: VerifyPaymentDto, @Request() req) {
         return this.paymentsService.verifyPayment(dto, req.user);
     }
@@ -80,7 +80,7 @@ export class PaymentsController {
 
     @Get('history')
     @UseGuards(RolesGuard)
-    @Roles(UserRole.USER, UserRole.ADMIN)
+    @Roles(UserRole.USER, UserRole.TURF_OWNER, UserRole.ADMIN)
     async history(@Request() req) {
         return this.paymentsService.getUserPayments(req.user);
     }

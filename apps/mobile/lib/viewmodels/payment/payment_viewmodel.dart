@@ -64,7 +64,7 @@ class PaymentViewmodel extends GetxController {
 
     try {
       isLoading.value = true;
-      final response = await _paymentService.requestPayout(token: token, amount: amount);
+      final response = await _paymentService.requestPayout(token, amount);
 
       if (response['success']) {
         Get.snackbar('Success', 'Payout requested successfully', backgroundColor: Colors.green.shade100);

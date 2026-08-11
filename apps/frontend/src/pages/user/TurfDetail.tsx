@@ -3,6 +3,7 @@ import {
     CheckCircle,
     ChevronLeft,
     Clock,
+    Heart,
     Mail,
     MapPin,
     Phone,
@@ -13,6 +14,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
+import { addFavorite, checkFavorite, removeFavorite } from "../../services/favorites";
 import { loadRazorpayScript } from "../../utils/razorpay";
 import type { Turf } from "./types";
 
@@ -24,12 +26,49 @@ export default function TurfDetail() {
     const [loading, setLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState("");
     const [selectedSlot, setSelectedSlot] = useState("");
+    const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+    const [loadingSlots, setLoadingSlots] = useState(false);
     const [booking, setBooking] = useState(false);
     const [activeImage, setActiveImage] = useState(0);
+    const [isFavorite, setIsFavorite] = useState(false);
 
     useEffect(() => {
-        if (id) fetchTurf();
-    }, [id]);
+        if (id) {
+            fetchTurf();
+            if (user) {
+                checkFavorite(id).then(setIsFavorite).catch(() => {});
+            }
+        }
+    }, [id, user]);
+
+    useEffect(() => {
+        if (id && selectedDate) {
+            fetchBookedSlots(selectedDate);
+        } else {
+            setBookedSlots([]);
+        }
+    }, [id, selectedDate]);
+
+    const fetchBookedSlots = async (date: string) => {
+        setLoadingSlots(true);
+        try {
+            const res = await api.get(`/turfs/${id}/booked-slots?date=${date}`);
+            setBookedSlots(Array.isArray(res.data) ? res.data : []);
+        } catch (e) {
+            setBookedSlots([]);
+        } finally {
+            setLoadingSlots(false);
+        }
+    };
+
+    const isSlotBooked = (slot: string) => {
+        if (!bookedSlots || bookedSlots.length === 0) return false;
+        const cleanSlot = slot.replace(/\s+/g, "").toLowerCase();
+        return bookedSlots.some((b) => {
+            const cleanB = b.replace(/\s+/g, "").toLowerCase();
+            return cleanB === cleanSlot || cleanB.includes(cleanSlot) || cleanSlot.includes(cleanB);
+        });
+    };
 
     const fetchTurf = async () => {
         try {
@@ -39,6 +78,25 @@ export default function TurfDetail() {
             console.error("Failed to fetch turf:", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleToggleFavorite = async () => {
+        if (!user) {
+            navigate("/login");
+            return;
+        }
+        if (!id) return;
+        try {
+            if (isFavorite) {
+                await removeFavorite(id);
+                setIsFavorite(false);
+            } else {
+                await addFavorite(id);
+                setIsFavorite(true);
+            }
+        } catch (error) {
+            console.error("Failed to toggle favorite:", error);
         }
     };
 
@@ -176,15 +234,31 @@ export default function TurfDetail() {
                     <ChevronLeft className="w-4 h-4" /> Back
                 </Link>
 
-                {/* Rating badge */}
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-sm">
-                    <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                    <span className="font-black text-gray-900 text-sm">
-                        {ratingValue > 0 ? ratingValue.toFixed(1) : "New"}
-                    </span>
-                    {turf.totalReviews > 0 && (
-                        <span className="text-gray-500 text-xs">({turf.totalReviews})</span>
-                    )}
+                {/* Rating & Favorite overlay */}
+                <div className="absolute top-4 right-4 flex items-center gap-2">
+                    <button
+                        onClick={handleToggleFavorite}
+                        className="bg-white/90 backdrop-blur-sm p-2 rounded-xl flex items-center justify-center shadow-sm hover:bg-white transition-all transform active:scale-95"
+                        title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                    >
+                        <Heart
+                            className={`w-4 h-4 transition-colors ${
+                                isFavorite
+                                    ? "text-red-500 fill-red-500"
+                                    : "text-gray-700 hover:text-red-500"
+                            }`}
+                        />
+                    </button>
+
+                    <div className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-sm">
+                        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                        <span className="font-black text-gray-900 text-sm">
+                            {ratingValue > 0 ? ratingValue.toFixed(1) : "New"}
+                        </span>
+                        {turf.totalReviews > 0 && (
+                            <span className="text-gray-500 text-xs">({turf.totalReviews})</span>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -195,9 +269,22 @@ export default function TurfDetail() {
                         {/* Title & location */}
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                             <h1 className="text-3xl font-black text-gray-900 mb-2">{turf.name}</h1>
-                            <div className="flex items-start gap-2 text-gray-500 mb-4">
-                                <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-[#E33E33]" />
-                                <span className="text-sm">{turf.address}</span>
+                            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                                <div className="flex items-start gap-2 text-gray-500">
+                                    <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-[#E33E33]" />
+                                    <span className="text-sm">{turf.address}</span>
+                                </div>
+                                {(turf.googleMapUrl || (turf as any).mapUrl) && (
+                                    <a
+                                        href={turf.googleMapUrl || (turf as any).mapUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-[#E33E33] bg-red-50 hover:bg-red-100 transition-colors"
+                                    >
+                                        <MapPin className="w-3.5 h-3.5" />
+                                        View on Map
+                                    </a>
+                                )}
                             </div>
                             <p className="text-gray-600 leading-relaxed">{turf.description}</p>
                         </div>
@@ -290,7 +377,7 @@ export default function TurfDetail() {
                                 <div className="space-y-4">
                                     {/* Date picker */}
                                     <div>
-                                        <label className="block text-sm font-bold text-gray-700 mb-1.5 flex items-center gap-1.5">
+                                        <label className="text-sm font-bold text-gray-700 mb-1.5 flex items-center gap-1.5">
                                             <Calendar className="w-4 h-4 text-[#E33E33]" />
                                             Select Date
                                         </label>
@@ -309,31 +396,52 @@ export default function TurfDetail() {
                                     {/* Slot picker */}
                                     {selectedDate && (
                                         <div>
-                                            <label className="block text-sm font-bold text-gray-700 mb-1.5 flex items-center gap-1.5">
-                                                <Clock className="w-4 h-4 text-[#E33E33]" />
-                                                Select Time Slot
+                                            <label className="text-sm font-bold text-gray-700 mb-1.5 flex items-center justify-between">
+                                                <span className="flex items-center gap-1.5">
+                                                    <Clock className="w-4 h-4 text-[#E33E33]" />
+                                                    Select Time Slot
+                                                </span>
+                                                {loadingSlots && (
+                                                    <span className="text-xs text-gray-400 font-normal">
+                                                        Checking slots...
+                                                    </span>
+                                                )}
                                             </label>
                                             <div className="grid grid-cols-2 gap-2 max-h-52 overflow-y-auto pr-1">
-                                                {turf.availableSlots.map((slot, idx) => (
-                                                    <button
-                                                        key={idx}
-                                                        type="button"
-                                                        onClick={() => setSelectedSlot(slot)}
-                                                        className={`px-2 py-2 rounded-xl text-xs font-bold transition-all ${
-                                                            selectedSlot === slot
-                                                                ? "bg-[#E33E33] text-white shadow-sm"
-                                                                : "bg-gray-50 border border-gray-200 text-gray-700 hover:border-[#E33E33] hover:text-[#E33E33]"
-                                                        }`}
-                                                    >
-                                                        {slot}
-                                                    </button>
-                                                ))}
+                                                {turf.availableSlots.map((slot, idx) => {
+                                                    const isBooked = isSlotBooked(slot);
+                                                    const isSelected = selectedSlot === slot;
+                                                    return (
+                                                        <button
+                                                            key={idx}
+                                                            type="button"
+                                                            disabled={isBooked}
+                                                            onClick={() => {
+                                                                if (!isBooked) setSelectedSlot(slot);
+                                                            }}
+                                                            className={`px-2 py-2 rounded-xl text-xs font-bold transition-all relative ${
+                                                                isBooked
+                                                                    ? "bg-gray-100 border border-gray-200 text-gray-400 line-through cursor-not-allowed opacity-60"
+                                                                    : isSelected
+                                                                        ? "bg-[#E33E33] text-white shadow-sm"
+                                                                        : "bg-gray-50 border border-gray-200 text-gray-700 hover:border-[#E33E33] hover:text-[#E33E33]"
+                                                            }`}
+                                                        >
+                                                            {slot}
+                                                            {isBooked && (
+                                                                <span className="block text-[10px] font-normal no-underline text-red-500">
+                                                                    Booked
+                                                                </span>
+                                                            )}
+                                                        </button>
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     )}
 
                                     {/* Price summary */}
-                                    {selectedSlot && (
+                                    {selectedSlot && !isSlotBooked(selectedSlot) && (
                                         <div className="bg-gray-50 rounded-xl p-3 text-sm">
                                             <div className="flex justify-between text-gray-600 mb-1">
                                                 <span>Slot</span>
@@ -348,7 +456,7 @@ export default function TurfDetail() {
 
                                     <button
                                         onClick={handleBooking}
-                                        disabled={!selectedDate || !selectedSlot || booking}
+                                        disabled={!selectedDate || !selectedSlot || isSlotBooked(selectedSlot) || booking}
                                         className="w-full bg-[#E33E33] hover:bg-red-700 text-white py-3 rounded-xl font-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                                     >
                                         {booking ? "Processing..." : "Book Now"}

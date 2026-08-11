@@ -4,7 +4,6 @@ import 'package:mobile/routes/app_paths.dart';
 import 'package:mobile/views/auth/login_page.dart';
 import 'package:mobile/views/auth/otp_verfication_page.dart';
 import 'package:mobile/views/auth/sign_up.dart';
-import 'package:mobile/views/widgets/main_shell.dart';
 import 'package:mobile/views/widgets/role_desicion_shell.dart';
 
 class AppRouter {
@@ -15,19 +14,13 @@ class AppRouter {
       binding: AuthBinding(), // ✅ MUST BE HERE
     ),
 
-    GetPage(
-      name: RoutePaths.signup,
-      page: () => SignUp(),
-    ),
+    GetPage(name: RoutePaths.signup, page: () => SignUp()),
 
     GetPage(
       name: RoutePaths.otpVerification,
       page: () => const OtpVerificationPage(),
     ),
 
-    GetPage(
-      name: RoutePaths.home,
-      page: () => const RoleDeciderPage(),
-    ),
+    GetPage(name: RoutePaths.home, page: () => const RoleDeciderPage()),
   ];
 }
