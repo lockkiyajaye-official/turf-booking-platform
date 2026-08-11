@@ -33,6 +33,10 @@ export class TurfsController {
   findAll(@Query() query: any, @Request() req?: any) {
     const filters = {
       search: query.search,
+      sport: query.sport,
+      sports: query.sports
+        ? query.sports.split(',').filter((s: string) => s)
+        : undefined,
       minPrice: query.minPrice ? parseFloat(query.minPrice) : undefined,
       maxPrice: query.maxPrice ? parseFloat(query.maxPrice) : undefined,
       amenities: query.amenities

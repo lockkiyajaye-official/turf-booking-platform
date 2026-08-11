@@ -42,6 +42,8 @@ export class TurfsService {
 
   async findAll(filters?: {
     search?: string;
+    sport?: string;
+    sports?: string[];
     minPrice?: number;
     maxPrice?: number;
     amenities?: string[];
@@ -65,9 +67,22 @@ export class TurfsService {
 
     if (filters?.search) {
       query.andWhere(
-        '(turf.name LIKE :search OR turf.description LIKE :search OR turf.address LIKE :search)',
+        '(turf.name LIKE :search OR turf.description LIKE :search OR turf.address LIKE :search OR turf.sports LIKE :search)',
         { search: `%${filters.search}%` },
       );
+    }
+
+    if (filters?.sport) {
+      query.andWhere(
+        '(turf.sports LIKE :sport OR turf.name LIKE :sport OR turf.description LIKE :sport)',
+        { sport: `%${filters.sport}%` },
+      );
+    }
+
+    if (filters?.sports && filters.sports.length > 0) {
+      const sportConditions = filters.sports.map((_, i) => `turf.sports LIKE :sport_${i}`).join(' OR ');
+      const sportParams = filters.sports.reduce((acc, s, i) => ({ ...acc, [`sport_${i}`]: `%${s}%` }), {});
+      query.andWhere(`(${sportConditions})`, sportParams);
     }
 
     if (filters?.minPrice) {
@@ -80,11 +95,6 @@ export class TurfsService {
       query.andWhere('turf.pricePerHour <= :maxPrice', {
         maxPrice: filters.maxPrice,
       });
-    }
-
-    if (filters?.amenities && filters.amenities.length > 0) {
-      // SQLite doesn't support array operations well, so we'll filter in memory
-      // For production, use PostgreSQL with proper array support
     }
 
     return query.getMany();

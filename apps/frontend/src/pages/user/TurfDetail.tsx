@@ -3,6 +3,7 @@ import {
     CheckCircle,
     ChevronLeft,
     Clock,
+    Heart,
     Mail,
     MapPin,
     Phone,
@@ -13,6 +14,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
+import { addFavorite, checkFavorite, removeFavorite } from "../../services/favorites";
 import { loadRazorpayScript } from "../../utils/razorpay";
 import type { Turf } from "./types";
 
@@ -28,10 +30,16 @@ export default function TurfDetail() {
     const [loadingSlots, setLoadingSlots] = useState(false);
     const [booking, setBooking] = useState(false);
     const [activeImage, setActiveImage] = useState(0);
+    const [isFavorite, setIsFavorite] = useState(false);
 
     useEffect(() => {
-        if (id) fetchTurf();
-    }, [id]);
+        if (id) {
+            fetchTurf();
+            if (user) {
+                checkFavorite(id).then(setIsFavorite).catch(() => {});
+            }
+        }
+    }, [id, user]);
 
     useEffect(() => {
         if (id && selectedDate) {
@@ -70,6 +78,25 @@ export default function TurfDetail() {
             console.error("Failed to fetch turf:", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleToggleFavorite = async () => {
+        if (!user) {
+            navigate("/login");
+            return;
+        }
+        if (!id) return;
+        try {
+            if (isFavorite) {
+                await removeFavorite(id);
+                setIsFavorite(false);
+            } else {
+                await addFavorite(id);
+                setIsFavorite(true);
+            }
+        } catch (error) {
+            console.error("Failed to toggle favorite:", error);
         }
     };
 
@@ -207,15 +234,31 @@ export default function TurfDetail() {
                     <ChevronLeft className="w-4 h-4" /> Back
                 </Link>
 
-                {/* Rating badge */}
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-sm">
-                    <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                    <span className="font-black text-gray-900 text-sm">
-                        {ratingValue > 0 ? ratingValue.toFixed(1) : "New"}
-                    </span>
-                    {turf.totalReviews > 0 && (
-                        <span className="text-gray-500 text-xs">({turf.totalReviews})</span>
-                    )}
+                {/* Rating & Favorite overlay */}
+                <div className="absolute top-4 right-4 flex items-center gap-2">
+                    <button
+                        onClick={handleToggleFavorite}
+                        className="bg-white/90 backdrop-blur-sm p-2 rounded-xl flex items-center justify-center shadow-sm hover:bg-white transition-all transform active:scale-95"
+                        title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                    >
+                        <Heart
+                            className={`w-4 h-4 transition-colors ${
+                                isFavorite
+                                    ? "text-red-500 fill-red-500"
+                                    : "text-gray-700 hover:text-red-500"
+                            }`}
+                        />
+                    </button>
+
+                    <div className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-sm">
+                        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                        <span className="font-black text-gray-900 text-sm">
+                            {ratingValue > 0 ? ratingValue.toFixed(1) : "New"}
+                        </span>
+                        {turf.totalReviews > 0 && (
+                            <span className="text-gray-500 text-xs">({turf.totalReviews})</span>
+                        )}
+                    </div>
                 </div>
             </div>
 

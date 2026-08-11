@@ -5,6 +5,7 @@ import 'package:mobile/core/responsive/screen_extensions.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/viewmodels/turf/turf_viewmodel.dart';
 import 'package:mobile/views/booking/booking_details_page.dart';
+import 'package:mobile/views/home/all_turfs_page.dart';
 import 'package:mobile/views/home/widgets/booking_card.dart';
 import 'package:mobile/views/notifications/notificaiton_page.dart';
 
@@ -25,6 +26,14 @@ class _HomePageState extends State<HomePage> {
     'Badminton',
   ];
   int _selectedFilter = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Get.find<TurfViewmodel>().fetchAllTurfs();
+    });
+  }
 
   @override
   void dispose() {
@@ -249,9 +258,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         TextButton(
-                          onPressed: () {
-                            // TODO: navigate to all turfs
-                          },
+                          onPressed: () => Get.to(() => const AllTurfsPage()),
                           child: Text(
                             'See all',
                             style: textTheme.bodySmall?.copyWith(
@@ -268,7 +275,6 @@ class _HomePageState extends State<HomePage> {
                 // Turf list
                 SliverToBoxAdapter(
                   child: GetX<TurfViewmodel>(
-                    init: Get.find<TurfViewmodel>()..fetchAllTurfs(),
                     builder: (vm) {
                       // Loading
                       if (vm.isLoading.value && vm.turfs.isEmpty) {

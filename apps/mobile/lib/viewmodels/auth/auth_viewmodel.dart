@@ -72,9 +72,12 @@ class AuthViewmodel extends GetxController {
 
   void _saveSession(Map<String, dynamic> data) {
     token.value = data['token'] ?? '';
-
-    // ✅ THIS WAS MISSING
     currentUser.value = Map<String, dynamic>.from(data['user'] ?? {});
+
+    final role = currentUser['role'];
+    if (role != null) {
+      Get.find<LocalStorageService>().saveUserRole(role.toString());
+    }
 
     if (token.value.isNotEmpty) {
       Get.find<LocalStorageService>().saveToken(token: token.value);
@@ -85,6 +88,10 @@ class AuthViewmodel extends GetxController {
   void onInit() {
     super.onInit();
     final storedToken = Get.find<LocalStorageService>().getToken();
+    final storedRole = Get.find<LocalStorageService>().getUserRole();
+    if (storedRole != null && storedRole.isNotEmpty) {
+      currentUser.value = {'role': storedRole};
+    }
     if (storedToken != null && storedToken.isNotEmpty) {
       token.value = storedToken;
       fetchProfile();
@@ -653,6 +660,10 @@ class AuthViewmodel extends GetxController {
 
       if (response['success']) {
         currentUser.value = Map<String, dynamic>.from(response['data'] ?? {});
+        final role = currentUser['role'];
+        if (role != null) {
+          Get.find<LocalStorageService>().saveUserRole(role.toString());
+        }
       } else {
         _showError(response['message'] ?? 'Failed to fetch profile');
       }
@@ -746,7 +757,7 @@ class AuthViewmodel extends GetxController {
     otpSent.value = false;
     _googleAccount = null;
     _clearControllers();
-    Get.find<LocalStorageService>().clearToken();
+    Get.find<LocalStorageService>().clearAll();
     Get.offAllNamed(RoutePaths.login);
   }
 

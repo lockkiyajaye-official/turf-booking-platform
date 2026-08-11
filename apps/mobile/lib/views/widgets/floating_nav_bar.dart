@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
 
+class FloatingNavItem {
+  final String label;
+  final IconData icon;
+  const FloatingNavItem({required this.label, required this.icon});
+}
+
 class FloatingNavBar extends StatefulWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
+  final List<FloatingNavItem>? items;
 
   const FloatingNavBar({
     super.key,
     required this.currentIndex,
     required this.onTap,
+    this.items,
   });
 
   @override
@@ -18,17 +26,19 @@ class _FloatingNavBarState extends State<FloatingNavBar>
     with TickerProviderStateMixin {
   late List<AnimationController> _controllers;
   late List<Animation<double>> _scaleAnimations;
-
-  final List<_NavItem> _items = const [
-    _NavItem(label: 'Home', icon: Icons.home_rounded),
-    _NavItem(label: 'Search', icon: Icons.search_rounded),
-    _NavItem(label: 'Bookings', icon: Icons.confirmation_number_outlined),
-    _NavItem(label: 'Profile', icon: Icons.person_outline_rounded),
-  ];
+  late List<FloatingNavItem> _items;
 
   @override
   void initState() {
     super.initState();
+    _items = widget.items ??
+        const [
+          FloatingNavItem(label: 'Home', icon: Icons.home_rounded),
+          FloatingNavItem(label: 'Search', icon: Icons.search_rounded),
+          FloatingNavItem(label: 'Bookings', icon: Icons.confirmation_number_outlined),
+          FloatingNavItem(label: 'Profile', icon: Icons.person_outline_rounded),
+        ];
+
     _controllers = List.generate(
       _items.length,
       (i) => AnimationController(
@@ -43,7 +53,9 @@ class _FloatingNavBarState extends State<FloatingNavBar>
         .toList();
 
     // Animate the initially selected item
-    _controllers[widget.currentIndex].forward();
+    if (widget.currentIndex < _controllers.length) {
+      _controllers[widget.currentIndex].forward();
+    }
   }
 
   @override
@@ -103,7 +115,7 @@ class _FloatingNavBarState extends State<FloatingNavBar>
 }
 
 class _NavBarItem extends StatelessWidget {
-  final _NavItem item;
+  final FloatingNavItem item;
   final bool isSelected;
   final Animation<double> scaleAnimation;
   final VoidCallback onTap;
@@ -180,10 +192,4 @@ class _NavBarItem extends StatelessWidget {
       ),
     );
   }
-}
-
-class _NavItem {
-  final String label;
-  final IconData icon;
-  const _NavItem({required this.label, required this.icon});
 }

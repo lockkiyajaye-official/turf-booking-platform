@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import TurfCard from "../components/TurfCard";
+import { addFavorite, getFavorites, removeFavorite } from "../services/favorites";
 
 interface Turf {
     id: string;
@@ -24,6 +25,37 @@ export default function Turfs() {
     const [turfs, setTurfs] = useState<Turf[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
+    const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+
+    useEffect(() => {
+        if (!user) return;
+        getFavorites()
+            .then((favs) => setFavoriteIds(new Set(favs.map((f) => f.id))))
+            .catch(() => {});
+    }, [user]);
+
+    const handleToggleFavorite = async (turfId: string) => {
+        if (!user) {
+            navigate("/login", { state: { returnTo: "/turfs" } });
+            return;
+        }
+        const isFav = favoriteIds.has(turfId);
+        try {
+            if (isFav) {
+                await removeFavorite(turfId);
+                setFavoriteIds((prev) => {
+                    const next = new Set(prev);
+                    next.delete(turfId);
+                    return next;
+                });
+            } else {
+                await addFavorite(turfId);
+                setFavoriteIds((prev) => new Set(prev).add(turfId));
+            }
+        } catch (error) {
+            console.error("Failed to toggle favorite:", error);
+        }
+    };
 
     useEffect(() => {
         const params = new URLSearchParams(routerLocation.search);
@@ -109,6 +141,8 @@ export default function Turfs() {
                         <TurfCard
                             key={turf.id}
                             {...turf}
+                            isFavorite={favoriteIds.has(turf.id)}
+                            onToggleFavorite={() => handleToggleFavorite(turf.id)}
                             onClick={() => {
                                 if (user) {
                                     navigate(`/turfs/${turf.id}`);

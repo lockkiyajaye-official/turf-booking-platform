@@ -5,6 +5,7 @@ class StorageKeys {
 
   // ===== AUTH KEYS =====
   static const String token = 'token';
+  static const String userRole = 'user_role';
 
   // ===== APP KEYS =====
   static const String themeMode = 'theme_mode';

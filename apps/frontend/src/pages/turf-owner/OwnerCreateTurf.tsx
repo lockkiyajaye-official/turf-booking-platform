@@ -1,12 +1,12 @@
 import {
     Clock, Image, Mail, MapPin, Phone, Star, X,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import ImageUploader, { type UploadedImage } from "../../components/ImageUploader";
 import api from "../../services/api";
 
-const SPORTS = ["Football", "Cricket", "Basketball", "Badminton", "Tennis", "Volleyball", "Hockey", "Rugby"];
+const SPORTS = ["Football", "Cricket", "Basketball", "Badminton", "Tennis", "Volleyball", "Hockey", "Rugby", "Table Tennis", "Squash", "Futsal"];
 const SURFACE_TYPES = ["Natural Grass", "Artificial Turf", "Hybrid Grass", "Concrete", "Clay", "Synthetic"];
 const AMENITY_OPTIONS = [
     "Parking", "Floodlights", "Changing Rooms", "Showers", "Drinking Water",
@@ -21,14 +21,47 @@ const DEFAULT_FORM = {
     availableSlots: [] as string[], rules: "", latitude: "", longitude: "",
 };
 
-function generateSlots() {
+const DURATION_OPTIONS = [
+    { label: "30 Mins", minutes: 30 },
+    { label: "45 Mins", minutes: 45 },
+    { label: "60 Mins (1 Hr)", minutes: 60 },
+    { label: "90 Mins (1.5 Hr)", minutes: 90 },
+    { label: "120 Mins (2 Hr)", minutes: 120 },
+];
+
+function formatTime12H(totalMins: number): string {
+    const h24 = Math.floor(totalMins / 60) % 24;
+    const m = totalMins % 60;
+    const period = h24 >= 12 ? "PM" : "AM";
+    const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+    const hStr = String(h12).padStart(2, "0");
+    const mStr = String(m).padStart(2, "0");
+    return `${hStr}:${mStr} ${period}`;
+}
+
+function parseStartMinutes12H(slotStr: string): number {
+    const startPart = slotStr.split(" - ")[0];
+    if (!startPart) return 0;
+    const [time, period] = startPart.split(" ");
+    if (!time || !period) return 0;
+    let [h, m] = time.split(":").map(Number);
+    if (period === "PM" && h < 12) h += 12;
+    if (period === "AM" && h === 12) h = 0;
+    return h * 60 + (m || 0);
+}
+
+function generate24hSlots(durationMinutes: number): string[] {
     const slots: string[] = [];
-    for (let h = 5; h < 23; h++) {
-        slots.push(`${String(h).padStart(2, "0")}:00-${String(h + 1).padStart(2, "0")}:00`);
+    const totalMinutes = 24 * 60;
+    let current = 0;
+    while (current + durationMinutes <= totalMinutes) {
+        const startStr = formatTime12H(current);
+        const endStr = formatTime12H(current + durationMinutes);
+        slots.push(`${startStr} - ${endStr}`);
+        current += durationMinutes;
     }
     return slots;
 }
-const ALL_SLOTS = generateSlots();
 
 const inputCls = "w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[#E33E33] transition-all text-sm";
 
@@ -57,15 +90,20 @@ export default function OwnerCreateTurf() {
     const [primaryIndex, setPrimaryIndex] = useState(0);
     const [submitting, setSubmitting] = useState(false);
     const [slotSearch, setSlotSearch] = useState("");
+    const [slotDuration, setSlotDuration] = useState(60);
+
+    const generatedSlots = useMemo(() => generate24hSlots(slotDuration), [slotDuration]);
+
+    useEffect(() => {
+        setFormData((prev) => ({ ...prev, availableSlots: [...generatedSlots] }));
+    }, [generatedSlots]);
 
     const set = (key: string, value: any) => setFormData((prev) => ({ ...prev, [key]: value }));
 
     const toggle = (key: "sports" | "amenities" | "availableSlots", val: string) =>
         set(key, formData[key].includes(val)
             ? formData[key].filter((v) => v !== val)
-            : key === "availableSlots"
-                ? [...formData[key], val].sort()
-                : [...formData[key], val]);
+            : [...formData[key], val]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -73,8 +111,9 @@ export default function OwnerCreateTurf() {
             alert("Please select at least one available time slot.");
             return;
         }
-        setSubmitting(true);
+
         try {
+            setSubmitting(true);
             const orderedImages = images.length > 0
                 ? [images[primaryIndex]?.cdnUrl, ...images.filter((_, i) => i !== primaryIndex).map((img) => img.cdnUrl)].filter(Boolean)
                 : [];
@@ -108,7 +147,7 @@ export default function OwnerCreateTurf() {
         }
     };
 
-    const filteredSlots = ALL_SLOTS.filter((s) => s.includes(slotSearch));
+    const filteredSlots = generatedSlots.filter((s: string) => s.includes(slotSearch));
 
     return (
         <div className="p-4 sm:p-8 w-full max-w-4xl mx-auto space-y-8">
@@ -224,10 +263,48 @@ export default function OwnerCreateTurf() {
 
                     <section>
                         <SectionTitle icon={<Clock className="w-5 h-5" />} title="Available Time Slots *" />
-                        <p className="text-sm text-gray-500 mb-3">Select all time slots when your turf is available for booking.</p>
-                        <input type="text" placeholder="Filter slots..." className={`${inputCls} mb-3 max-w-xs`}
-                            value={slotSearch} onChange={(e) => setSlotSearch(e.target.value)} />
-                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                        <p className="text-sm text-gray-500 mb-3">Choose slot duration and select all time slots when your turf is open (covering 24 hours).</p>
+
+                        <div className="mb-4 space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Slot Duration</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {DURATION_OPTIONS.map((opt) => (
+                                        <button key={opt.minutes} type="button" onClick={() => setSlotDuration(opt.minutes)}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${slotDuration === opt.minutes ? "bg-[#E33E33] text-white shadow-sm" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-100"}`}>
+                                            {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-200">
+                                <div className="flex flex-wrap gap-2">
+                                    <button type="button" onClick={() => setFormData((prev) => ({ ...prev, availableSlots: [...generatedSlots] }))}
+                                        className="px-2.5 py-1 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md text-xs font-bold transition-all">
+                                        Select All (24h)
+                                    </button>
+                                    <button type="button" onClick={() => setFormData((prev) => ({ ...prev, availableSlots: [] }))}
+                                        className="px-2.5 py-1 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md text-xs font-bold transition-all">
+                                        Clear All
+                                    </button>
+                                    <button type="button" onClick={() => {
+                                        const daySlots = generatedSlots.filter((s: string) => {
+                                            const mins = parseStartMinutes12H(s);
+                                            return mins >= 360 && mins < 1320;
+                                        });
+                                        setFormData((prev) => ({ ...prev, availableSlots: daySlots }));
+                                    }} className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-md text-xs font-bold transition-all">
+                                        Daytime (06:00 AM - 10:00 PM)
+                                    </button>
+                                </div>
+
+                                <input type="text" placeholder="Filter slots..." className="px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-[#E33E33]"
+                                    value={slotSearch} onChange={(e) => setSlotSearch(e.target.value)} />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 max-h-72 overflow-y-auto p-1">
                             {filteredSlots.map((slot) => (
                                 <button key={slot} type="button" onClick={() => toggle("availableSlots", slot)}
                                     className={`px-2 py-2 rounded-lg text-xs font-bold transition-all ${formData.availableSlots.includes(slot) ? "bg-[#E33E33] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
@@ -236,7 +313,7 @@ export default function OwnerCreateTurf() {
                             ))}
                         </div>
                         {formData.availableSlots.length > 0 && (
-                            <p className="text-xs text-gray-500 mt-2">{formData.availableSlots.length} slot{formData.availableSlots.length > 1 ? "s" : ""} selected</p>
+                            <p className="text-xs text-gray-500 mt-2">{formData.availableSlots.length} of {generatedSlots.length} slot{formData.availableSlots.length > 1 ? "s" : ""} selected</p>
                         )}
                     </section>
 

@@ -19,6 +19,9 @@ class _OwnerBookingsPageState extends State<OwnerBookingsPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Get.find<OwnerViewmodel>().fetchAllBookings();
+    });
   }
 
   @override
@@ -31,7 +34,7 @@ class _OwnerBookingsPageState extends State<OwnerBookingsPage>
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final textTheme = Theme.of(context).textTheme;
-    final vm = Get.find<OwnerViewmodel>()..fetchAllBookings();
+    final vm = Get.find<OwnerViewmodel>();
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -188,14 +191,30 @@ class _BookingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final id = booking['_id'] as String? ?? booking['id'] as String? ?? '';
-    final status = booking['status'] as String? ?? 'pending';
-    final turfName = booking['turfName'] as String? ?? 'Unknown Turf';
-    final userName = booking['userName'] as String? ?? 'User';
-    final userPhone = booking['userPhone'] as String? ?? '';
-    final date = booking['date'] as String? ?? '';
+    final status = (booking['status'] as String? ?? 'pending').toLowerCase();
+
+    final turfObj = booking['turf'];
+    final turfName = (turfObj is Map ? turfObj['name'] as String? : null) ??
+        booking['turfName'] as String? ??
+        'Unknown Turf';
+
+    final userObj = booking['user'];
+    final userName = (userObj is Map ? userObj['name'] as String? : null) ??
+        booking['userName'] as String? ??
+        'Player';
+    final userPhone = (userObj is Map ? (userObj['phone'] ?? userObj['contactPhone']) as String? : null) ??
+        booking['userPhone'] as String? ??
+        '';
+
+    final rawDate = booking['bookingDate'] ?? booking['date'];
+    String date = '';
+    if (rawDate != null) {
+      date = rawDate.toString().split('T').first;
+    }
+
     final startTime = booking['startTime'] as String? ?? '';
     final endTime = booking['endTime'] as String? ?? '';
-    final amount = booking['totalAmount'] ?? 0;
+    final amount = booking['totalPrice'] ?? booking['totalAmount'] ?? booking['price'] ?? 0;
     final isPending = status == 'pending';
 
     return Container(

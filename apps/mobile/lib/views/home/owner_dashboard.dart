@@ -7,6 +7,7 @@ import 'package:mobile/viewmodels/turf/owner_viewmodel.dart';
 import 'package:mobile/views/booking/add_turf_page.dart';
 import 'package:mobile/views/booking/my_turf_page.dart';
 import 'package:mobile/views/booking/owner_booking_page.dart';
+import 'package:mobile/views/booking/owner_finances_page.dart';
 import 'package:mobile/views/notifications/notificaiton_page.dart';
 
 class OwnerDashboardPage extends StatelessWidget {
@@ -159,6 +160,16 @@ class OwnerDashboardPage extends StatelessWidget {
                           colors: colors,
                           textTheme: textTheme,
                           onTap: () => Get.to(() => const OwnerBookingsPage()),
+                        ),
+                      ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: _ActionTile(
+                          icon: Icons.payments_outlined,
+                          label: 'Finances',
+                          colors: colors,
+                          textTheme: textTheme,
+                          onTap: () => Get.to(() => const OwnerFinancesPage()),
                         ),
                       ),
                     ],
@@ -402,11 +413,25 @@ class _BookingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final status = booking['status'] as String? ?? 'pending';
-    final turfName = booking['turfName'] as String? ?? 'Unknown Turf';
-    final userName = booking['userName'] as String? ?? 'Unknown User';
-    final date = booking['date'] as String? ?? '';
-    final amount = booking['totalAmount'] ?? 0;
+    final status = (booking['status'] as String? ?? 'pending').toLowerCase();
+
+    final turfObj = booking['turf'];
+    final turfName = (turfObj is Map ? turfObj['name'] as String? : null) ??
+        booking['turfName'] as String? ??
+        'Unknown Turf';
+
+    final userObj = booking['user'];
+    final userName = (userObj is Map ? userObj['name'] as String? : null) ??
+        booking['userName'] as String? ??
+        'Player';
+
+    final rawDate = booking['bookingDate'] ?? booking['date'];
+    String date = '';
+    if (rawDate != null) {
+      date = rawDate.toString().split('T').first;
+    }
+
+    final amount = booking['totalPrice'] ?? booking['totalAmount'] ?? booking['price'] ?? 0;
 
     return Container(
       padding: EdgeInsets.all(14.w),

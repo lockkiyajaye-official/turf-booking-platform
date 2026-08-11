@@ -23,6 +23,7 @@ import Profile from "./pages/user/Profile";
 import TurfDetail from "./pages/user/TurfDetail";
 import Turfs from "./pages/Turfs";
 import UserBookings from "./pages/user/UserBookings";
+import UserFavorites from "./pages/user/UserFavorites";
 import UserHome from "./pages/user/UserHome";
 
 // Admin
@@ -69,6 +70,10 @@ function App() {
 
                         {/* User Dashboard / Shared */}
                         <Route path="/dashboard" element={<Dashboard />} />
+                        <Route
+                            path="/dashboard/favorites"
+                            element={<UserFavorites />}
+                        />
                         <Route
                             path="/dashboard/bookings"
                             element={<UserBookings />}

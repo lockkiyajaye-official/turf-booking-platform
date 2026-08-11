@@ -2,22 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobile/core/storage/local_storage.dart';
 import 'package:mobile/data/services/booking_service.dart';
+import 'package:mobile/data/services/payment_service.dart';
 import 'package:mobile/data/services/turf_service.dart';
 import 'package:mobile/data/models/turf_model.dart';
-import 'package:mobile/routes/app_paths.dart';
 
 class OwnerViewmodel extends GetxController {
   final TurfService _turfService = TurfService();
   final BookingService _bookingService = BookingService();
+  final PaymentService _paymentService = PaymentService();
 
   var isLoading = false.obs;
   var isBookingsLoading = false.obs;
   var isTurfsLoading = false.obs;
+  var isFinancesLoading = false.obs;
 
   var myTurfs = <TurfModel>[].obs;
   var allBookings = <Map<String, dynamic>>[].obs;
   var recentBookings = <Map<String, dynamic>>[].obs;
   var stats = <String, dynamic>{}.obs;
+
+  // Finances
+  var walletBalance = 0.0.obs;
+  var totalEarnings = 0.0.obs;
+  var payoutHistory = <Map<String, dynamic>>[].obs;
 
   String get _token => Get.find<LocalStorageService>().getToken() ?? '';
 
@@ -46,8 +53,8 @@ class OwnerViewmodel extends GetxController {
 
   void _computeStats() {
     final totalRevenue = allBookings
-        .where((b) => (b['status'] as String? ?? '') == 'confirmed')
-        .fold<num>(0, (sum, b) => sum + (b['totalAmount'] as num? ?? 0));
+        .where((b) => (b['status'] as String? ?? '').toLowerCase() == 'confirmed')
+        .fold<num>(0, (sum, b) => sum + (b['totalPrice'] as num? ?? b['totalAmount'] as num? ?? b['price'] as num? ?? 0));
 
     stats.value = {
       'totalTurfs': myTurfs.length,
@@ -157,6 +164,46 @@ class OwnerViewmodel extends GetxController {
       }
     } catch (e) {
       _showError(e.toString());
+    }
+  }
+
+  // ── Finances & Payouts ────────────────────────────────────
+  Future<void> fetchFinancesSummary() async {
+    try {
+      isFinancesLoading.value = true;
+      final res = await _paymentService.getOwnerSummary(_token);
+      if (res['success']) {
+        final data = res['data'] ?? {};
+        walletBalance.value = double.tryParse((data['walletBalance'] ?? 0).toString()) ?? 0.0;
+        totalEarnings.value = double.tryParse((data['totalEarnings'] ?? 0).toString()) ?? 0.0;
+        final list = data['payouts'] ?? data['history'] ?? [];
+        if (list is List) {
+          payoutHistory.value = list.cast<Map<String, dynamic>>();
+        }
+      }
+    } catch (_) {
+    } finally {
+      isFinancesLoading.value = false;
+    }
+  }
+
+  Future<bool> requestPayout(double amount) async {
+    try {
+      isFinancesLoading.value = true;
+      final res = await _paymentService.requestPayout(_token, amount);
+      if (res['success']) {
+        _showSuccess('Payout request submitted successfully');
+        await fetchFinancesSummary();
+        return true;
+      } else {
+        _showError(res['message'] ?? 'Failed to request payout');
+        return false;
+      }
+    } catch (e) {
+      _showError(e.toString());
+      return false;
+    } finally {
+      isFinancesLoading.value = false;
     }
   }
 }

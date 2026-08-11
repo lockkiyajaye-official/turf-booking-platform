@@ -11,12 +11,14 @@ class RoleDeciderPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = Get.find<AuthViewmodel>();
 
-    final role = auth.currentUser['role'];
+    return Obx(() {
+      final role = auth.currentUser['role']?.toString().toLowerCase();
 
-    if (role == 'turf_owner') {
-      return const OwnerShell();
-    } else {
-      return const MainShell();
-    }
+      if (role == 'turf_owner') {
+        return const OwnerShell();
+      } else {
+        return const MainShell();
+      }
+    });
   }
 }

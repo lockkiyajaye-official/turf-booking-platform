@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { MapPin, Search, Bell } from "lucide-react";
 import api from "../../services/api";
 import TurfCard from "../../components/TurfCard";
+import { addFavorite, getFavorites, removeFavorite } from "../../services/favorites";
 
 interface Turf {
     id: string;
@@ -26,8 +27,39 @@ export default function UserHome() {
     const [selectedSport, setSelectedSport] = useState("All");
     const [turfs, setTurfs] = useState<Turf[]>([]);
     const [turfsLoading, setTurfsLoading] = useState(true);
+    const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
 
     const sports = ["All", "Football", "Cricket", "Badminton"];
+
+    useEffect(() => {
+        if (!user) return;
+        getFavorites()
+            .then((favs) => setFavoriteIds(new Set(favs.map((f) => f.id))))
+            .catch(() => {});
+    }, [user]);
+
+    const handleToggleFavorite = async (turfId: string) => {
+        if (!user) {
+            navigate("/login");
+            return;
+        }
+        const isFav = favoriteIds.has(turfId);
+        try {
+            if (isFav) {
+                await removeFavorite(turfId);
+                setFavoriteIds((prev) => {
+                    const next = new Set(prev);
+                    next.delete(turfId);
+                    return next;
+                });
+            } else {
+                await addFavorite(turfId);
+                setFavoriteIds((prev) => new Set(prev).add(turfId));
+            }
+        } catch (error) {
+            console.error("Failed to toggle favorite:", error);
+        }
+    };
 
     useEffect(() => {
         if (loading) return;
@@ -205,7 +237,12 @@ export default function UserHome() {
                     ) : turfs.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {turfs.map((turf) => (
-                                <TurfCard key={turf.id} {...turf} />
+                                <TurfCard
+                                    key={turf.id}
+                                    {...turf}
+                                    isFavorite={favoriteIds.has(turf.id)}
+                                    onToggleFavorite={() => handleToggleFavorite(turf.id)}
+                                />
                             ))}
                         </div>
                     ) : (
