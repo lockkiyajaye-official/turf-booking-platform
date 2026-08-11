@@ -335,7 +335,7 @@ export default function Profile() {
                     </div>
 
                     {/* Notification Settings Section */}
-                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-8">
+                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-8 mb-6">
                         <h1 className="text-3xl font-bold text-gray-900 mb-6">Notification Settings</h1>
                         <p className="text-sm text-gray-500 mb-6">
                             Choose how you want to be notified about bookings, payments, and promotions.
@@ -388,6 +388,20 @@ export default function Profile() {
                                 {loading ? "Saving..." : "Save preferences"}
                             </button>
                         </form>
+                    </div>
+
+                    {/* Account Deletion Section */}
+                    <div className="bg-white rounded-xl border border-red-100 shadow-sm p-8">
+                        <h1 className="text-3xl font-bold text-red-600 mb-2">Delete Account & Data</h1>
+                        <p className="text-sm text-gray-600 mb-6">
+                            Request permanent deletion of your Lockkiyajaye account and associated data.
+                        </p>
+                        <a
+                            href="/delete-account"
+                            className="inline-flex items-center gap-2 px-6 py-2.5 bg-red-50 hover:bg-red-100 text-red-700 font-semibold rounded-lg border border-red-200 transition-colors"
+                        >
+                            Request Account Deletion Page
+                        </a>
                     </div>
                 </div>
             </main>

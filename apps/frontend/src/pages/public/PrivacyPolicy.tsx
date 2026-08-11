@@ -188,16 +188,16 @@ export default function PrivacyPolicy() {
                             </p>
                             <div className="flex flex-wrap gap-4">
                                 <a 
-                                    href="mailto:support@lockkiyajaye.com?subject=Account%20Deletion%20Request"
+                                    href="/delete-account"
                                     className="bg-emerald-500 hover:bg-emerald-400 text-gray-950 px-6 py-3 rounded-xl font-bold transition-all shadow-lg inline-flex items-center gap-2"
                                 >
-                                    Email Account Deletion Request
+                                    Submit Online Deletion Request
                                 </a>
                                 <a 
-                                    href="/contact"
+                                    href="mailto:support@lockkiyajaye.com?subject=Account%20Deletion%20Request"
                                     className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl font-bold transition-all border border-white/20"
                                 >
-                                    Contact Support Team
+                                    Email Account Deletion Request
                                 </a>
                             </div>
                         </div>

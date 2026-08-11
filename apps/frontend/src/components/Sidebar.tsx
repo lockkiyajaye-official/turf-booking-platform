@@ -9,6 +9,7 @@ import {
     Search,
     User,
     UserCheck,
+    UserX,
     Users,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -42,6 +43,7 @@ export default function Sidebar() {
                 { name: "Bookings", path: "/admin/bookings", icon: Calendar },
                 { name: "Payments", path: "/admin/payments", icon: CreditCard },
                 { name: "Contact", path: "/admin/contact", icon: MessageSquare },
+                { name: "Deletion Requests", path: "/admin/deletion-requests", icon: UserX },
             ];
         }
         if (user.role === "turf_owner") {

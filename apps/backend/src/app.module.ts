@@ -15,6 +15,7 @@ import { getDatabaseConfig } from './database/config/database.config';
 import { BannerModule } from './banner/banner.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { DeletionRequestsModule } from './deletion-requests/deletion-requests.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     BannerModule,
     FavoritesModule,
     NotificationsModule,
+    DeletionRequestsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
