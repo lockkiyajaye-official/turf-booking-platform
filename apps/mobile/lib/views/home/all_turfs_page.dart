@@ -95,7 +95,7 @@ class _AllTurfsPageState extends State<AllTurfsPage> {
                 decoration: InputDecoration(
                   hintText: 'Search by venue name or location...',
                   hintStyle: textTheme.bodyMedium?.copyWith(
-                    color: colors.textGrey.withOpacity(0.6),
+                    color: colors.textGrey.withValues(alpha: 0.6),
                   ),
                   prefixIcon: Icon(Icons.search_rounded, color: colors.primary),
                   suffixIcon: _searchQuery.isNotEmpty
@@ -176,6 +176,8 @@ class _AllTurfsPageState extends State<AllTurfsPage> {
                     turf.address.toLowerCase().contains(_searchQuery);
 
                 final matchesSport = selectedSport == 'All' ||
+                    turf.sports.any((s) =>
+                        s.toLowerCase().contains(selectedSport.toLowerCase())) ||
                     turf.amenities.any((a) =>
                         a.toLowerCase().contains(selectedSport.toLowerCase())) ||
                     (turf.description ?? '')

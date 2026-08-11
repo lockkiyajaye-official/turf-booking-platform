@@ -7,11 +7,13 @@ import 'package:mobile/views/booking/booking_details_page.dart';
 class VenueCard extends StatelessWidget {
   final TurfModel turf;
   final VoidCallback? onBookNow;
+  final double? distanceKm;
 
   const VenueCard({
     super.key,
     required this.turf,
     this.onBookNow,
+    this.distanceKm,
   });
 
   @override
@@ -171,17 +173,46 @@ class VenueCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
 
-                      // Location
-                      Text(
-                        turf.address,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF7F8C8D),
-                          fontWeight: FontWeight.w500,
-                          height: 1.3,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                      // Location & Distance
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              turf.address,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF7F8C8D),
+                                fontWeight: FontWeight.w500,
+                                height: 1.3,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (distanceKm != null) ...[
+                            const SizedBox(width: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE8F5E9),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                distanceKm! < 1
+                                    ? '${(distanceKm! * 1000).round()} m'
+                                    : '${distanceKm!.toStringAsFixed(1)} km',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2E7D32),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
 
                       const Spacer(),
