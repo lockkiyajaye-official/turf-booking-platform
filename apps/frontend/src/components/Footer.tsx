@@ -235,6 +235,12 @@ export default function Footer() {
                         >
                             Refund Policy
                         </Link>
+                        <Link
+                            to="/delete-account"
+                            className="text-white/60 hover:text-white transition-colors text-sm"
+                        >
+                            Delete Account
+                        </Link>
                     </div>
                 </div>
             </div>

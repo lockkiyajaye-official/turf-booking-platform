@@ -15,6 +15,7 @@ import Landing from "./pages/public/Landing";
 import PrivacyPolicy from "./pages/public/PrivacyPolicy";
 import TermsConditions from "./pages/public/TermsConditions";
 import RefundPolicy from "./pages/public/RefundPolicy";
+import DeleteAccountPage from "./pages/public/DeleteAccountPage";
 
 // Shared / User
 import Dashboard from "./pages/user/Dashboard";
@@ -34,6 +35,7 @@ import AdminTurfOwners from "./pages/admin/AdminTurfOwners";
 import AdminTurfs from "./pages/admin/AdminTurfs";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminContact from "./pages/admin/AdminContact";
+import AdminDeletionRequests from "./pages/admin/AdminDeletionRequests";
 
 // Turf Owner
 import OwnerBookings from "./pages/turf-owner/OwnerBookings";
@@ -65,6 +67,7 @@ function App() {
                         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                         <Route path="/terms-conditions" element={<TermsConditions />} />
                         <Route path="/refund-policy" element={<RefundPolicy />} />
+                        <Route path="/delete-account" element={<DeleteAccountPage />} />
                         <Route path="/turfs" element={<Turfs />} />
                         <Route path="/turfs/:id" element={<TurfDetail />} />
 
@@ -109,6 +112,10 @@ function App() {
                         <Route
                             path="/admin/contact"
                             element={<AdminContact />}
+                        />
+                        <Route
+                            path="/admin/deletion-requests"
+                            element={<AdminDeletionRequests />}
                         />
 
                         {/* Turf Owner Routes */}
