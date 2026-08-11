@@ -4,8 +4,10 @@ import 'package:mobile/core/responsive/screen_extensions.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/viewmodels/auth/auth_viewmodel.dart';
 import 'package:mobile/viewmodels/turf/owner_viewmodel.dart';
+import 'package:mobile/views/booking/add_turf_page.dart';
 import 'package:mobile/views/booking/my_turf_page.dart';
 import 'package:mobile/views/booking/owner_booking_page.dart';
+import 'package:mobile/views/notifications/notificaiton_page.dart';
 
 class OwnerDashboardPage extends StatelessWidget {
   const OwnerDashboardPage({super.key});
@@ -136,7 +138,7 @@ class OwnerDashboardPage extends StatelessWidget {
                           label: 'Add Turf',
                           colors: colors,
                           textTheme: textTheme,
-                          onTap: () => Get.toNamed('/owner/turfs/add'),
+                          onTap: () => Get.to(() => const AddTurfPage()),
                         ),
                       ),
                       SizedBox(width: 12.w),
@@ -498,7 +500,7 @@ class _NotifBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => Get.toNamed('/notifications'),
+      onTap: () => Get.to(() => NotificationPage()),
       child: Container(
         height: 42,
         width: 42,

@@ -4,6 +4,7 @@ import 'package:mobile/core/constants/app_assets.dart';
 import 'package:mobile/core/responsive/screen_extensions.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/viewmodels/turf/turf_viewmodel.dart';
+import 'package:mobile/views/booking/booking_details_page.dart';
 import 'package:mobile/views/home/widgets/booking_card.dart';
 import 'package:mobile/views/notifications/notificaiton_page.dart';
 
@@ -317,8 +318,8 @@ class _HomePageState extends State<HomePage> {
                                 padding: EdgeInsets.only(bottom: 12.h),
                                 child: VenueCard(
                                   turf: turf,
-                                  onBookNow: () => debugPrint(
-                                    'Book Now tapped for ${turf.name}',
+                                  onBookNow: () => Get.to(
+                                    () => TurfDetailsPage(turf: turf),
                                   ),
                                 ),
                               ),

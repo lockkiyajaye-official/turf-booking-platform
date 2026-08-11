@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:mobile/core/constants/app_constants.dart';
 
 class TurfService {
-  static const String _base = '${AppConstants.baseUrl}/turfs';
+  static String get _base => '${AppConstants.baseUrl}/turfs';
 
   Map<String, String> _headers(String? token) {
     if (token == null || token.isEmpty) {
@@ -16,7 +16,7 @@ class TurfService {
   }
 
   Map<String, dynamic> _handleResponse(http.Response response) {
-    var data;
+    dynamic data;
     try {
       data = jsonDecode(response.body);
     } catch (_) {
@@ -159,6 +159,21 @@ class TurfService {
         'date': date,
         'startTime': startTime,
         'endTime': endTime,
+      });
+      final response = await http.get(uri, headers: _headers(null));
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>> getBookedSlots({
+    required String id,
+    required String date,
+  }) async {
+    try {
+      final uri = Uri.parse('$_base/$id/booked-slots').replace(queryParameters: {
+        'date': date,
       });
       final response = await http.get(uri, headers: _headers(null));
       return _handleResponse(response);

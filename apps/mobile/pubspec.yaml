@@ -44,7 +44,9 @@ dependencies:
   app_links: ^7.0.0
   razorpay_flutter: ^1.4.5
   flutter_dotenv: ^6.0.1
-  
+  http: ^1.6.0
+  image_picker: ^1.1.2
+
 
 dev_dependencies:
   flutter_test:

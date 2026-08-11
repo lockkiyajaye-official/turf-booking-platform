@@ -24,12 +24,43 @@ export default function TurfDetail() {
     const [loading, setLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState("");
     const [selectedSlot, setSelectedSlot] = useState("");
+    const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+    const [loadingSlots, setLoadingSlots] = useState(false);
     const [booking, setBooking] = useState(false);
     const [activeImage, setActiveImage] = useState(0);
 
     useEffect(() => {
         if (id) fetchTurf();
     }, [id]);
+
+    useEffect(() => {
+        if (id && selectedDate) {
+            fetchBookedSlots(selectedDate);
+        } else {
+            setBookedSlots([]);
+        }
+    }, [id, selectedDate]);
+
+    const fetchBookedSlots = async (date: string) => {
+        setLoadingSlots(true);
+        try {
+            const res = await api.get(`/turfs/${id}/booked-slots?date=${date}`);
+            setBookedSlots(Array.isArray(res.data) ? res.data : []);
+        } catch (e) {
+            setBookedSlots([]);
+        } finally {
+            setLoadingSlots(false);
+        }
+    };
+
+    const isSlotBooked = (slot: string) => {
+        if (!bookedSlots || bookedSlots.length === 0) return false;
+        const cleanSlot = slot.replace(/\s+/g, "").toLowerCase();
+        return bookedSlots.some((b) => {
+            const cleanB = b.replace(/\s+/g, "").toLowerCase();
+            return cleanB === cleanSlot || cleanB.includes(cleanSlot) || cleanSlot.includes(cleanB);
+        });
+    };
 
     const fetchTurf = async () => {
         try {
@@ -290,7 +321,7 @@ export default function TurfDetail() {
                                 <div className="space-y-4">
                                     {/* Date picker */}
                                     <div>
-                                        <label className="block text-sm font-bold text-gray-700 mb-1.5 flex items-center gap-1.5">
+                                        <label className="text-sm font-bold text-gray-700 mb-1.5 flex items-center gap-1.5">
                                             <Calendar className="w-4 h-4 text-[#E33E33]" />
                                             Select Date
                                         </label>
@@ -309,31 +340,52 @@ export default function TurfDetail() {
                                     {/* Slot picker */}
                                     {selectedDate && (
                                         <div>
-                                            <label className="block text-sm font-bold text-gray-700 mb-1.5 flex items-center gap-1.5">
-                                                <Clock className="w-4 h-4 text-[#E33E33]" />
-                                                Select Time Slot
+                                            <label className="text-sm font-bold text-gray-700 mb-1.5 flex items-center justify-between">
+                                                <span className="flex items-center gap-1.5">
+                                                    <Clock className="w-4 h-4 text-[#E33E33]" />
+                                                    Select Time Slot
+                                                </span>
+                                                {loadingSlots && (
+                                                    <span className="text-xs text-gray-400 font-normal">
+                                                        Checking slots...
+                                                    </span>
+                                                )}
                                             </label>
                                             <div className="grid grid-cols-2 gap-2 max-h-52 overflow-y-auto pr-1">
-                                                {turf.availableSlots.map((slot, idx) => (
-                                                    <button
-                                                        key={idx}
-                                                        type="button"
-                                                        onClick={() => setSelectedSlot(slot)}
-                                                        className={`px-2 py-2 rounded-xl text-xs font-bold transition-all ${
-                                                            selectedSlot === slot
-                                                                ? "bg-[#E33E33] text-white shadow-sm"
-                                                                : "bg-gray-50 border border-gray-200 text-gray-700 hover:border-[#E33E33] hover:text-[#E33E33]"
-                                                        }`}
-                                                    >
-                                                        {slot}
-                                                    </button>
-                                                ))}
+                                                {turf.availableSlots.map((slot, idx) => {
+                                                    const isBooked = isSlotBooked(slot);
+                                                    const isSelected = selectedSlot === slot;
+                                                    return (
+                                                        <button
+                                                            key={idx}
+                                                            type="button"
+                                                            disabled={isBooked}
+                                                            onClick={() => {
+                                                                if (!isBooked) setSelectedSlot(slot);
+                                                            }}
+                                                            className={`px-2 py-2 rounded-xl text-xs font-bold transition-all relative ${
+                                                                isBooked
+                                                                    ? "bg-gray-100 border border-gray-200 text-gray-400 line-through cursor-not-allowed opacity-60"
+                                                                    : isSelected
+                                                                        ? "bg-[#E33E33] text-white shadow-sm"
+                                                                        : "bg-gray-50 border border-gray-200 text-gray-700 hover:border-[#E33E33] hover:text-[#E33E33]"
+                                                            }`}
+                                                        >
+                                                            {slot}
+                                                            {isBooked && (
+                                                                <span className="block text-[10px] font-normal no-underline text-red-500">
+                                                                    Booked
+                                                                </span>
+                                                            )}
+                                                        </button>
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     )}
 
                                     {/* Price summary */}
-                                    {selectedSlot && (
+                                    {selectedSlot && !isSlotBooked(selectedSlot) && (
                                         <div className="bg-gray-50 rounded-xl p-3 text-sm">
                                             <div className="flex justify-between text-gray-600 mb-1">
                                                 <span>Slot</span>
@@ -348,7 +400,7 @@ export default function TurfDetail() {
 
                                     <button
                                         onClick={handleBooking}
-                                        disabled={!selectedDate || !selectedSlot || booking}
+                                        disabled={!selectedDate || !selectedSlot || isSlotBooked(selectedSlot) || booking}
                                         className="w-full bg-[#E33E33] hover:bg-red-700 text-white py-3 rounded-xl font-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                                     >
                                         {booking ? "Processing..." : "Book Now"}

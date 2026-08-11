@@ -4,8 +4,9 @@ import 'package:mobile/core/responsive/screen_extensions.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/storage/local_storage.dart';
 import 'package:mobile/data/models/turf_model.dart';
+import 'package:mobile/viewmodels/favorite/favorite_viewmodel.dart';
 import 'package:mobile/viewmodels/turf/turf_viewmodel.dart';
-import 'package:mobile/views/home/widgets/booking_details.dart';
+import 'package:mobile/views/booking/booking_details_page.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -529,8 +530,44 @@ class _ResultCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                // Favorite button — top left
+                Positioned(
+                  top: 6.h,
+                  left: 6.w,
+                  child: Obx(() {
+                    final favVm = Get.find<FavoriteViewmodel>();
+                    final isFav = favVm.isFavorite(turf.id);
+                    return GestureDetector(
+                      onTap: () => favVm.toggleFavorite(turf),
+                      child: Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          isFav
+                              ? Icons.favorite_rounded
+                              : Icons.favorite_border_rounded,
+                          size: 16,
+                          color: isFav
+                              ? const Color(0xFFE74C3C)
+                              : const Color(0xFF7F8C8D),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
               ],
             ),
+
 
             // ── Right: details ─────────────────────────────────
             Expanded(
@@ -649,20 +686,51 @@ class _PopularTurfCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Image.network(
-                imageUrl,
-                height: 90.h,
-                width: 115.w,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  height: 90.h,
-                  width: 115.w,
-                  color: Colors.grey[200],
-                  child: const Icon(Icons.sports_soccer, color: Colors.grey),
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.network(
+                    imageUrl,
+                    height: 90.h,
+                    width: 115.w,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      height: 90.h,
+                      width: 115.w,
+                      color: Colors.grey[200],
+                      child: const Icon(Icons.sports_soccer, color: Colors.grey),
+                    ),
+                  ),
                 ),
-              ),
+                Positioned(
+                  top: 4.h,
+                  right: 4.w,
+                  child: Obx(() {
+                    final favVm = Get.find<FavoriteViewmodel>();
+                    final isFav = favVm.isFavorite(turf.id);
+                    return GestureDetector(
+                      onTap: () => favVm.toggleFavorite(turf),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          isFav
+                              ? Icons.favorite_rounded
+                              : Icons.favorite_border_rounded,
+                          size: 14,
+                          color: isFav
+                              ? const Color(0xFFE74C3C)
+                              : const Color(0xFF7F8C8D),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ],
             ),
             SizedBox(height: 6.h),
             Text(

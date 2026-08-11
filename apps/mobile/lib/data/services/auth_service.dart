@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:mobile/core/constants/app_constants.dart';
 
 class AuthService {
-  static const String _base = '${AppConstants.baseUrl}/auth';
+  static String get _base => '${AppConstants.baseUrl}/auth';
 
   Map<String, String> get _headers => {'Content-Type': 'application/json'};
 
@@ -300,6 +300,40 @@ Future<Map<String, dynamic>> loginWithGoogle({
       final response = await http.get(
         Uri.parse('$_base/me'),
         headers: _authHeaders(token),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// PATCH /auth/profile — requires JWT token
+  Future<Map<String, dynamic>> updateProfile({
+    required String token,
+    required Map<String, dynamic> data,
+  }) async {
+    try {
+      final response = await http.patch(
+        Uri.parse('$_base/profile'),
+        headers: _authHeaders(token),
+        body: jsonEncode(data),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// PATCH /auth/notifications — requires JWT token
+  Future<Map<String, dynamic>> updateNotifications({
+    required String token,
+    required Map<String, dynamic> data,
+  }) async {
+    try {
+      final response = await http.patch(
+        Uri.parse('$_base/notifications'),
+        headers: _authHeaders(token),
+        body: jsonEncode(data),
       );
       return _handleResponse(response);
     } catch (e) {

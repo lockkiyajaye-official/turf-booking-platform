@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:mobile/core/constants/app_constants.dart';
 
 class BookingService {
-  static const String _base = '${AppConstants.baseUrl}/bookings';
+  static String get _base => '${AppConstants.baseUrl}/bookings';
 
   Map<String, String> _headers(String token) {
     return {

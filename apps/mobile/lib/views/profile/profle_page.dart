@@ -1,8 +1,15 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobile/core/responsive/screen_extensions.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/viewmodels/auth/auth_viewmodel.dart';
+import 'package:mobile/views/profile/about_page.dart';
+import 'package:mobile/views/profile/cancellation_page.dart';
+import 'package:mobile/views/profile/edit_profile_page.dart';
+import 'package:mobile/views/profile/favorite_venues_page.dart';
+import 'package:mobile/views/profile/notification_settings_page.dart';
+import 'package:mobile/views/profile/support_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -17,34 +24,32 @@ class ProfilePage extends StatelessWidget {
       _ProfileMenuItem(
         icon: Icons.person_outline,
         label: 'Edit Profile',
-        onTap: () => Get.toNamed('/profile/edit'),
+        onTap: () => Get.to(() => const EditProfilePage()),
       ),
-     
       _ProfileMenuItem(
         icon: Icons.favorite_border_rounded,
         label: 'Favorite Venue',
-        onTap: () => Get.toNamed('/favorites'),
+        onTap: () => Get.to(() => const FavoriteVenuesPage()),
       ),
       _ProfileMenuItem(
         icon: Icons.notifications_outlined,
         label: 'Notification settings',
-        onTap: () => Get.toNamed('/settings/notifications'),
+        onTap: () => Get.to(() => const NotificationSettingsPage()),
       ),
-     
       _ProfileMenuItem(
         icon: Icons.cancel_outlined,
         label: 'Cancellation/Reschedule',
-        onTap: () => Get.toNamed('/bookings/cancellation'),
+        onTap: () => Get.to(() => const CancellationPage()),
       ),
       _ProfileMenuItem(
         icon: Icons.help_outline_rounded,
         label: 'Help & Support',
-        onTap: () => Get.toNamed('/support'),
+        onTap: () => Get.to(() => const SupportPage()),
       ),
       _ProfileMenuItem(
         icon: Icons.info_outline_rounded,
         label: 'About app',
-        onTap: () => Get.toNamed('/about'),
+        onTap: () => Get.to(() => const AboutPage()),
       ),
     ];
 
@@ -85,13 +90,22 @@ class ProfilePage extends StatelessWidget {
                   ),
                   child: ClipOval(
                     child: Obx(() {
-                      final avatarUrl =
-                          vm.currentUser['avatarUrl'] as String?;
+                      final avatarUrl = vm.currentUser['avatarUrl'] as String?;
                       if (avatarUrl != null && avatarUrl.isNotEmpty) {
+                        if (avatarUrl.startsWith('data:image')) {
+                          try {
+                            final base64Data = avatarUrl.split(',').last;
+                            final bytes = base64Decode(base64Data);
+                            return Image.memory(
+                              bytes,
+                              fit: BoxFit.cover,
+                            );
+                          } catch (_) {}
+                        }
                         return Image.network(
                           avatarUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
+                          errorBuilder: (context, error, stackTrace) =>
                               _DefaultAvatar(colors: colors),
                         );
                       }
@@ -104,12 +118,9 @@ class ProfilePage extends StatelessWidget {
 
                 // Name
                 Obx(() {
-                  final first =
-                      vm.currentUser['firstName'] as String? ?? '';
-                  final last =
-                      vm.currentUser['lastName'] as String? ?? '';
-                  final name =
-                      '${first.trim()} ${last.trim()}'.trim();
+                  final first = vm.currentUser['firstName'] as String? ?? '';
+                  final last = vm.currentUser['lastName'] as String? ?? '';
+                  final name = '${first.trim()} ${last.trim()}'.trim();
                   return Text(
                     name.isEmpty ? 'User' : name,
                     style: textTheme.titleMedium?.copyWith(
@@ -123,8 +134,7 @@ class ProfilePage extends StatelessWidget {
 
                 // Email
                 Obx(() {
-                  final email =
-                      vm.currentUser['email'] as String? ?? '';
+                  final email = vm.currentUser['email'] as String? ?? '';
                   return Text(
                     email,
                     style: textTheme.bodySmall?.copyWith(
@@ -144,24 +154,23 @@ class ProfilePage extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               padding: EdgeInsets.symmetric(horizontal: 16.w),
               itemCount: menuItems.length + 1, // +1 for logout
-              separatorBuilder: (_, __) => Divider(
-                height: 1,
-                color: colors.white
-              ),
+              separatorBuilder: (context, index) =>
+                  Divider(height: 1, color: colors.white),
               itemBuilder: (context, index) {
                 // Last item = Logout (red)
                 if (index == menuItems.length) {
                   return _MenuTile(
                     icon: Icons.logout_rounded,
                     label: 'Logout',
-                    labelColor: colors.error ?? Colors.red,
-                    iconColor: colors.error ?? Colors.red,
+                    labelColor: colors.error,
+                    iconColor: colors.error,
                     onTap: () {
                       Get.dialog(
                         AlertDialog(
                           title: const Text('Logout'),
                           content: const Text(
-                              'Are you sure you want to logout?'),
+                            'Are you sure you want to logout?',
+                          ),
                           actions: [
                             TextButton(
                               onPressed: () => Get.back(),
@@ -174,9 +183,7 @@ class ProfilePage extends StatelessWidget {
                               },
                               child: Text(
                                 'Logout',
-                                style: TextStyle(
-                                    color:
-                                        colors.error ?? Colors.red),
+                                style: TextStyle(color: colors.error),
                               ),
                             ),
                           ],
@@ -228,11 +235,7 @@ class _MenuTile extends StatelessWidget {
         padding: EdgeInsets.symmetric(vertical: 14.h),
         child: Row(
           children: [
-            Icon(
-              icon,
-              size: 22,
-              color: iconColor ?? colors.textTitle,
-            ),
+            Icon(icon, size: 22, color: iconColor ?? colors.textTitle),
             SizedBox(width: 14.w),
             Expanded(
               child: Text(
@@ -243,11 +246,7 @@ class _MenuTile extends StatelessWidget {
                 ),
               ),
             ),
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 20,
-              color: colors.textGrey,
-            ),
+            Icon(Icons.chevron_right_rounded, size: 20, color: colors.textGrey),
           ],
         ),
       ),
@@ -264,11 +263,7 @@ class _DefaultAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: colors.background,
-      child: Icon(
-        Icons.person_rounded,
-        size: 40,
-        color: colors.textGrey,
-      ),
+      child: Icon(Icons.person_rounded, size: 40, color: colors.textGrey),
     );
   }
 }

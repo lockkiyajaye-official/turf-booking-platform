@@ -13,6 +13,8 @@ import { PaymentsModule } from './payments/payments.module';
 import { ContactModule } from './contact/contact.module';
 import { getDatabaseConfig } from './database/config/database.config';
 import { BannerModule } from './banner/banner.module';
+import { FavoritesModule } from './favorites/favorites.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -33,6 +35,8 @@ import { BannerModule } from './banner/banner.module';
     PaymentsModule,
     ContactModule,
     BannerModule,
+    FavoritesModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

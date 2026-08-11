@@ -10,6 +10,8 @@ import 'package:mobile/data/services/booking_service.dart';
 import 'package:mobile/viewmodels/auth/auth_viewmodel.dart';
 import 'package:mobile/views/home/widgets/amentity_chip.dart';
 import 'package:mobile/views/widgets/my_buttons.dart';
+import 'package:mobile/data/services/turf_service.dart';
+import 'package:mobile/viewmodels/favorite/favorite_viewmodel.dart';
 
 class TurfDetailsPage extends StatefulWidget {
   final TurfModel turf;
@@ -26,10 +28,13 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
   int _selectedSlotIndex = 1;
   int _currentImageIndex = 0;
   bool _isBooking = false;
+  bool _isLoadingSlots = false;
+  Set<String> _bookedSlots = {};
 
   late final List<String> _imageUrls;
   late final Razorpay _razorpay;
 
+  final TurfService _turfService = TurfService();
   final BookingService _bookingService = BookingService();
   final AuthViewmodel _authViewmodel = Get.find<AuthViewmodel>();
 
@@ -37,14 +42,14 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
   // back before opening Razorpay, which BookingViewmodel.createBooking()
   // doesn't return (it snackbars + navigates back instead) — so this page
   // calls BookingService directly, same as BookingViewmodel does, rather
-  // than going through the viewmodel.
+  // than going through the view-model.
   String get _token => _authViewmodel.token.value;
 
   // Holds the PENDING booking id + price returned by createBooking, until payment confirms it.
   String? _pendingBookingId;
   num? _pendingBookingAmount;
 
-    final String _razorpayKeyId =
+  final String _razorpayKeyId =
       '${dotenv.env['RAZORPAY']}'; // RAZORPAY_KEY_ID only — never put the secret in the app
 
   // Real, upcoming dates (today + next 6 days) instead of hardcoded ones —
@@ -58,15 +63,27 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
 
   static const _weekdayAbbr = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   static const _monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June', 'July',
-    'August', 'September', 'October', 'November', 'December'
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
 
   late final List<DayItem> _days = _dayDates
-      .map((d) => DayItem(
-            day: _weekdayAbbr[d.weekday - 1],
-            date: d.day.toString().padLeft(2, '0'),
-          ))
+      .map(
+        (d) => DayItem(
+          day: _weekdayAbbr[d.weekday - 1],
+          date: d.day.toString().padLeft(2, '0'),
+        ),
+      )
       .toList();
 
   late final List<String> _slots;
@@ -131,6 +148,38 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
             AmenityItem(icon: Icons.local_parking_outlined, label: 'Parking'),
             AmenityItem(icon: Icons.videocam_outlined, label: 'CCTV & Safety'),
           ];
+
+    _fetchBookedSlots();
+  }
+
+  Future<void> _fetchBookedSlots() async {
+    final dateIso = _selectedDateIso();
+    setState(() => _isLoadingSlots = true);
+    final result = await _turfService.getBookedSlots(
+      id: widget.turf.id,
+      date: dateIso,
+    );
+    if (mounted) {
+      setState(() {
+        _isLoadingSlots = false;
+        if (result['success'] == true && result['data'] is List) {
+          _bookedSlots = Set<String>.from(
+            (result['data'] as List).map((e) => e.toString()),
+          );
+        } else {
+          _bookedSlots = {};
+        }
+      });
+    }
+  }
+
+  bool _isSlotBooked(String slot) {
+    if (_bookedSlots.isEmpty) return false;
+    final clean = slot.replaceAll(RegExp(r'\s+'), '').toLowerCase();
+    return _bookedSlots.any((b) {
+      final cleanB = b.replaceAll(RegExp(r'\s+'), '').toLowerCase();
+      return cleanB == clean || cleanB.contains(clean) || clean.contains(cleanB);
+    });
   }
 
   @override
@@ -152,7 +201,9 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
   }
 
   String _formatSlot(String slot) {
-    final match = RegExp(r'^(\d{2}):(\d{2})-(\d{2}):(\d{2})$').firstMatch(slot.trim());
+    final match = RegExp(
+      r'^(\d{2}):(\d{2})-(\d{2}):(\d{2})$',
+    ).firstMatch(slot.trim());
     if (match == null) return slot;
 
     int startHour = int.parse(match.group(1)!);
@@ -195,9 +246,20 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
   Future<void> _startBookingFlow() async {
     if (_isBooking) return;
     if (_token.isEmpty) {
-      Get.snackbar('Error', 'Not authenticated', backgroundColor: Colors.red.shade100);
+      Get.snackbar(
+        'Error',
+        'Not authenticated',
+        backgroundColor: Colors.red.shade100,
+      );
       return;
     }
+    if (_selectedSlotIndex >= 0 && _selectedSlotIndex < _slots.length) {
+      if (_isSlotBooked(_slots[_selectedSlotIndex])) {
+        _showMessage('This slot is already booked for the selected date');
+        return;
+      }
+    }
+
     setState(() => _isBooking = true);
 
     final String startTime;
@@ -279,12 +341,14 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
 
     if (!mounted) return;
     if (result['success'] == true) {
-      _showMessage('Booking confirmed! Payment ID: ${response.paymentId}', isError: false);
+      _showMessage(
+        'Booking confirmed! Payment ID: ${response.paymentId}',
+        isError: false,
+      );
       // e.g. Navigator.pushReplacement(context, ...BookingConfirmationPage...)
     } else {
       // Show the backend's actual message — a generic string here just
       // hides the real cause (validation error, wrong route, auth, etc).
-     
     }
   }
 
@@ -339,6 +403,23 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          Obx(() {
+            final favVm = Get.find<FavoriteViewmodel>();
+            final isFav = favVm.isFavorite(widget.turf.id);
+            return IconButton(
+              icon: Icon(
+                isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                color: isFav
+                    ? const Color(0xFFE74C3C)
+                    : const Color(0xFF1C1C1E),
+                size: 24,
+              ),
+              onPressed: () => favVm.toggleFavorite(widget.turf),
+            );
+          }),
+          SizedBox(width: 4.w),
+        ],
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -649,7 +730,10 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                   var day = e.value;
                   bool isSelected = _selectedDayIndex == i;
                   return GestureDetector(
-                    onTap: () => setState(() => _selectedDayIndex = i),
+                    onTap: () {
+                      setState(() => _selectedDayIndex = i);
+                      _fetchBookedSlots();
+                    },
                     child: Container(
                       width: 44.w,
                       height: 50.h,
@@ -696,13 +780,26 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
               SizedBox(height: 20.h),
 
               // ── Slots Available ─────────────────
-              Text(
-                'Slots Available',
-                style: textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF454555),
-                  fontSize: 13.sp,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Slots Available',
+                    style: textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF454555),
+                      fontSize: 13.sp,
+                    ),
+                  ),
+                  if (_isLoadingSlots)
+                    Text(
+                      'Checking...',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: Colors.grey[400],
+                        fontSize: 11.sp,
+                      ),
+                    ),
+                ],
               ),
               SizedBox(height: 16.h),
               Wrap(
@@ -712,30 +809,43 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                   int i = e.key;
                   var slot = e.value;
                   bool isSelected = _selectedSlotIndex == i;
+                  bool isBooked = _isSlotBooked(slot);
+
                   return GestureDetector(
-                    onTap: () => setState(() => _selectedSlotIndex = i),
+                    onTap: isBooked
+                        ? null
+                        : () => setState(() => _selectedSlotIndex = i),
                     child: Container(
                       padding: EdgeInsets.symmetric(
                         horizontal: 16.w,
                         vertical: 8.h,
                       ),
                       decoration: BoxDecoration(
-                        color: isSelected ? primaryGreen : Colors.white,
+                        color: isBooked
+                            ? const Color(0xFFF0F0F0)
+                            : (isSelected ? primaryGreen : Colors.white),
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: isSelected
-                              ? primaryGreen
-                              : primaryGreen.withOpacity(0.4),
+                          color: isBooked
+                              ? const Color(0xFFD0D0D0)
+                              : (isSelected
+                                  ? primaryGreen
+                                  : primaryGreen.withOpacity(0.4)),
                         ),
                       ),
                       child: Text(
                         _formatSlot(slot),
                         style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.grey[700],
+                          color: isBooked
+                              ? Colors.grey[400]
+                              : (isSelected ? Colors.white : Colors.grey[700]),
                           fontSize: 11.sp,
                           fontWeight: isSelected
                               ? FontWeight.w600
                               : FontWeight.w500,
+                          decoration: isBooked
+                              ? TextDecoration.lineThrough
+                              : TextDecoration.none,
                           letterSpacing: -0.2,
                         ),
                       ),

@@ -62,6 +62,14 @@ export class TurfsController {
     return this.turfsService.checkAvailability(id, date, startTime, endTime);
   }
 
+  @Get(':id/booked-slots')
+  getBookedSlots(
+    @Param('id') id: string,
+    @Query('date') date: string,
+  ) {
+    return this.turfsService.getBookedSlots(id, date);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.turfsService.findOne(id);

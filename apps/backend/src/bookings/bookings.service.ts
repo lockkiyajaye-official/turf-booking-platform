@@ -8,7 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Booking, BookingStatus } from '../database/entities/booking.entity';
 import { Turf } from '../database/entities/turf.entity';
 import { User, UserRole } from '../database/entities/user.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { CreateBookingDto } from './dto/create-booking.dto';
 
 @Injectable()
@@ -47,7 +47,7 @@ export class BookingsService {
     const startHour = parseInt(createBookingDto.startTime.split(':')[0]);
     const endHour = parseInt(createBookingDto.endTime.split(':')[0]);
     const hours = endHour - startHour;
-    const totalPrice = turf.pricePerHour * hours;
+    const totalPrice = turf.pricePerHour * (isNaN(hours) || hours <= 0 ? 1 : hours);
 
     const booking = this.bookingRepository.create({
       ...createBookingDto,
@@ -138,27 +138,48 @@ export class BookingsService {
     }
 
     // Check if slot exists in available slots
-    const slotString = `${startTime}-${endTime}`;
-    if (!turf.availableSlots.includes(slotString)) {
+    const slotString = startTime && endTime ? `${startTime}-${endTime}` : startTime;
+    const exists = turf.availableSlots.some((s) => {
+      if (s === slotString || s === startTime) return true;
+      if (startTime && endTime && (s.includes(startTime) || s.replace(/\s/g, '').includes(slotString.replace(/\s/g, '')))) return true;
+      return false;
+    });
+
+    if (!exists && turf.availableSlots.length > 0) {
       return { available: false, reason: 'Slot not in available slots' };
     }
 
-    // Check for conflicting bookings
-    const bookingDate = new Date(date);
-    const conflictingBooking = await this.bookingRepository.findOne({
+    const dateFormatted = date ? date.split('T')[0] : '';
+
+    const activeBookings = await this.bookingRepository.find({
       where: {
         turfId,
-        bookingDate,
-        startTime,
-        endTime,
-        status: BookingStatus.CONFIRMED,
+        status: In([BookingStatus.CONFIRMED, BookingStatus.PENDING]),
       },
     });
 
-    if (conflictingBooking) {
+    const isConflicting = activeBookings.some((b) => {
+      const bDate = b.bookingDate instanceof Date
+        ? b.bookingDate.toISOString().split('T')[0]
+        : String(b.bookingDate).split('T')[0];
+
+      if (bDate !== dateFormatted) return false;
+
+      if (startTime && endTime) {
+        return (
+          (b.startTime === startTime && b.endTime === endTime) ||
+          (`${b.startTime}-${b.endTime}` === `${startTime}-${endTime}`) ||
+          (`${b.startTime} - ${b.endTime}` === `${startTime} - ${endTime}`)
+        );
+      }
+      return b.startTime === startTime || b.startTime.includes(startTime) || startTime.includes(b.startTime);
+    });
+
+    if (isConflicting) {
       return { available: false, reason: 'Slot already booked' };
     }
 
     return { available: true };
   }
 }
+

@@ -4,9 +4,10 @@ import {
   UnauthorizedException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Booking, BookingStatus } from '../database/entities/booking.entity';
 import { Turf } from '../database/entities/turf.entity';
 import { User, UserRole } from '../database/entities/user.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { CreateTurfDto } from './dto/create-turf.dto';
 import { UpdateTurfDto } from './dto/update-turf.dto';
 
@@ -15,6 +16,8 @@ export class TurfsService {
   constructor(
     @InjectRepository(Turf)
     private turfRepository: Repository<Turf>,
+    @InjectRepository(Booking)
+    private bookingRepository: Repository<Booking>,
   ) { }
 
   async create(createTurfDto: CreateTurfDto, owner: User) {
@@ -133,7 +136,7 @@ export class TurfsService {
     const turf = await this.findOne(id);
 
     if (turf.ownerId !== owner.id && owner.role !== UserRole.ADMIN) {
-      throw new UnauthorizedException('You can only unpublish your own turfs');
+      throw new UnauthorizedException('You can only un-publish your own turfs');
     }
 
     turf.isPublished = false;
@@ -163,18 +166,60 @@ export class TurfsService {
     return { message: 'Turf deleted successfully' };
   }
 
+  async getBookedSlots(turfId: string, date: string): Promise<string[]> {
+    const targetDate = date ? date.split('T')[0] : '';
+    if (!targetDate) return [];
+
+    const activeBookings = await this.bookingRepository.find({
+      where: {
+        turfId,
+        status: In([BookingStatus.CONFIRMED, BookingStatus.PENDING]),
+      },
+    });
+
+    const bookedSlotsSet = new Set<string>();
+
+    for (const b of activeBookings) {
+      const bDate = b.bookingDate instanceof Date
+        ? b.bookingDate.toISOString().split('T')[0]
+        : String(b.bookingDate).split('T')[0];
+
+      if (bDate === targetDate) {
+        if (b.startTime && b.endTime) {
+          bookedSlotsSet.add(`${b.startTime}-${b.endTime}`);
+          bookedSlotsSet.add(`${b.startTime} - ${b.endTime}`);
+        }
+        if (b.startTime) {
+          bookedSlotsSet.add(b.startTime);
+        }
+      }
+    }
+
+    return Array.from(bookedSlotsSet);
+  }
+
   async checkAvailability(turfId: string, date: string, startTime: string, endTime: string) {
     const turf = await this.findOne(turfId);
 
     // Check if the slot is in available slots
-    const slotString = `${startTime}-${endTime}`;
-    if (!turf.availableSlots.includes(slotString)) {
+    const slotString = startTime && endTime ? `${startTime}-${endTime}` : startTime;
+    const exists = turf.availableSlots.some((s) => {
+      if (s === slotString || s === startTime) return true;
+      if (startTime && endTime && (s.includes(startTime) || s.replace(/\s/g, '').includes(slotString.replace(/\s/g, '')))) return true;
+      return false;
+    });
+
+    if (!exists && turf.availableSlots.length > 0) {
       return { available: false, reason: 'Slot not available' };
     }
 
-    // In a real app, you'd check against existing bookings
-    // For now, we'll just check if the slot exists
+    const bookedSlots = await this.getBookedSlots(turfId, date);
+    if (bookedSlots.includes(slotString) || (startTime && bookedSlots.includes(startTime))) {
+      return { available: false, reason: 'Slot already booked' };
+    }
+
     return { available: true };
   }
 }
+
 

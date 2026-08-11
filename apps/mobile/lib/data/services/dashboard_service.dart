@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:mobile/core/constants/app_constants.dart';
 
 class DashboardService {
-  static const String _base = '${AppConstants.baseUrl}/dashboard';
+  static String get _base => '${AppConstants.baseUrl}/dashboard';
 
   Map<String, String> _headers(String token) {
     return {
