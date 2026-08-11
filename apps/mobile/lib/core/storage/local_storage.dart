@@ -149,5 +149,17 @@ class LocalStorageService {
     authBox.delete(StorageKeys.doctorName);
     authBox.delete(StorageKeys.country);
     authBox.delete(StorageKeys.currencyCode);
+    appBox.delete(StorageKeys.searchHistory);
+  }
+
+  // ================= SEARCH HISTORY =================
+
+  void saveSearchHistory(List<String> history) {
+    appBox.put(StorageKeys.searchHistory, history);
+  }
+
+  List<String> getSearchHistory() {
+    final List? history = appBox.get(StorageKeys.searchHistory);
+    return history?.cast<String>() ?? [];
   }
 }

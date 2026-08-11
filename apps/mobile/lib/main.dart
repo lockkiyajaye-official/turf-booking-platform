@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:mobile/core/constants/app_strings.dart';
 import 'package:mobile/core/responsive/app_screen.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/core/theme/light_theme.dart';
 import 'package:mobile/di/core_controller.dart';
+import 'package:mobile/di/feature_controller.dart';
 import 'package:mobile/routes/app_paths.dart';
 import 'package:mobile/routes/app_router.dart';
+import 'package:mobile/core/storage/local_storage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
 
   await CoreController.init();
+   AuthBinding().dependencies();
 
   runApp(const MyApp());
 }
@@ -39,7 +44,9 @@ class MyApp extends StatelessWidget {
                 title: AppStrings.appName,
                 theme: lightTheme,
                 themeMode: appTheme.themeMode,
-                initialRoute: RoutePaths.login,
+                initialRoute: Get.find<LocalStorageService>().getToken() != null
+                    ? RoutePaths.home
+                    : RoutePaths.login,
                 getPages: AppRouter.router,
                 defaultTransition: Transition.fade,
                 transitionDuration: const Duration(milliseconds: 300),
