@@ -22,9 +22,9 @@ class _SearchPageState extends State<SearchPage> {
   List<String> _recentSearches = [];
 
   final List<String> _nearbyAreas = [
-    'Indiranagar',
-    'Koramangala',
-    'Electronic City',
+    'Itanagar',
+    'Naharlagun',
+    'Arunachal Pradesh',
   ];
 
   @override
@@ -45,7 +45,9 @@ class _SearchPageState extends State<SearchPage> {
     if (term.isEmpty) return;
 
     setState(() {
-      _recentSearches.removeWhere((item) => item.toLowerCase() == term.toLowerCase());
+      _recentSearches.removeWhere(
+        (item) => item.toLowerCase() == term.toLowerCase(),
+      );
       _recentSearches.insert(0, term);
       if (_recentSearches.length > 5) {
         _recentSearches.removeLast();
@@ -74,9 +76,11 @@ class _SearchPageState extends State<SearchPage> {
     if (_query.isEmpty) return turfs;
     final q = _query.toLowerCase();
     return turfs
-        .where((t) =>
-            t.name.toLowerCase().contains(q) ||
-            t.address.toLowerCase().contains(q))
+        .where(
+          (t) =>
+              t.name.toLowerCase().contains(q) ||
+              t.address.toLowerCase().contains(q),
+        )
         .toList();
   }
 
@@ -129,8 +133,11 @@ class _SearchPageState extends State<SearchPage> {
                       color: Colors.grey[400],
                       fontSize: 14.sp,
                     ),
-                    prefixIcon:
-                        Icon(Icons.search, color: Colors.grey[500], size: 20),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: Colors.grey[500],
+                      size: 20,
+                    ),
                     suffixIcon: _isSearching
                         ? IconButton(
                             icon: const Icon(Icons.close, size: 18),
@@ -234,25 +241,23 @@ class _DefaultView extends StatelessWidget {
         SizedBox(
           height: 175.h,
           child: isLoading && turfs.isEmpty
-              ? Center(
-                  child: CircularProgressIndicator(color: colors.primary))
+              ? Center(child: CircularProgressIndicator(color: colors.primary))
               : turfs.isEmpty
-                  ? Center(
-                      child: Text(
-                        'No turfs available.',
-                        style:
-                            textTheme.bodySmall?.copyWith(color: colors.textGrey),
-                      ),
-                    )
-                  : ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: turfs.length,
-                      separatorBuilder: (_, __) => SizedBox(width: 12.w),
-                      itemBuilder: (_, i) => _PopularTurfCard(
-                        turf: turfs[i],
-                        textTheme: textTheme,
-                      ),
+              ? Center(
+                  child: Text(
+                    'No turfs available.',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colors.textGrey,
                     ),
+                  ),
+                )
+              : ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: turfs.length,
+                  separatorBuilder: (_, __) => SizedBox(width: 12.w),
+                  itemBuilder: (_, i) =>
+                      _PopularTurfCard(turf: turfs[i], textTheme: textTheme),
+                ),
         ),
 
         SizedBox(height: 24.h),
@@ -264,11 +269,13 @@ class _DefaultView extends StatelessWidget {
           spacing: 10.w,
           runSpacing: 10.h,
           children: nearbyAreas
-              .map((area) => _AreaChip(
-                    label: area,
-                    textTheme: textTheme,
-                    colors: colors,
-                  ))
+              .map(
+                (area) => _AreaChip(
+                  label: area,
+                  textTheme: textTheme,
+                  colors: colors,
+                ),
+              )
               .toList(),
         ),
 
@@ -351,20 +358,18 @@ class _SearchResultsViewState extends State<_SearchResultsView> {
                   final picked = await showModalBottomSheet<String>(
                     context: context,
                     shape: const RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.vertical(top: Radius.circular(16)),
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(16),
+                      ),
                     ),
-                    builder: (_) => _SortSheet(
-                      options: _sortOptions,
-                      selected: _sortBy,
-                    ),
+                    builder: (_) =>
+                        _SortSheet(options: _sortOptions, selected: _sortBy),
                   );
                   if (picked != null) setState(() => _sortBy = picked);
                 },
                 child: Row(
                   children: [
-                    Icon(Icons.sort_rounded,
-                        size: 18, color: Colors.grey[600]),
+                    Icon(Icons.sort_rounded, size: 18, color: Colors.grey[600]),
                     SizedBox(width: 4.w),
                     Text(
                       'Sort by',
@@ -385,35 +390,37 @@ class _SearchResultsViewState extends State<_SearchResultsView> {
         // Results
         Expanded(
           child: widget.isLoading && widget.turfs.isEmpty
-              ? Center(
-                  child: CircularProgressIndicator(color: colors.primary))
+              ? Center(child: CircularProgressIndicator(color: colors.primary))
               : _sortedTurfs.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.search_off_rounded,
-                              size: 48, color: colors.textGrey),
-                          SizedBox(height: 12.h),
-                          Text(
-                            'No results for "${widget.query}"',
-                            style: textTheme.bodyMedium
-                                ?.copyWith(color: colors.textGrey),
-                          ),
-                        ],
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.search_off_rounded,
+                        size: 48,
+                        color: colors.textGrey,
                       ),
-                    )
-                  : ListView.separated(
-                      padding:
-                          EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 32.h),
-                      itemCount: _sortedTurfs.length,
-                      separatorBuilder: (_, __) => SizedBox(height: 12.h),
-                      itemBuilder: (_, i) => _ResultCard(
-                        turf: _sortedTurfs[i],
-                        textTheme: textTheme,
-                        colors: colors,
+                      SizedBox(height: 12.h),
+                      Text(
+                        'No results for "${widget.query}"',
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colors.textGrey,
+                        ),
                       ),
-                    ),
+                    ],
+                  ),
+                )
+              : ListView.separated(
+                  padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 32.h),
+                  itemCount: _sortedTurfs.length,
+                  separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                  itemBuilder: (_, i) => _ResultCard(
+                    turf: _sortedTurfs[i],
+                    textTheme: textTheme,
+                    colors: colors,
+                  ),
+                ),
         ),
       ],
     );
@@ -474,8 +481,10 @@ class _ResultCard extends StatelessWidget {
                       width: 130.w,
                       height: 120.h,
                       color: Colors.grey[200],
-                      child:
-                          const Icon(Icons.sports_soccer, color: Colors.grey),
+                      child: const Icon(
+                        Icons.sports_soccer,
+                        color: Colors.grey,
+                      ),
                     ),
                   ),
                 ),
@@ -484,8 +493,10 @@ class _ResultCard extends StatelessWidget {
                   bottom: 8,
                   left: 8,
                   child: Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 7.w, vertical: 4.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 7.w,
+                      vertical: 4.h,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(6),
@@ -500,8 +511,11 @@ class _ResultCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.star_rounded,
-                            size: 13, color: Colors.amber),
+                        const Icon(
+                          Icons.star_rounded,
+                          size: 13,
+                          color: Colors.amber,
+                        ),
                         SizedBox(width: 3.w),
                         Text(
                           '${(turf.rating ?? 0.0).toStringAsFixed(1)} (${turf.totalReviews})',
@@ -521,8 +535,7 @@ class _ResultCard extends StatelessWidget {
             // ── Right: details ─────────────────────────────────
             Expanded(
               child: Padding(
-                padding:
-                    EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -584,7 +597,8 @@ class _ResultCard extends StatelessWidget {
                       width: double.infinity,
                       height: 34.h,
                       child: OutlinedButton(
-                        onPressed: () => Get.to(() => TurfDetailsPage(turf: turf)),
+                        onPressed: () =>
+                            Get.to(() => TurfDetailsPage(turf: turf)),
                         style: OutlinedButton.styleFrom(
                           side: BorderSide(color: colors.primary, width: 1.5),
                           shape: RoundedRectangleBorder(
@@ -741,8 +755,11 @@ class _RecentSearchTile extends StatelessWidget {
                     ),
                   ),
                 ),
-                Icon(Icons.north_west_rounded,
-                    size: 16, color: Colors.grey[400]),
+                Icon(
+                  Icons.north_west_rounded,
+                  size: 16,
+                  color: Colors.grey[400],
+                ),
               ],
             ),
           ),
@@ -844,24 +861,28 @@ class _SortSheet extends StatelessWidget {
         children: [
           Text(
             'Sort by',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
           SizedBox(height: 16.h),
-          ...options.map((opt) => ListTile(
-                title: Text(
-                  opt,
-                  style: TextStyle(
-                    fontWeight: opt == selected ? FontWeight.w700 : FontWeight.w500,
-                    color: opt == selected ? Colors.black : Colors.grey[600],
-                  ),
+          ...options.map(
+            (opt) => ListTile(
+              title: Text(
+                opt,
+                style: TextStyle(
+                  fontWeight: opt == selected
+                      ? FontWeight.w700
+                      : FontWeight.w500,
+                  color: opt == selected ? Colors.black : Colors.grey[600],
                 ),
-                trailing: opt == selected
-                    ? Icon(Icons.check_circle, color: Colors.green)
-                    : null,
-                onTap: () => Navigator.pop(context, opt),
-              )),
+              ),
+              trailing: opt == selected
+                  ? Icon(Icons.check_circle, color: Colors.green)
+                  : null,
+              onTap: () => Navigator.pop(context, opt),
+            ),
+          ),
         ],
       ),
     );

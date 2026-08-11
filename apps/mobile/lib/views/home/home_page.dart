@@ -81,7 +81,7 @@ class _HomePageState extends State<HomePage> {
                           SizedBox(width: 8.w),
                           Expanded(
                             child: Text(
-                              'HSR Layout, Bangalore',
+                              'Itanagar, Arunachal Pradesh',
                               style: textTheme.bodyMedium?.copyWith(
                                 fontWeight: FontWeight.w500,
                               ),
