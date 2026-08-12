@@ -25,6 +25,9 @@ export class AccountDeletionRequest {
     @Column('text', { nullable: true })
     reason?: string;
 
+    @Column({ default: true })
+    confirmDeleteAllData: boolean;
+
     @Column({
         type: 'enum',
         enum: DeletionRequestStatus,
