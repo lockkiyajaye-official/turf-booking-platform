@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body, Request, UseGuards, ForbiddenException, NotFoundException, UseInterceptors, UploadedFile, Res } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
-import { UserRole } from 'src/database/entities/user.entity';
+import { UserRole } from '../database/entities/user.entity';
 import { BannerService } from './banner.service';
 
 @Controller('banners')

@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserRole } from 'src/database/entities/user.entity';
-import { Banner, BannerTarget } from 'src/database/entities/banner.entity'; 
+import { UserRole } from '../database/entities/user.entity';
+import { Banner, BannerTarget } from '../database/entities/banner.entity'; 
 
 @Injectable()
 export class BannerService {
