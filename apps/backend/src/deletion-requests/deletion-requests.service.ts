@@ -24,6 +24,7 @@ export class DeletionRequestsService {
         const newRequest = this.deletionRepo.create({
             email: createDto.email.toLowerCase().trim(),
             reason: createDto.reason || '',
+            confirmDeleteAllData: createDto.confirmDeleteAllData ?? true,
             userId: user ? user.id : currentUser?.id,
             userName: user ? `${user.firstName} ${user.lastName}` : (currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : undefined),
             status: DeletionRequestStatus.PENDING,

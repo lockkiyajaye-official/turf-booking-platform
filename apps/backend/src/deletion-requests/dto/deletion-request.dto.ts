@@ -1,4 +1,4 @@
-import { IsEmail, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsEmail, IsOptional, IsString } from 'class-validator';
 
 export class CreateDeletionRequestDto {
     @IsEmail()
@@ -7,6 +7,10 @@ export class CreateDeletionRequestDto {
     @IsOptional()
     @IsString()
     reason?: string;
+
+    @IsOptional()
+    @IsBoolean()
+    confirmDeleteAllData?: boolean;
 }
 
 export class UpdateDeletionRequestStatusDto {

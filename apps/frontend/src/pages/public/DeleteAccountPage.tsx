@@ -9,6 +9,7 @@ export default function DeleteAccountPage() {
     const [email, setEmail] = useState(user?.email || "");
     const [reason, setReason] = useState("");
     const [confirmText, setConfirmText] = useState("");
+    const [deleteAllData, setDeleteAllData] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
@@ -16,6 +17,11 @@ export default function DeleteAccountPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setErrorMessage("");
+
+        if (!deleteAllData) {
+            setErrorMessage("Please check the box confirming you want to delete all your account data.");
+            return;
+        }
 
         if (confirmText.trim().toUpperCase() !== "DELETE") {
             setErrorMessage('Please type "DELETE" to confirm account deletion.');
@@ -28,6 +34,7 @@ export default function DeleteAccountPage() {
             await api.post("/deletion-requests", {
                 email: email,
                 reason: reason || "No reason specified",
+                confirmDeleteAllData: deleteAllData,
             });
             setSubmitted(true);
             if (user) {
@@ -102,11 +109,21 @@ export default function DeleteAccountPage() {
                                             <h3 className="font-bold text-amber-900 text-base mb-1">
                                                 What happens when your account is deleted?
                                             </h3>
-                                            <ul className="text-sm text-amber-800 space-y-1.5 list-disc list-inside">
-                                                <li>Your profile credentials, phone number, and email history will be permanently deleted.</li>
-                                                <li>Your active booking passes, slot reservations, and favorite turfs will be revoked.</li>
-                                                <li>This action cannot be undone once processed by our compliance team.</li>
-                                            </ul>
+                                            <p className="text-sm text-amber-800 mb-4 leading-relaxed">
+                                                Your profile credentials, phone number, booking history, and stored preferences will be permanently purged from our database. This action cannot be undone once processed by our team.
+                                            </p>
+
+                                            <label className="flex items-start space-x-3 cursor-pointer pt-2 border-t border-amber-200/60">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={deleteAllData}
+                                                    onChange={(e) => setDeleteAllData(e.target.checked)}
+                                                    className="mt-0.5 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded cursor-pointer"
+                                                />
+                                                <span className="text-sm font-bold text-amber-950">
+                                                    I want to permanently delete all my account data, active bookings, and personal records.
+                                                </span>
+                                            </label>
                                         </div>
                                     </div>
                                 </div>
@@ -173,7 +190,7 @@ export default function DeleteAccountPage() {
                                     <div className="pt-4 flex flex-col sm:flex-row gap-4 items-center justify-between">
                                         <button
                                             type="submit"
-                                            disabled={loading || confirmText.trim().toUpperCase() !== "DELETE"}
+                                            disabled={loading || !deleteAllData || confirmText.trim().toUpperCase() !== "DELETE"}
                                             className="w-full sm:w-auto px-8 py-3.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold rounded-xl transition-all shadow-lg flex items-center justify-center gap-2"
                                         >
                                             <Trash2 className="w-5 h-5" />
