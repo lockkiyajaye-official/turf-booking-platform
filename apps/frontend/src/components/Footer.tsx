@@ -210,7 +210,10 @@ export default function Footer() {
                 <div className="flex flex-col md:flex-row justify-between items-center">
                     <div className="mb-6 md:mb-0">
                         <p className="text-white/60 text-sm">
-                            © {new Date().getFullYear()} Lock Kiya Jaye. All rights reserved.
+                            © {new Date().getFullYear()} lockkiyajaye. All rights reserved.
+                        </p>
+                        <p className="text-white/40 text-xs mt-1">
+                            Product: lockkiyajaye | Company Legal Name: SOFTTECH ENTERPRISE
                         </p>
                         <p className="text-white/40 text-xs mt-1">
                             Making sports accessible to everyone
