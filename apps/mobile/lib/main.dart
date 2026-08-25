@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:mobile/core/constants/app_strings.dart';
 import 'package:mobile/core/responsive/app_screen.dart';
 import 'package:mobile/core/theme/app_theme.dart';
@@ -11,14 +14,22 @@ import 'package:mobile/routes/app_paths.dart';
 import 'package:mobile/routes/app_router.dart';
 import 'package:mobile/core/storage/local_storage.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
+void main() {
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await dotenv.load(fileName: ".env");
 
-  await CoreController.init();
-   AuthBinding().dependencies();
+    await CoreController.init();
+    AuthBinding().dependencies();
 
-  runApp(const MyApp());
+    runApp(const MyApp());
+  }, (error, stack) {
+    if (error is GoogleSignInException &&
+        error.code == GoogleSignInExceptionCode.canceled) {
+      return; // user closed Google account picker — not an error
+    }
+    debugPrint('Uncaught zone error: $error\n$stack');
+  });
 }
 
 class MyApp extends StatelessWidget {

@@ -1,4 +1,4 @@
-package com.lockkiyajaye.app
+package com.lockkiyajaye.mobile
 
 import io.flutter.embedding.android.FlutterActivity
 
