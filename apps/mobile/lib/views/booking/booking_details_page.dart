@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
@@ -17,6 +19,186 @@ import 'package:mobile/viewmodels/favorite/favorite_viewmodel.dart';
 import 'package:mobile/views/booking/booking_confirmation_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+class _PaymentVerifyingDialog extends StatefulWidget {
+  const _PaymentVerifyingDialog();
+
+  @override
+  State<_PaymentVerifyingDialog> createState() =>
+      _PaymentVerifyingDialogState();
+}
+
+class _PaymentVerifyingDialogState extends State<_PaymentVerifyingDialog>
+    with TickerProviderStateMixin {
+  static const _green = Color(0xFF0DAA6C);
+
+  late final AnimationController _ringController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1400),
+  )..repeat();
+
+  late final AnimationController _pulseController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  )..repeat(reverse: true);
+
+  late final Animation<double> _pulse = Tween<double>(
+    begin: 0.92,
+    end: 1.06,
+  ).animate(CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut));
+
+  int _dotCount = 1;
+  Timer? _dotTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _dotTimer = Timer.periodic(const Duration(milliseconds: 450), (_) {
+      if (!mounted) return;
+      setState(() => _dotCount = (_dotCount % 3) + 1);
+    });
+  }
+
+  @override
+  void dispose() {
+    _ringController.dispose();
+    _pulseController.dispose();
+    _dotTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 28.w, vertical: 32.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.12),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 76,
+              height: 76,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  RotationTransition(
+                    turns: _ringController,
+                    child: CustomPaint(
+                      size: const Size(76, 76),
+                      painter: _ArcRingPainter(color: _green),
+                    ),
+                  ),
+                  ScaleTransition(
+                    scale: _pulse,
+                    child: Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: _green.withOpacity(0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.shield_outlined,
+                        color: _green,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 22.h),
+            Text(
+              'Confirming your booking',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF1C1C1E),
+              ),
+            ),
+            SizedBox(height: 6.h),
+            Text(
+              'Verifying payment${'.' * _dotCount}',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12.5.sp,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey[500],
+              ),
+            ),
+            SizedBox(height: 16.h),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF6E5),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.info_outline, size: 13, color: Color(0xFFB8860B)),
+                  SizedBox(width: 6.w),
+                  Text(
+                    "Please don't close the app",
+                    style: TextStyle(
+                      fontSize: 10.5.sp,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFFB8860B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ArcRingPainter extends CustomPainter {
+  final Color color;
+  const _ArcRingPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final trackPaint = Paint()
+      ..color = color.withOpacity(0.15)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round;
+    canvas.drawArc(rect.deflate(2), 0, 6.283, false, trackPaint);
+
+    final arcPaint = Paint()
+      ..shader = SweepGradient(
+        colors: [color.withOpacity(0.0), color],
+        startAngle: 0,
+        endAngle: 3.14,
+      ).createShader(rect)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round;
+    canvas.drawArc(rect.deflate(2), 0, 3.14, false, arcPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ArcRingPainter oldDelegate) => false;
+}
+
 class TurfDetailsPage extends StatefulWidget {
   final TurfModel turf;
 
@@ -33,6 +215,7 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
   int _currentImageIndex = 0;
   bool _isBooking = false;
   bool _isLoadingSlots = false;
+  bool _isVerifyingPayment = false;
   Set<String> _bookedSlots = {};
 
   late final List<String> _imageUrls;
@@ -327,7 +510,16 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
     if (value is String) return num.tryParse(value) ?? 0;
     return 0;
   }
-
+  void _showVerifyingDialog() {
+  Get.dialog(
+    const PopScope(
+      canPop: false,
+      child: _PaymentVerifyingDialog(),
+    ),
+    barrierDismissible: false,
+    barrierColor: Colors.black.withOpacity(0.45),
+  );
+}
   void _openCheckout() {
     var options = <String, dynamic>{
       'key': _razorpayKeyId,
@@ -353,46 +545,53 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
     }
   }
 
-  Future<void> _onPaymentSuccess(PaymentSuccessResponse response) async {
-    final id = _pendingBookingId;
-    if (id == null) return;
+Future<void> _onPaymentSuccess(PaymentSuccessResponse response) async {
+  final id = _pendingBookingId;
+  if (id == null) return;
 
-    final orderId = (response.orderId != null && response.orderId!.isNotEmpty)
-        ? response.orderId!
-        : (_pendingOrderId ?? 'order_dev_${DateTime.now().millisecondsSinceEpoch}');
-    final paymentId = (response.paymentId != null && response.paymentId!.isNotEmpty)
-        ? response.paymentId!
-        : 'pay_dev_${DateTime.now().millisecondsSinceEpoch}';
-    final signature = response.signature ?? 'test_sig';
+  setState(() => _isVerifyingPayment = true);
+  _showVerifyingDialog();
 
-    final result = await PaymentService().verifyPayment(
-      token: _token,
-      bookingId: id,
-      razorpayOrderId: orderId,
-      razorpayPaymentId: paymentId,
-      razorpaySignature: signature,
-    );
+  final orderId = (response.orderId != null && response.orderId!.isNotEmpty)
+      ? response.orderId!
+      : (_pendingOrderId ?? 'order_dev_${DateTime.now().millisecondsSinceEpoch}');
+  final paymentId = (response.paymentId != null && response.paymentId!.isNotEmpty)
+      ? response.paymentId!
+      : 'pay_dev_${DateTime.now().millisecondsSinceEpoch}';
+  final signature = response.signature ?? 'test_sig';
 
-    // Fallback status update if verify API failed
-    if (result['success'] != true) {
-      await _bookingService.updateStatus(token: _token, id: id, status: 'CONFIRMED');
-    }
+  final result = await PaymentService().verifyPayment(
+    token: _token,
+    bookingId: id,
+    razorpayOrderId: orderId,
+    razorpayPaymentId: paymentId,
+    razorpaySignature: signature,
+  );
 
-    if (Get.isRegistered<BookingViewmodel>()) {
-      await Get.find<BookingViewmodel>().fetchMyBookings();
-    }
-
-    if (!mounted) return;
-    Get.off(() => BookingConfirmationPage(
-      bookingId: id,
-      turfName: widget.turf.name,
-      bookingDate: '${_days[_selectedDayIndex].day} ${_days[_selectedDayIndex].date}',
-      timeSlot: _formatSlot(_slots[_selectedSlotIndex]),
-      totalPrice: (_pendingBookingAmount ?? widget.turf.pricePerHour).toDouble(),
-      turfImage: _imageUrls.isNotEmpty ? _imageUrls.first : null,
-    ));
+  // Fallback status update if verify API failed
+  if (result['success'] != true) {
+    await _bookingService.updateStatus(token: _token, id: id, status: 'CONFIRMED');
   }
 
+  if (Get.isRegistered<BookingViewmodel>()) {
+    await Get.find<BookingViewmodel>().fetchMyBookings();
+  }
+
+  if (!mounted) return;
+
+  // Close the loading dialog before navigating.
+  if (Get.isDialogOpen ?? false) Get.back();
+  setState(() => _isVerifyingPayment = false);
+
+  Get.off(() => BookingConfirmationPage(
+    bookingId: id,
+    turfName: widget.turf.name,
+    bookingDate: '${_days[_selectedDayIndex].day} ${_days[_selectedDayIndex].date}',
+    timeSlot: _formatSlot(_slots[_selectedSlotIndex]),
+    totalPrice: (_pendingBookingAmount ?? widget.turf.pricePerHour).toDouble(),
+    turfImage: _imageUrls.isNotEmpty ? _imageUrls.first : null,
+  ));
+}
   void _onPaymentError(PaymentFailureResponse response) {
     // Leave PENDING or cancel, don't confirm.
     final id = _pendingBookingId;
