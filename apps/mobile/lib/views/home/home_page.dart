@@ -105,8 +105,8 @@ class _HomePageState extends State<HomePage> {
                                   isLocating
                                       ? 'Locating...'
                                       : (locName.isNotEmpty
-                                          ? locName
-                                          : 'Select Location'),
+                                            ? locName
+                                            : 'Select Location'),
                                   style: textTheme.bodyMedium?.copyWith(
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -245,21 +245,6 @@ class _HomePageState extends State<HomePage> {
             child: CustomScrollView(
               slivers: [
                 // Banner
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.asset(
-                        AppAssets.football,
-                        height: 160.h,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                ),
-
                 SliverToBoxAdapter(child: SizedBox(height: 16.h)),
 
                 // Section title
@@ -308,23 +293,33 @@ class _HomePageState extends State<HomePage> {
 
                       // Filter list by selected sport filter, search text, and location selection
                       final selectedSport = _filters[_selectedFilter];
-                      final searchQuery = _searchController.text.trim().toLowerCase();
+                      final searchQuery = _searchController.text
+                          .trim()
+                          .toLowerCase();
                       final activeLocation = vm.selectedLocationName.value;
                       final isUsingGps = vm.isUsingCurrentLocation.value;
 
                       List<TurfModel> filteredTurfs = vm.turfs.where((turf) {
-                        final matchesSearch = searchQuery.isEmpty ||
+                        final matchesSearch =
+                            searchQuery.isEmpty ||
                             turf.name.toLowerCase().contains(searchQuery) ||
                             turf.address.toLowerCase().contains(searchQuery);
 
-                        final matchesSport = selectedSport == 'All' ||
-                            turf.sports.any((s) =>
-                                s.toLowerCase().contains(selectedSport.toLowerCase())) ||
-                            turf.amenities.any((a) =>
-                                a.toLowerCase().contains(selectedSport.toLowerCase())) ||
-                            (turf.description ?? '')
-                                .toLowerCase()
-                                .contains(selectedSport.toLowerCase());
+                        final matchesSport =
+                            selectedSport == 'All' ||
+                            turf.sports.any(
+                              (s) => s.toLowerCase().contains(
+                                selectedSport.toLowerCase(),
+                              ),
+                            ) ||
+                            turf.amenities.any(
+                              (a) => a.toLowerCase().contains(
+                                selectedSport.toLowerCase(),
+                              ),
+                            ) ||
+                            (turf.description ?? '').toLowerCase().contains(
+                              selectedSport.toLowerCase(),
+                            );
 
                         bool matchesLocation = true;
                         if (!isUsingGps &&
@@ -332,10 +327,17 @@ class _HomePageState extends State<HomePage> {
                             activeLocation != 'Select Location' &&
                             activeLocation != 'All Locations') {
                           final locLower = activeLocation.toLowerCase();
-                          final cityMatch = (turf.city ?? '').toLowerCase().contains(locLower);
-                          final stateMatch = (turf.state ?? '').toLowerCase().contains(locLower);
-                          final addressMatch = turf.address.toLowerCase().contains(locLower);
-                          matchesLocation = cityMatch || stateMatch || addressMatch;
+                          final cityMatch = (turf.city ?? '')
+                              .toLowerCase()
+                              .contains(locLower);
+                          final stateMatch = (turf.state ?? '')
+                              .toLowerCase()
+                              .contains(locLower);
+                          final addressMatch = turf.address
+                              .toLowerCase()
+                              .contains(locLower);
+                          matchesLocation =
+                              cityMatch || stateMatch || addressMatch;
                         }
 
                         return matchesSearch && matchesSport && matchesLocation;
@@ -348,18 +350,26 @@ class _HomePageState extends State<HomePage> {
                           activeLocation != 'Select Location' &&
                           activeLocation != 'All Locations') {
                         filteredTurfs = vm.turfs.where((turf) {
-                          final matchesSearch = searchQuery.isEmpty ||
+                          final matchesSearch =
+                              searchQuery.isEmpty ||
                               turf.name.toLowerCase().contains(searchQuery) ||
                               turf.address.toLowerCase().contains(searchQuery);
 
-                          final matchesSport = selectedSport == 'All' ||
-                              turf.sports.any((s) =>
-                                  s.toLowerCase().contains(selectedSport.toLowerCase())) ||
-                              turf.amenities.any((a) =>
-                                  a.toLowerCase().contains(selectedSport.toLowerCase())) ||
-                              (turf.description ?? '')
-                                  .toLowerCase()
-                                  .contains(selectedSport.toLowerCase());
+                          final matchesSport =
+                              selectedSport == 'All' ||
+                              turf.sports.any(
+                                (s) => s.toLowerCase().contains(
+                                  selectedSport.toLowerCase(),
+                                ),
+                              ) ||
+                              turf.amenities.any(
+                                (a) => a.toLowerCase().contains(
+                                  selectedSport.toLowerCase(),
+                                ),
+                              ) ||
+                              (turf.description ?? '').toLowerCase().contains(
+                                selectedSport.toLowerCase(),
+                              );
 
                           return matchesSearch && matchesSport;
                         }).toList();
@@ -368,8 +378,10 @@ class _HomePageState extends State<HomePage> {
                       // If using GPS location, sort turfs by distance (closest first)
                       if (isUsingGps && vm.currentPosition.value != null) {
                         filteredTurfs.sort((a, b) {
-                          final distA = vm.getDistanceToTurf(a) ?? double.infinity;
-                          final distB = vm.getDistanceToTurf(b) ?? double.infinity;
+                          final distA =
+                              vm.getDistanceToTurf(a) ?? double.infinity;
+                          final distB =
+                              vm.getDistanceToTurf(b) ?? double.infinity;
                           return distA.compareTo(distB);
                         });
                       }
@@ -411,9 +423,8 @@ class _HomePageState extends State<HomePage> {
                                 child: VenueCard(
                                   turf: turf,
                                   distanceKm: vm.getDistanceToTurf(turf),
-                                  onBookNow: () => Get.to(
-                                    () => TurfDetailsPage(turf: turf),
-                                  ),
+                                  onBookNow: () =>
+                                      Get.to(() => TurfDetailsPage(turf: turf)),
                                 ),
                               ),
                           ],
