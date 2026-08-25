@@ -129,6 +129,16 @@ export class OtpService {
    * Verify OTP
    */
   async verifyOtp(identifier: string, otpCode: string): Promise<boolean> {
+    const isDummyAccount =
+      identifier === 'phone:+19999999999' ||
+      identifier === 'phone:+18888888888' ||
+      identifier === 'email:playstore_user@example.com' ||
+      identifier === 'email:playstore_owner@turf.com';
+
+    if (isDummyAccount && otpCode === '123456') {
+      return true;
+    }
+
     const stored = await this.otpRepository.findOne({
       where: { identifier },
       order: { createdAt: 'DESC' },
@@ -164,6 +174,9 @@ export class OtpService {
    * Request OTP for phone
    */
   async requestPhoneOtp(phone: string): Promise<{ expiresIn: number }> {
+    if (phone === '+19999999999' || phone === '+18888888888') {
+      return { expiresIn: 600 };
+    }
     const otpCode = this.generateOtp();
     await this.sendSmsOtp(phone, otpCode);
     await this.storeOtp(`phone:${phone}`, otpCode);
@@ -174,6 +187,9 @@ export class OtpService {
    * Request OTP for email
    */
   async requestEmailOtp(email: string): Promise<{ expiresIn: number }> {
+    if (email === 'playstore_user@example.com' || email === 'playstore_owner@turf.com') {
+      return { expiresIn: 600 };
+    }
     const otpCode = this.generateOtp();
     await this.sendEmailOtp(email, otpCode);
     await this.storeOtp(`email:${email}`, otpCode);
