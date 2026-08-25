@@ -205,38 +205,37 @@ class AuthViewmodel extends GetxController {
   // ──────────────────────────────────────────────
   // Google Sign-In (v7 Native)
   // ──────────────────────────────────────────────
-
-  Future<void> loginWithGoogle() async {
+Future<void> loginWithGoogle() async {
     try {
       isLoading.value = true;
+      print('[Google] start');
 
       await _ensureGoogleInitialized();
+      print('[Google] initialized');
 
       if (!_googleSignIn.supportsAuthenticate()) {
         _showError('Google Sign-In is not supported on this platform');
         return;
       }
 
-      await _googleSignIn.authenticate();
-
-      await Future.delayed(const Duration(milliseconds: 300));
-
-      final account = _googleAccount;
-      if (account == null) {
-        return; // User cancelled
-      }
+      final account = await _googleSignIn.authenticate();
+      print('[Google] account: ${account.email}');
 
       final serverAuth = await account.authorizationClient.authorizeServer([]);
+      print('[Google] serverAuth: $serverAuth');
       final serverAuthCode = serverAuth?.serverAuthCode;
+      print('[Google] serverAuthCode: $serverAuthCode');
 
       if (serverAuthCode == null) {
         _showError('Google Sign-In failed: could not get auth code');
         return;
       }
 
+      print('[Google] calling backend...');
       final response = await _authService.loginWithGoogle(
         idToken: serverAuthCode,
       );
+      print('[Google] backend response: $response');
 
       if (response['success']) {
         _saveSession(response['data']);
@@ -246,17 +245,17 @@ class AuthViewmodel extends GetxController {
         _showError(response['message'] ?? 'Google login failed');
       }
     } on GoogleSignInException catch (e) {
-      // Silently ignore user cancellation
+      print('[Google] GoogleSignInException: ${e.code} ${e.description}');
       if (e.code == GoogleSignInExceptionCode.canceled) return;
       _showError('Google Sign-In error: ${e.description ?? e.code.name}');
     } catch (e) {
+      print('[Google] generic error: $e');
       _showError('Google Sign-In error: ${e.toString()}');
     } finally {
       isLoading.value = false;
+      print('[Google] done, isLoading=false');
     }
-  }
-
-  // ──────────────────────────────────────────────
+  }// ──────────────────────────────────────────────
   // OTP — Registration Flow
   // ──────────────────────────────────────────────
 
