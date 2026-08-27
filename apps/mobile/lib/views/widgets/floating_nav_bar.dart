@@ -34,32 +34,34 @@ class FloatingNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final navItems = items ?? _defaultItems;
 
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 8.h),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 12,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(navItems.length, (index) {
-            final isSelected = index == currentIndex;
-            return _NavBarItem(
-              item: navItems[index],
-              isSelected: isSelected,
-              selectedColor: _primaryRed,
-              unselectedColor: _unselectedColor,
-              onTap: () => onTap(index),
-            );
-          }),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 8.h),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(navItems.length, (index) {
+              final isSelected = index == currentIndex;
+              return _NavBarItem(
+                item: navItems[index],
+                isSelected: isSelected,
+                selectedColor: _primaryRed,
+                unselectedColor: _unselectedColor,
+                onTap: () => onTap(index),
+              );
+            }),
+          ),
         ),
       ),
     );
