@@ -74,6 +74,26 @@ export class SeedingService {
 
     // Create Normal Users
     const users: User[] = [];
+
+    // Play Store Dummy User
+    const playstoreUser = this.userRepository.create({
+      email: 'playstore_user@example.com',
+      phone: '+19999999999',
+      firstName: 'PlayStore',
+      lastName: 'User',
+      role: UserRole.USER,
+      emailVerified: true,
+      phoneVerified: true,
+      onboardingStatus: OnboardingStatus.COMPLETED,
+      dateOfBirth: new Date(1990, 0, 1),
+      address: '123 Test St',
+      city: 'New York',
+      state: 'NY',
+      zipCode: '10001',
+      country: 'USA',
+    });
+    users.push(await this.userRepository.save(playstoreUser));
+
     for (let i = 1; i <= 5; i++) {
       const user = this.userRepository.create({
         email: `user${i}@example.com`,
@@ -97,6 +117,28 @@ export class SeedingService {
     // Create Turf Owners (some approved, some pending)
     const turfOwners: User[] = [];
     const turfOwnerPassword = await bcrypt.hash('owner123', 10);
+
+    // Play Store Dummy Owner
+    const playstoreOwner = this.userRepository.create({
+      email: 'playstore_owner@turf.com',
+      password: turfOwnerPassword,
+      phone: '+18888888888',
+      firstName: 'PlayStore',
+      lastName: 'Owner',
+      role: UserRole.TURF_OWNER,
+      emailVerified: true,
+      phoneVerified: true,
+      onboardingStatus: OnboardingStatus.COMPLETED,
+      isApproved: true,
+      businessName: 'PlayStore Turf',
+      businessAddress: '100 PlayStore Ave',
+      businessPhone: '+18888888888',
+      businessDescription: 'Dummy account for app review',
+      taxId: 'TAX123456',
+      approvalNotes: 'Approved for PlayStore review',
+    });
+    turfOwners.push(await this.userRepository.save(playstoreOwner));
+
     for (let i = 1; i <= 4; i++) {
       const isApproved = i <= 2; // First 2 are approved
       const owner = this.userRepository.create({
