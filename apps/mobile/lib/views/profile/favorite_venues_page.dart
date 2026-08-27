@@ -33,14 +33,17 @@ class _FavoriteVenuesPageState extends State<FavoriteVenuesPage> {
         backgroundColor: colors.white,
         elevation: 0,
         centerTitle: true,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new,
-            color: colors.textTitle,
-            size: 20,
-          ),
-          onPressed: () => Get.back(),
-        ),
+        automaticallyImplyLeading: false,
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new,
+                  color: colors.textTitle,
+                  size: 20,
+                ),
+                onPressed: () => Get.back(),
+              )
+            : null,
         title: Text(
           'Favorite Venues',
           style: textTheme.titleMedium?.copyWith(

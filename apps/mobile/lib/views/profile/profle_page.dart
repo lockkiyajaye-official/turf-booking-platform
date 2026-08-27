@@ -104,11 +104,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   onTap: () => Get.to(() => const EditProfilePage()),
                 ),
                 _ProfileMenuItem(
-                  icon: Icons.favorite_border_rounded,
-                  label: 'Favorite Venues',
-                  onTap: () => Get.to(() => const FavoriteVenuesPage()),
-                ),
-                _ProfileMenuItem(
                   icon: Icons.notifications_outlined,
                   label: 'Notification Settings',
                   onTap: () => Get.to(() => const NotificationSettingsPage()),
