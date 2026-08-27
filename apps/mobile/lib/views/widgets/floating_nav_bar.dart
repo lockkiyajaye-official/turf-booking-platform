@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/core/responsive/screen_extensions.dart';
 
 class FloatingNavItem {
   final String label;
@@ -25,7 +26,7 @@ class FloatingNavBar extends StatefulWidget {
 class _FloatingNavBarState extends State<FloatingNavBar>
     with TickerProviderStateMixin {
   late List<AnimationController> _controllers;
-  late List<Animation<double>> _scaleAnimations;
+  late List<Animation<double>> _bounce;
   late List<FloatingNavItem> _items;
 
   @override
@@ -35,7 +36,8 @@ class _FloatingNavBarState extends State<FloatingNavBar>
         const [
           FloatingNavItem(label: 'Home', icon: Icons.home_rounded),
           FloatingNavItem(label: 'Search', icon: Icons.search_rounded),
-          FloatingNavItem(label: 'Bookings', icon: Icons.confirmation_number_outlined),
+          FloatingNavItem(
+              label: 'Bookings', icon: Icons.confirmation_number_outlined),
           FloatingNavItem(label: 'Profile', icon: Icons.person_outline_rounded),
         ];
 
@@ -43,16 +45,14 @@ class _FloatingNavBarState extends State<FloatingNavBar>
       _items.length,
       (i) => AnimationController(
         vsync: this,
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 350),
       ),
     );
-    _scaleAnimations = _controllers
-        .map((c) => Tween<double>(begin: 1.0, end: 1.15).animate(
-              CurvedAnimation(parent: c, curve: Curves.easeOutBack),
-            ))
+    _bounce = _controllers
+        .map((c) => Tween<double>(begin: 1.0, end: 1.2)
+            .animate(CurvedAnimation(parent: c, curve: Curves.easeOutBack)))
         .toList();
 
-    // Animate the initially selected item
     if (widget.currentIndex < _controllers.length) {
       _controllers[widget.currentIndex].forward();
     }
@@ -68,7 +68,6 @@ class _FloatingNavBarState extends State<FloatingNavBar>
 
   void _handleTap(int index) {
     if (index == widget.currentIndex) return;
-
     _controllers[widget.currentIndex].reverse();
     _controllers[index].forward();
     widget.onTap(index);
@@ -76,35 +75,35 @@ class _FloatingNavBarState extends State<FloatingNavBar>
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.10),
-            blurRadius: 24,
-            spreadRadius: 2,
-            offset: const Offset(0, 6),
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+    return SafeArea(
+      top: false,
+      child: Container(
+        margin: EdgeInsets.fromLTRB(18.w, 0, 18.w, 12.h),
+        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.12),
+              blurRadius: 24,
+              spreadRadius: 1,
+              offset: const Offset(0, 8),
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: List.generate(_items.length, (index) {
-            final isSelected = index == widget.currentIndex;
             return _NavBarItem(
               item: _items[index],
-              isSelected: isSelected,
-              scaleAnimation: _scaleAnimations[index],
+              isSelected: index == widget.currentIndex,
+              bounce: _bounce[index],
               onTap: () => _handleTap(index),
             );
           }),
@@ -117,18 +116,18 @@ class _FloatingNavBarState extends State<FloatingNavBar>
 class _NavBarItem extends StatelessWidget {
   final FloatingNavItem item;
   final bool isSelected;
-  final Animation<double> scaleAnimation;
+  final Animation<double> bounce;
   final VoidCallback onTap;
 
   const _NavBarItem({
     required this.item,
     required this.isSelected,
-    required this.scaleAnimation,
+    required this.bounce,
     required this.onTap,
   });
 
   static const _primaryRed = Color(0xFFE53935);
-  static const _unselectedColor = Color(0xFF4A4A5A);
+  static const _unselectedColor = Color(0xFF9A9AA5);
 
   @override
   Widget build(BuildContext context) {
@@ -136,50 +135,53 @@ class _NavBarItem extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: ScaleTransition(
-        scale: scaleAnimation,
+        scale: bounce,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
           padding: EdgeInsets.symmetric(
-            horizontal: isSelected ? 16 : 14,
-            vertical: 8,
+            horizontal: isSelected ? 18.w : 12.w,
+            vertical: 10.h,
           ),
           decoration: BoxDecoration(
-            color: isSelected
-                ? _primaryRed.withOpacity(0.10)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
+            gradient: isSelected
+                ? LinearGradient(
+                    colors: [_primaryRed, _primaryRed.withOpacity(0.85)],
+                  )
+                : null,
+            color: isSelected ? null : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: _primaryRed.withOpacity(0.35),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : null,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                transitionBuilder: (child, animation) => ScaleTransition(
-                  scale: animation,
-                  child: child,
-                ),
-                child: Icon(
-                  item.icon,
-                  key: ValueKey(isSelected),
-                  color: isSelected ? _primaryRed : _unselectedColor,
-                  size: 24,
-                ),
+              Icon(
+                item.icon,
+                color: isSelected ? Colors.white : _unselectedColor,
+                size: 22.sp,
               ),
               AnimatedSize(
-                duration: const Duration(milliseconds: 300),
+                duration: const Duration(milliseconds: 250),
                 curve: Curves.easeInOut,
                 child: isSelected
                     ? Row(
                         children: [
-                          const SizedBox(width: 6),
+                          SizedBox(width: 6.w),
                           Text(
                             item.label,
-                            style: const TextStyle(
-                              color: _primaryRed,
+                            style: TextStyle(
+                              color: Colors.white,
                               fontWeight: FontWeight.w700,
-                              fontSize: 14,
-                              letterSpacing: 0.2,
+                              fontSize: 13.sp,
                             ),
                           ),
                         ],

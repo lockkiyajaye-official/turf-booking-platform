@@ -93,7 +93,7 @@ class _HomePageState extends State<HomePage> {
                           Icon(
                             Icons.location_on_rounded,
                             color: colors.primary,
-                            size: 20,
+                            size: 20.sp,
                           ),
                           SizedBox(width: 8.w),
                           Expanded(
@@ -118,7 +118,7 @@ class _HomePageState extends State<HomePage> {
                           Icon(
                             Icons.keyboard_arrow_down_rounded,
                             color: colors.textGrey,
-                            size: 20,
+                            size: 20.sp,
                           ),
                         ],
                       ),
@@ -169,14 +169,14 @@ class _HomePageState extends State<HomePage> {
                   prefixIcon: Icon(
                     Icons.search,
                     color: colors.textGrey,
-                    size: 22,
+                    size: 22.sp,
                   ),
                   suffixIcon: ValueListenableBuilder<TextEditingValue>(
                     valueListenable: _searchController,
                     builder: (_, value, __) {
                       if (value.text.isEmpty) return const SizedBox.shrink();
                       return IconButton(
-                        icon: const Icon(Icons.close_rounded, size: 18),
+                        icon: Icon(Icons.close_rounded, size: 18.sp),
                         color: colors.textGrey,
                         onPressed: () => _searchController.clear(),
                       );
@@ -396,7 +396,7 @@ class _HomePageState extends State<HomePage> {
                               children: [
                                 Icon(
                                   Icons.sports_soccer_outlined,
-                                  size: 48,
+                                  size: 48.sp,
                                   color: colors.textGrey,
                                 ),
                                 SizedBox(height: 12.h),
@@ -459,8 +459,8 @@ class _HeaderIconButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 46,
-        width: 46,
+        height: 46.h,
+        width: 46.h,
         decoration: BoxDecoration(
           color: colors.white,
           borderRadius: BorderRadius.circular(10),
@@ -473,7 +473,7 @@ class _HeaderIconButton extends StatelessWidget {
             ),
           ],
         ),
-        child: Icon(icon, color: colors.primary, size: 22),
+        child: Icon(icon, color: colors.primary, size: 22.sp),
       ),
     );
   }
