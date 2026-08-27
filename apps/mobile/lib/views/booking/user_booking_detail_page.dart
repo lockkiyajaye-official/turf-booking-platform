@@ -426,7 +426,7 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
                           ),
                           child: Text(
                             'Cancel Booking',
-                            style: textTheme.titleSmall?.copyWith(
+                            style: textTheme.titleMedium?.copyWith(
                               color: Colors.red,
                               fontWeight: FontWeight.bold,
                             ),
@@ -451,7 +451,7 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
                             ? const CircularProgressIndicator(color: Colors.white)
                             : Text(
                                 'Rebook Turf',
-                                style: textTheme.titleSmall?.copyWith(
+                                style: textTheme.titleMedium?.copyWith(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                 ),

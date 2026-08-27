@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/views/booking/booking_page.dart';
 import 'package:mobile/views/home/home_page.dart';
+import 'package:mobile/views/profile/favorite_venues_page.dart';
 import 'package:mobile/views/search/search_page.dart';
 import 'package:mobile/views/widgets/floating_nav_bar.dart';
 import 'package:mobile/views/profile/profle_page.dart';
+
 class MainShell extends StatefulWidget {
   final int initialIndex;
   const MainShell({super.key, this.initialIndex = 0});
@@ -23,8 +25,9 @@ class _MainShellState extends State<MainShell> {
   final _pages = const [
     HomePage(),
     SearchPage(),
-   BookingPage(),
-ProfilePage()
+    FavoriteVenuesPage(),
+    BookingPage(),
+    ProfilePage(),
   ];
 
   @override

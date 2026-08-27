@@ -93,7 +93,7 @@ class _HomePageState extends State<HomePage> {
                           Icon(
                             Icons.location_on_rounded,
                             color: colors.primary,
-                            size: 20,
+                            size: 20.sp,
                           ),
                           SizedBox(width: 8.w),
                           Expanded(
@@ -118,7 +118,7 @@ class _HomePageState extends State<HomePage> {
                           Icon(
                             Icons.keyboard_arrow_down_rounded,
                             color: colors.textGrey,
-                            size: 20,
+                            size: 20.sp,
                           ),
                         ],
                       ),
@@ -143,52 +143,70 @@ class _HomePageState extends State<HomePage> {
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
             child: Container(
-              height: 48.h,
+              height: 46.h,
+              padding: EdgeInsets.symmetric(horizontal: 12.w),
               decoration: BoxDecoration(
                 color: colors.white,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: const Color(0xFFE8E8E8)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
                 ],
               ),
-              child: TextField(
-                controller: _searchController,
-                onChanged: (_) => setState(() {}),
-                style: textTheme.bodyMedium,
-                decoration: InputDecoration(
-                  hintText: 'Search turf by name, location or sport',
-                  hintStyle: TextStyle(
-                    color: colors.textGrey.withOpacity(0.6),
-                    fontSize: 14.sp,
-                  ),
-                  prefixIcon: Icon(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(
                     Icons.search,
                     color: colors.textGrey,
-                    size: 22,
+                    size: 20.sp,
                   ),
-                  suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (_) => setState(() {}),
+                      style: textTheme.bodyMedium,
+                      textAlignVertical: TextAlignVertical.center,
+                      decoration: InputDecoration(
+                        isDense: true,
+                        hintText: 'Search turf by name, location or sport',
+                        hintStyle: TextStyle(
+                          color: colors.textGrey.withValues(alpha: 0.6),
+                          fontSize: 14.sp,
+                        ),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ),
+                  ValueListenableBuilder<TextEditingValue>(
                     valueListenable: _searchController,
                     builder: (_, value, __) {
                       if (value.text.isEmpty) return const SizedBox.shrink();
-                      return IconButton(
-                        icon: const Icon(Icons.close_rounded, size: 18),
-                        color: colors.textGrey,
-                        onPressed: () => _searchController.clear(),
+                      return Padding(
+                        padding: EdgeInsets.only(left: 8.w),
+                        child: GestureDetector(
+                          onTap: () {
+                            _searchController.clear();
+                            setState(() {});
+                          },
+                          child: Icon(
+                            Icons.close_rounded,
+                            color: colors.textGrey,
+                            size: 18.sp,
+                          ),
+                        ),
                       );
                     },
                   ),
-                  filled: true,
-                  fillColor: Colors.transparent,
-                  contentPadding: EdgeInsets.symmetric(vertical: 14.h),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                ),
+                ],
               ),
             ),
           ),
@@ -396,7 +414,7 @@ class _HomePageState extends State<HomePage> {
                               children: [
                                 Icon(
                                   Icons.sports_soccer_outlined,
-                                  size: 48,
+                                  size: 48.sp,
                                   color: colors.textGrey,
                                 ),
                                 SizedBox(height: 12.h),
@@ -459,8 +477,8 @@ class _HeaderIconButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 46,
-        width: 46,
+        height: 46.h,
+        width: 46.h,
         decoration: BoxDecoration(
           color: colors.white,
           borderRadius: BorderRadius.circular(10),
@@ -473,7 +491,7 @@ class _HeaderIconButton extends StatelessWidget {
             ),
           ],
         ),
-        child: Icon(icon, color: colors.primary, size: 22),
+        child: Icon(icon, color: colors.primary, size: 22.sp),
       ),
     );
   }

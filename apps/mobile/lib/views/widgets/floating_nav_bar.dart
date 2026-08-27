@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/core/responsive/screen_extensions.dart';
 
 class FloatingNavItem {
   final String label;
@@ -6,7 +7,7 @@ class FloatingNavItem {
   const FloatingNavItem({required this.label, required this.icon});
 }
 
-class FloatingNavBar extends StatefulWidget {
+class FloatingNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
   final List<FloatingNavItem>? items;
@@ -18,96 +19,49 @@ class FloatingNavBar extends StatefulWidget {
     this.items,
   });
 
-  @override
-  State<FloatingNavBar> createState() => _FloatingNavBarState();
-}
+  static const List<FloatingNavItem> _defaultItems = [
+    FloatingNavItem(label: 'Home', icon: Icons.home_rounded),
+    FloatingNavItem(label: 'Explore', icon: Icons.search_rounded),
+    FloatingNavItem(label: 'Favorites', icon: Icons.favorite_border_rounded),
+    FloatingNavItem(label: 'Bookings', icon: Icons.calendar_today_outlined),
+    FloatingNavItem(label: 'Profile', icon: Icons.person_outline_rounded),
+  ];
 
-class _FloatingNavBarState extends State<FloatingNavBar>
-    with TickerProviderStateMixin {
-  late List<AnimationController> _controllers;
-  late List<Animation<double>> _scaleAnimations;
-  late List<FloatingNavItem> _items;
-
-  @override
-  void initState() {
-    super.initState();
-    _items = widget.items ??
-        const [
-          FloatingNavItem(label: 'Home', icon: Icons.home_rounded),
-          FloatingNavItem(label: 'Search', icon: Icons.search_rounded),
-          FloatingNavItem(label: 'Bookings', icon: Icons.confirmation_number_outlined),
-          FloatingNavItem(label: 'Profile', icon: Icons.person_outline_rounded),
-        ];
-
-    _controllers = List.generate(
-      _items.length,
-      (i) => AnimationController(
-        vsync: this,
-        duration: const Duration(milliseconds: 300),
-      ),
-    );
-    _scaleAnimations = _controllers
-        .map((c) => Tween<double>(begin: 1.0, end: 1.15).animate(
-              CurvedAnimation(parent: c, curve: Curves.easeOutBack),
-            ))
-        .toList();
-
-    // Animate the initially selected item
-    if (widget.currentIndex < _controllers.length) {
-      _controllers[widget.currentIndex].forward();
-    }
-  }
-
-  @override
-  void dispose() {
-    for (final c in _controllers) {
-      c.dispose();
-    }
-    super.dispose();
-  }
-
-  void _handleTap(int index) {
-    if (index == widget.currentIndex) return;
-
-    _controllers[widget.currentIndex].reverse();
-    _controllers[index].forward();
-    widget.onTap(index);
-  }
+  static const _primaryRed = Color(0xFFE53935);
+  static const _unselectedColor = Color(0xFF5A5A63);
 
   @override
   Widget build(BuildContext context) {
+    final navItems = items ?? _defaultItems;
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.10),
-            blurRadius: 24,
-            spreadRadius: 2,
-            offset: const Offset(0, 6),
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, -2),
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(_items.length, (index) {
-            final isSelected = index == widget.currentIndex;
-            return _NavBarItem(
-              item: _items[index],
-              isSelected: isSelected,
-              scaleAnimation: _scaleAnimations[index],
-              onTap: () => _handleTap(index),
-            );
-          }),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 8.h),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(navItems.length, (index) {
+              final isSelected = index == currentIndex;
+              return _NavBarItem(
+                item: navItems[index],
+                isSelected: isSelected,
+                selectedColor: _primaryRed,
+                unselectedColor: _unselectedColor,
+                onTap: () => onTap(index),
+              );
+            }),
+          ),
         ),
       ),
     );
@@ -117,77 +71,45 @@ class _FloatingNavBarState extends State<FloatingNavBar>
 class _NavBarItem extends StatelessWidget {
   final FloatingNavItem item;
   final bool isSelected;
-  final Animation<double> scaleAnimation;
+  final Color selectedColor;
+  final Color unselectedColor;
   final VoidCallback onTap;
 
   const _NavBarItem({
     required this.item,
     required this.isSelected,
-    required this.scaleAnimation,
+    required this.selectedColor,
+    required this.unselectedColor,
     required this.onTap,
   });
 
-  static const _primaryRed = Color(0xFFE53935);
-  static const _unselectedColor = Color(0xFF4A4A5A);
-
   @override
   Widget build(BuildContext context) {
+    final color = isSelected ? selectedColor : unselectedColor;
+
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: ScaleTransition(
-        scale: scaleAnimation,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-          padding: EdgeInsets.symmetric(
-            horizontal: isSelected ? 16 : 14,
-            vertical: 8,
-          ),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? _primaryRed.withOpacity(0.10)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                transitionBuilder: (child, animation) => ScaleTransition(
-                  scale: animation,
-                  child: child,
-                ),
-                child: Icon(
-                  item.icon,
-                  key: ValueKey(isSelected),
-                  color: isSelected ? _primaryRed : _unselectedColor,
-                  size: 24,
-                ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              item.icon,
+              color: color,
+              size: 22.sp,
+            ),
+            SizedBox(height: 4.h),
+            Text(
+              item.label,
+              style: TextStyle(
+                color: color,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 11.sp,
               ),
-              AnimatedSize(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-                child: isSelected
-                    ? Row(
-                        children: [
-                          const SizedBox(width: 6),
-                          Text(
-                            item.label,
-                            style: const TextStyle(
-                              color: _primaryRed,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14,
-                              letterSpacing: 0.2,
-                            ),
-                          ),
-                        ],
-                      )
-                    : const SizedBox.shrink(),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
