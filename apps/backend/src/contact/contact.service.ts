@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ContactMessage } from './contact.entity';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
 import { EmailService } from '../email/email.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/notification.entity';
 
 @Injectable()
 export class ContactService {
@@ -12,6 +14,7 @@ export class ContactService {
     @InjectRepository(ContactMessage)
     private readonly contactRepository: Repository<ContactMessage>,
     private readonly emailService: EmailService,
+    private readonly notificationsService: NotificationsService,
   ) { }
 
   async create(createContactDto: CreateContactDto): Promise<ContactMessage> {
@@ -35,10 +38,42 @@ export class ContactService {
     });
   }
 
+  async findByUser(userId?: string, email?: string): Promise<ContactMessage[]> {
+    const qb = this.contactRepository.createQueryBuilder('message');
+
+    if (userId && email) {
+      qb.where('message.userId = :userId OR LOWER(message.email) = LOWER(:email)', {
+        userId,
+        email,
+      });
+    } else if (userId) {
+      qb.where('message.userId = :userId', { userId });
+    } else if (email) {
+      qb.where('LOWER(message.email) = LOWER(:email)', { email });
+    } else {
+      return [];
+    }
+
+    return await qb.orderBy('message.createdAt', 'DESC').getMany();
+  }
+
+  async findUserMessage(id: string, userId?: string, email?: string): Promise<ContactMessage> {
+    const message = await this.findOne(id);
+    const matches =
+      (userId && message.userId === userId) ||
+      (email && message.email.toLowerCase() === email.toLowerCase());
+
+    if (!matches) {
+      throw new ForbiddenException('You do not have access to this support ticket');
+    }
+
+    return message;
+  }
+
   async findOne(id: string): Promise<ContactMessage> {
     const message = await this.contactRepository.findOne({ where: { id } });
     if (!message) {
-      throw new Error('Contact message not found');
+      throw new NotFoundException('Contact message not found');
     }
     return message;
   }
@@ -60,6 +95,20 @@ export class ContactService {
         adminResponse: updateContactDto.adminResponse,
         respondedBy: updateContactDto.respondedBy || 'admin',
       });
+
+      // Send in-app notification if user is known
+      if (message.userId) {
+        try {
+          await this.notificationsService.createNotification(
+            message.userId,
+            'Support Request Update',
+            `An admin responded to your request: "${message.subject}"`,
+            NotificationType.SYSTEM,
+          );
+        } catch (e) {
+          console.error('Failed to create in-app notification for contact update:', e);
+        }
+      }
     }
 
     return await this.contactRepository.save(message);

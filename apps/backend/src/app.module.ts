@@ -16,6 +16,7 @@ import { BannerModule } from './banner/banner.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { DeletionRequestsModule } from './deletion-requests/deletion-requests.module';
+import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { DeletionRequestsModule } from './deletion-requests/deletion-requests.mo
     FavoritesModule,
     NotificationsModule,
     DeletionRequestsModule,
+    ReviewsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

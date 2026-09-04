@@ -10,6 +10,7 @@ import 'package:mobile/viewmodels/auth/auth_viewmodel.dart';
 import 'package:mobile/viewmodels/booking/booking_viewmodel.dart';
 import 'package:mobile/views/booking/booking_details_page.dart';
 import 'package:mobile/views/booking/booking_cancelled_page.dart';
+import 'package:mobile/views/booking/widgets/rate_turf_bottom_sheet.dart';
 
 class UserBookingDetailPage extends StatefulWidget {
   final BookingModel booking;
@@ -385,7 +386,52 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 24.h),
+                    SizedBox(height: 16.h),
+
+                    // Rate Turf Experience Card
+                    if (_booking.status.toLowerCase() != 'cancelled') ...[
+                      _buildSectionCard(
+                        colors: colors,
+                        textTheme: textTheme,
+                        title: 'Rate Your Experience',
+                        children: [
+                          Text(
+                            'How was your session at ${_booking.turfName}? Your rating and review help fellow players.',
+                            style: textTheme.bodySmall?.copyWith(color: colors.textGrey),
+                          ),
+                          SizedBox(height: 12.h),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 44.h,
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                RateTurfBottomSheet.show(
+                                  context: context,
+                                  turfId: _booking.turfId,
+                                  turfName: _booking.turfName,
+                                  bookingId: _booking.id,
+                                );
+                              },
+                              icon: const Icon(Icons.star_rounded, color: Color(0xFFFFB800), size: 22),
+                              label: Text(
+                                'Rate & Review Turf',
+                                style: textTheme.titleSmall?.copyWith(
+                                  color: colors.primary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: colors.primary.withOpacity(0.5)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 16.h),
+                    ],
 
                     // Cancellation Info (if cancelled)
                     if (_booking.status.toLowerCase() == 'cancelled') ...[

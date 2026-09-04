@@ -7,6 +7,8 @@ import 'package:mobile/viewmodels/booking/booking_viewmodel.dart';
 import 'package:mobile/viewmodels/payment/payment_viewmodel.dart';
 import 'package:mobile/viewmodels/dashboard/dashboard_viewmodel.dart';
 
+import 'package:mobile/viewmodels/support/support_viewmodel.dart';
+
 class AuthBinding extends Bindings {
   @override
   void dependencies() {
@@ -17,6 +19,7 @@ class AuthBinding extends Bindings {
     Get.put<DashboardViewmodel>(DashboardViewmodel(), permanent: true);
     Get.put<FavoriteViewmodel>(FavoriteViewmodel(), permanent: true);
     Get.lazyPut<OwnerViewmodel>(() => OwnerViewmodel());
+    Get.lazyPut<SupportViewmodel>(() => SupportViewmodel());
   }
 }
 

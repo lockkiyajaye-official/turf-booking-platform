@@ -10,7 +10,6 @@ import 'package:mobile/views/booking/owner_finances_page.dart';
 import 'package:mobile/views/profile/about_page.dart';
 import 'package:mobile/views/profile/cancellation_page.dart';
 import 'package:mobile/views/profile/edit_profile_page.dart';
-import 'package:mobile/views/profile/favorite_venues_page.dart';
 import 'package:mobile/views/profile/notification_settings_page.dart';
 import 'package:mobile/views/profile/support_page.dart';
 
@@ -26,7 +25,8 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     final vm = Get.find<AuthViewmodel>();
-    final isOwner = vm.currentUser['role']?.toString().toLowerCase() == 'turf_owner';
+    final isOwner =
+        vm.currentUser['role']?.toString().toLowerCase() == 'turf_owner';
     if (isOwner) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Get.find<OwnerViewmodel>().fetchFinancesSummary();
@@ -92,6 +92,11 @@ class _ProfilePageState extends State<ProfilePage> {
                   onTap: () => Get.to(() => const SupportPage()),
                 ),
                 _ProfileMenuItem(
+                  icon: Icons.chat_bubble_outline_rounded,
+                  label: 'My Support Requests',
+                  onTap: () => Get.to(() => const SupportPage(initialTab: 1)),
+                ),
+                _ProfileMenuItem(
                   icon: Icons.info_outline_rounded,
                   label: 'About App',
                   onTap: () => Get.to(() => const AboutPage()),
@@ -119,6 +124,11 @@ class _ProfilePageState extends State<ProfilePage> {
                   onTap: () => Get.to(() => const SupportPage()),
                 ),
                 _ProfileMenuItem(
+                  icon: Icons.chat_bubble_outline_rounded,
+                  label: 'My Support Requests',
+                  onTap: () => Get.to(() => const SupportPage(initialTab: 1)),
+                ),
+                _ProfileMenuItem(
                   icon: Icons.info_outline_rounded,
                   label: 'About App',
                   onTap: () => Get.to(() => const AboutPage()),
@@ -144,57 +154,64 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFE43434).withOpacity(0.15),
+                            color: const Color(0xFFE43434).withValues(alpha: 0.15),
                             blurRadius: 16,
                             offset: const Offset(0, 4),
                           ),
                         ],
                       ),
                       child: ClipOval(
-                        child: Builder(builder: (_) {
-                          final avatarUrl = currentUser['avatarUrl'] as String?;
-                          if (avatarUrl != null && avatarUrl.isNotEmpty) {
-                            if (avatarUrl.startsWith('data:image')) {
-                              try {
-                                final base64Data = avatarUrl.split(',').last;
-                                final bytes = base64Decode(base64Data);
-                                return Image.memory(bytes, fit: BoxFit.cover);
-                              } catch (_) {}
+                        child: Builder(
+                          builder: (_) {
+                            final avatarUrl =
+                                currentUser['avatarUrl'] as String?;
+                            if (avatarUrl != null && avatarUrl.isNotEmpty) {
+                              if (avatarUrl.startsWith('data:image')) {
+                                try {
+                                  final base64Data = avatarUrl.split(',').last;
+                                  final bytes = base64Decode(base64Data);
+                                  return Image.memory(bytes, fit: BoxFit.cover);
+                                } catch (_) {}
+                              }
+                              return Image.network(
+                                avatarUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    _DefaultAvatar(colors: colors),
+                              );
                             }
-                            return Image.network(
-                              avatarUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  _DefaultAvatar(colors: colors),
-                            );
-                          }
-                          return _DefaultAvatar(colors: colors);
-                        }),
+                            return _DefaultAvatar(colors: colors);
+                          },
+                        ),
                       ),
                     ),
 
                     SizedBox(height: 12.h),
 
                     // Name
-                    Builder(builder: (_) {
-                      final first = currentUser['firstName'] as String? ?? '';
-                      final last = currentUser['lastName'] as String? ?? '';
-                      final name = '${first.trim()} ${last.trim()}'.trim();
-                      return Text(
-                        name.isEmpty ? 'User' : name,
-                        style: textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: colors.textTitle,
-                        ),
-                      );
-                    }),
+                    Builder(
+                      builder: (_) {
+                        final first = currentUser['firstName'] as String? ?? '';
+                        final last = currentUser['lastName'] as String? ?? '';
+                        final name = '${first.trim()} ${last.trim()}'.trim();
+                        return Text(
+                          name.isEmpty ? 'User' : name,
+                          style: textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colors.textTitle,
+                          ),
+                        );
+                      },
+                    ),
 
                     SizedBox(height: 4.h),
 
                     // Email
                     Text(
                       currentUser['email'] as String? ?? '',
-                      style: textTheme.bodySmall?.copyWith(color: colors.textGrey),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colors.textGrey,
+                      ),
                     ),
 
                     SizedBox(height: 10.h),
@@ -204,11 +221,14 @@ class _ProfilePageState extends State<ProfilePage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 10.w,
+                            vertical: 4.h,
+                          ),
                           decoration: BoxDecoration(
                             color: isOwner
                                 ? const Color(0xFF1E293B)
-                                : colors.primary.withOpacity(0.1),
+                                : colors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -224,11 +244,14 @@ class _ProfilePageState extends State<ProfilePage> {
                         if (isOwner) ...[
                           SizedBox(width: 8.w),
                           Container(
-                            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10.w,
+                              vertical: 4.h,
+                            ),
                             decoration: BoxDecoration(
                               color: isApproved
-                                  ? Colors.green.withOpacity(0.12)
-                                  : Colors.orange.withOpacity(0.12),
+                                  ? Colors.green.withValues(alpha: 0.12)
+                                  : Colors.orange.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
@@ -238,13 +261,17 @@ class _ProfilePageState extends State<ProfilePage> {
                                       ? Icons.check_circle_rounded
                                       : Icons.schedule_rounded,
                                   size: 12.sp,
-                                  color: isApproved ? Colors.green : Colors.orange,
+                                  color: isApproved
+                                      ? Colors.green
+                                      : Colors.orange,
                                 ),
                                 SizedBox(width: 4.w),
                                 Text(
                                   isApproved ? 'APPROVED' : 'PENDING APPROVAL',
                                   style: TextStyle(
-                                    color: isApproved ? Colors.green : Colors.orange,
+                                    color: isApproved
+                                        ? Colors.green
+                                        : Colors.orange,
                                     fontSize: 10.sp,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -296,7 +323,8 @@ class _ProfilePageState extends State<ProfilePage> {
                         ],
                       ),
                       ElevatedButton.icon(
-                        onPressed: () => Get.to(() => const OwnerFinancesPage()),
+                        onPressed: () =>
+                            Get.to(() => const OwnerFinancesPage()),
                         icon: const Icon(Icons.payments_outlined, size: 16),
                         label: const Text('Finances'),
                         style: ElevatedButton.styleFrom(
@@ -306,7 +334,10 @@ class _ProfilePageState extends State<ProfilePage> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 14.w,
+                            vertical: 8.h,
+                          ),
                           textStyle: TextStyle(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.bold,
@@ -333,8 +364,11 @@ class _ProfilePageState extends State<ProfilePage> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.storefront_rounded,
-                                color: colors.primary, size: 18.sp),
+                            Icon(
+                              Icons.storefront_rounded,
+                              color: colors.primary,
+                              size: 18.sp,
+                            ),
                             SizedBox(width: 8.w),
                             Text(
                               businessName,
@@ -345,7 +379,8 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ],
                         ),
-                        if (businessAddress != null && businessAddress.isNotEmpty) ...[
+                        if (businessAddress != null &&
+                            businessAddress.isNotEmpty) ...[
                           SizedBox(height: 4.h),
                           Text(
                             businessAddress,
@@ -461,7 +496,11 @@ class _MenuTile extends StatelessWidget {
                 ),
               ),
             ),
-            Icon(Icons.chevron_right_rounded, size: 20.sp, color: colors.textGrey),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 20.sp,
+              color: colors.textGrey,
+            ),
           ],
         ),
       ),

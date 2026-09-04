@@ -1,6 +1,10 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class CreateContactDto {
+  @IsOptional()
+  @IsString()
+  userId?: string;
+
   @IsNotEmpty()
   @IsString()
   @MinLength(2)
