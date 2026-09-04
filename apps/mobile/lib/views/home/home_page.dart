@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mobile/core/constants/app_assets.dart';
 import 'package:mobile/core/responsive/screen_extensions.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/data/models/turf_model.dart';
@@ -160,11 +159,7 @@ class _HomePageState extends State<HomePage> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.search,
-                    color: colors.textGrey,
-                    size: 20.sp,
-                  ),
+                  Icon(Icons.search, color: colors.textGrey, size: 20.sp),
                   SizedBox(width: 8.w),
                   Expanded(
                     child: TextField(

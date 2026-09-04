@@ -236,79 +236,80 @@ class _AddTurfPageState extends State<AddTurfPage> {
 
   void _showImageSourcePicker(AppColors colors, TextTheme textTheme) {
     Get.bottomSheet(
-      Container(
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-        decoration: BoxDecoration(
-          color: colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
+      Material(
+        color: colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        clipBehavior: Clip.antiAlias,
         child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40.w,
-                height: 4.h,
-                margin: EdgeInsets.only(bottom: 16.h),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE0E0E0),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Text(
-                'Upload Turf Photo',
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colors.textTitle,
-                ),
-              ),
-              SizedBox(height: 16.h),
-              ListTile(
-                leading: Container(
-                  padding: EdgeInsets.all(8.w),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40.w,
+                  height: 4.h,
+                  margin: EdgeInsets.only(bottom: 16.h),
                   decoration: BoxDecoration(
-                    color: colors.primary.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
+                    color: const Color(0xFFE0E0E0),
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  child: Icon(Icons.camera_alt_rounded, color: colors.primary),
                 ),
-                title: Text('Take Photo', style: textTheme.bodyMedium),
-                onTap: () {
-                  Get.back();
-                  _pickImage(ImageSource.camera);
-                },
-              ),
-              ListTile(
-                leading: Container(
-                  padding: EdgeInsets.all(8.w),
-                  decoration: BoxDecoration(
-                    color: colors.primary.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
+                Text(
+                  'Upload Turf Photo',
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colors.textTitle,
                   ),
-                  child: Icon(Icons.photo_library_rounded, color: colors.primary),
                 ),
-                title: Text('Choose from Gallery', style: textTheme.bodyMedium),
-                onTap: () {
-                  Get.back();
-                  _pickImage(ImageSource.gallery);
-                },
-              ),
-              ListTile(
-                leading: Container(
-                  padding: EdgeInsets.all(8.w),
-                  decoration: BoxDecoration(
-                    color: colors.primary.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
+                SizedBox(height: 16.h),
+                ListTile(
+                  leading: Container(
+                    padding: EdgeInsets.all(8.w),
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.camera_alt_rounded, color: colors.primary),
                   ),
-                  child: Icon(Icons.link_rounded, color: colors.primary),
+                  title: Text('Take Photo', style: textTheme.bodyMedium),
+                  onTap: () {
+                    Get.back();
+                    _pickImage(ImageSource.camera);
+                  },
                 ),
-                title: Text('Paste Image URL', style: textTheme.bodyMedium),
-                onTap: () {
-                  Get.back();
-                  _showAddUrlDialog();
-                },
-              ),
-            ],
+                ListTile(
+                  leading: Container(
+                    padding: EdgeInsets.all(8.w),
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.photo_library_rounded, color: colors.primary),
+                  ),
+                  title: Text('Choose from Gallery', style: textTheme.bodyMedium),
+                  onTap: () {
+                    Get.back();
+                    _pickImage(ImageSource.gallery);
+                  },
+                ),
+                ListTile(
+                  leading: Container(
+                    padding: EdgeInsets.all(8.w),
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.link_rounded, color: colors.primary),
+                  ),
+                  title: Text('Paste Image URL', style: textTheme.bodyMedium),
+                  onTap: () {
+                    Get.back();
+                    _showAddUrlDialog();
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),

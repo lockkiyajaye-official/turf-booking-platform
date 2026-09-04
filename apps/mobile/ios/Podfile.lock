@@ -23,11 +23,11 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/razorpay_flutter/ios"
 
 SPEC CHECKSUMS:
-  Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  Flutter: 71a624a5bc0c04062bf19101d501e466baf2fb47
   razorpay-core-pod: c7f3ac3d214c1a7fac4e9a59c1de7eac02130573
   razorpay-pod: 3c91ef4895d389968a5c56a6f1e9943e44b50fa0
   razorpay_flutter: 0e98e4fcaae27ad50e011d85f66d85e0a008754a
 
-PODFILE CHECKSUM: 3c63482e143d1b91d2d2560aee9fb04ecc74ac7e
+PODFILE CHECKSUM: 3ba3a73b1b12adcf321a227a745625fe0888cc82
 
 COCOAPODS: 1.16.2

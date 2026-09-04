@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -32,14 +33,19 @@ import {
 import { RegisterDto } from './dto/register.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UpdateNotificationsDto } from './dto/update-notifications.dto';
+import { ConfigService } from '@nestjs/config';
+import { GoogleLoginDto } from './dto/google-login.dto';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private jwtService: JwtService,
     private otpService: OtpService,
+    private configService: ConfigService,
   ) { }
 
   async register(registerDto: RegisterDto) {
@@ -393,6 +399,146 @@ export class AuthService {
       sub: googleUser.id,
       role: googleUser.role,
     });
+
+    return {
+      user: result,
+      token,
+    };
+  }
+
+  // Native/Mobile Google token authentication
+  async loginWithGoogleToken(dto: GoogleLoginDto) {
+    this.logger.log(
+      `[Google Auth] Received token request: serverAuthCode=${dto.serverAuthCode ? 'present' : 'none'}, idToken=${dto.idToken ? 'present' : 'none'}`,
+    );
+
+    let email: string | undefined;
+    let firstName: string | undefined;
+    let lastName: string | undefined;
+    let profileImage: string | undefined = undefined;
+
+    const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
+    const clientSecret = this.configService.get<string>('GOOGLE_CLIENT_SECRET');
+
+    this.logger.log(`[Google Auth] Using backend GOOGLE_CLIENT_ID: ${clientId || 'NOT SET'}`);
+
+    // 1. If serverAuthCode is provided, exchange it for tokens
+    if (dto.serverAuthCode) {
+      this.logger.log('[Google Auth] Exchanging serverAuthCode with Google OAuth endpoint...');
+      try {
+        const bodyParams = new URLSearchParams({
+          code: dto.serverAuthCode,
+          client_id: clientId || '',
+          client_secret: clientSecret || '',
+          grant_type: 'authorization_code',
+          redirect_uri: '',
+        });
+
+        const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: bodyParams.toString(),
+        });
+
+        if (tokenResponse.ok) {
+          const tokenData = await tokenResponse.json();
+          this.logger.log('[Google Auth] Successfully exchanged serverAuthCode with Google.');
+          if (tokenData.id_token) {
+            dto.idToken = tokenData.id_token;
+            this.logger.log('[Google Auth] Received id_token from code exchange.');
+          } else if (tokenData.access_token) {
+            this.logger.log('[Google Auth] Fetching userinfo via access_token...');
+            const userInfoRes = await fetch(
+              'https://www.googleapis.com/oauth2/v3/userinfo',
+              { headers: { Authorization: `Bearer ${tokenData.access_token}` } },
+            );
+            if (userInfoRes.ok) {
+              const userInfo = await userInfoRes.json();
+              email = userInfo.email;
+              firstName = userInfo.given_name || userInfo.name || 'Google';
+              lastName = userInfo.family_name || '';
+              profileImage = userInfo.picture || undefined;
+              this.logger.log(`[Google Auth] Userinfo retrieved for email: ${email}`);
+            }
+          }
+        } else {
+          const errText = await tokenResponse.text();
+          this.logger.error(`[Google Auth] Token exchange failed HTTP ${tokenResponse.status}: ${errText}`);
+        }
+      } catch (err) {
+        this.logger.error('[Google Auth] Failed to exchange serverAuthCode exception:', err);
+      }
+    }
+
+    // 2. If we have an idToken, verify it via Google tokeninfo
+    if (dto.idToken && !email) {
+      this.logger.log('[Google Auth] Verifying idToken with Google tokeninfo endpoint...');
+      try {
+        const verifyRes = await fetch(
+          `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(dto.idToken)}`,
+        );
+        if (verifyRes.ok) {
+          const payload = await verifyRes.json();
+          email = payload.email;
+          firstName = payload.given_name || payload.name || 'Google';
+          lastName = payload.family_name || '';
+          profileImage = payload.picture || undefined;
+          this.logger.log(`[Google Auth] idToken verified successfully for email: ${email}`);
+        } else {
+          const errText = await verifyRes.text();
+          this.logger.error(`[Google Auth] Tokeninfo verification failed HTTP ${verifyRes.status}: ${errText}`);
+        }
+      } catch (err) {
+        this.logger.error('[Google Auth] Failed to verify idToken exception:', err);
+      }
+    }
+
+    if (!email) {
+      this.logger.warn('[Google Auth] Authentication failed - no email could be verified.');
+      throw new UnauthorizedException(
+        'Google authentication failed: invalid token or authorization code',
+      );
+    }
+
+    let user = await this.userRepository.findOne({ where: { email } });
+    if (!user) {
+      this.logger.log(`[Google Auth] Creating new user for: ${email}`);
+      const newUser = this.userRepository.create({
+        email,
+        firstName: firstName || 'Google',
+        lastName: lastName || '',
+        password: null as any,
+        emailVerified: true,
+        phoneVerified: false,
+        role: UserRole.USER,
+        onboardingStatus: OnboardingStatus.PENDING,
+        profileImage,
+      });
+      user = await this.userRepository.save(newUser);
+    } else {
+      this.logger.log(`[Google Auth] Existing user found for: ${email} (id: ${user.id})`);
+      let changed = false;
+      if (!user.emailVerified) {
+        user.emailVerified = true;
+        changed = true;
+      }
+      if (!user.profileImage && profileImage) {
+        user.profileImage = profileImage;
+        changed = true;
+      }
+      if (changed) {
+        user = await this.userRepository.save(user);
+      }
+    }
+
+    const { password, ...result } = user;
+    const token = this.jwtService.sign({
+      sub: user.id,
+      role: user.role,
+      email: user.email,
+    });
+
+    this.logger.log(`[Google Auth] Login successful for user: ${email}, JWT token generated.`);
 
     return {
       user: result,

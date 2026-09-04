@@ -87,14 +87,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   void _showImagePickerModal(AppColors colors, TextTheme textTheme) {
     Get.bottomSheet(
-      Container(
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-        decoration: BoxDecoration(
-          color: colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
+      Material(
+        color: colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        clipBehavior: Clip.antiAlias,
         child: SafeArea(
-          child: Column(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
@@ -172,8 +172,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Future<void> _handleSave() async {
     setState(() => _isSaving = true);

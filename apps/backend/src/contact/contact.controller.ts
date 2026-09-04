@@ -25,13 +25,19 @@ export class ContactController {
 
   @Post()
   @HttpCode(HttpStatus.OK)
-  async submitContact(@Body() createContactDto: CreateContactDto) {
+  async submitContact(
+    @Body() createContactDto: CreateContactDto,
+    @Request() req: any,
+  ) {
     try {
       console.log('Contact form submission:', createContactDto);
 
-      const message = await this.contactService.create(createContactDto);
+      // Associate userId if passed in body or extracted from auth user
+      if (!createContactDto.userId && req.user?.id) {
+        createContactDto.userId = req.user.id;
+      }
 
-      // Email notification is automatically sent in the service
+      const message = await this.contactService.create(createContactDto);
 
       return {
         success: true,
@@ -41,13 +47,40 @@ export class ContactController {
           name: message.name,
           email: message.email,
           subject: message.subject,
-          submittedAt: message.createdAt
-        }
+          status: message.status,
+          submittedAt: message.createdAt,
+        },
       };
     } catch (error) {
       console.error('Contact form submission error:', error);
-      throw new Error('Failed to submit contact form');
+      throw error instanceof Error ? error : new Error('Failed to submit contact form');
     }
+  }
+
+  @Get('my-tickets')
+  @UseGuards(JwtAuthGuard)
+  async getMyTickets(@Request() req: any) {
+    const userId = req.user?.id;
+    const email = req.user?.email;
+
+    const tickets = await this.contactService.findByUser(userId, email);
+    return {
+      success: true,
+      data: tickets,
+    };
+  }
+
+  @Get('my-tickets/:id')
+  @UseGuards(JwtAuthGuard)
+  async getMyTicketDetail(@Param('id') id: string, @Request() req: any) {
+    const userId = req.user?.id;
+    const email = req.user?.email;
+
+    const ticket = await this.contactService.findUserMessage(id, userId, email);
+    return {
+      success: true,
+      data: ticket,
+    };
   }
 
   @Get('admin')

@@ -1,22 +1,24 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
-import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:mobile/core/responsive/screen_extensions.dart';
 import 'package:mobile/data/models/amentity_item.dart';
-import 'package:mobile/data/models/day_item.dart';
 import 'package:mobile/data/models/turf_model.dart';
 import 'package:mobile/data/services/booking_service.dart';
-import 'package:mobile/viewmodels/auth/auth_viewmodel.dart';
-import 'package:mobile/views/home/widgets/amentity_chip.dart';
-import 'package:mobile/views/widgets/my_buttons.dart';
-import 'package:mobile/data/services/turf_service.dart';
 import 'package:mobile/data/services/payment_service.dart';
+import 'package:mobile/data/services/turf_service.dart';
+import 'package:mobile/viewmodels/auth/auth_viewmodel.dart';
 import 'package:mobile/viewmodels/booking/booking_viewmodel.dart';
 import 'package:mobile/viewmodels/favorite/favorite_viewmodel.dart';
 import 'package:mobile/views/booking/booking_confirmation_page.dart';
+import 'package:mobile/views/home/widgets/amentity_chip.dart';
+import 'package:mobile/views/widgets/my_buttons.dart';
+import 'package:mobile/views/booking/widgets/turf_reviews_section.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class _PaymentVerifyingDialog extends StatefulWidget {
@@ -149,7 +151,11 @@ class _PaymentVerifyingDialogState extends State<_PaymentVerifyingDialog>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.info_outline, size: 13, color: Color(0xFFB8860B)),
+                  const Icon(
+                    Icons.info_outline,
+                    size: 13,
+                    color: Color(0xFFB8860B),
+                  ),
                   SizedBox(width: 6.w),
                   Text(
                     "Please don't close the app",
@@ -199,6 +205,82 @@ class _ArcRingPainter extends CustomPainter {
   bool shouldRepaint(covariant _ArcRingPainter oldDelegate) => false;
 }
 
+class _ShimmerSlotCard extends StatefulWidget {
+  final String text;
+  final double width;
+  final double height;
+
+  const _ShimmerSlotCard({
+    required this.text,
+    required this.width,
+    required this.height,
+  });
+
+  @override
+  State<_ShimmerSlotCard> createState() => _ShimmerSlotCardState();
+}
+
+class _ShimmerSlotCardState extends State<_ShimmerSlotCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1300),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const primaryGreen = Color(0xFF0DAA6C);
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final val = _controller.value;
+        return Container(
+          width: widget.width,
+          height: widget.height,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: primaryGreen.withOpacity(0.35)),
+            gradient: LinearGradient(
+              begin: Alignment(-2.2 + val * 4.4, 0),
+              end: Alignment(-0.6 + val * 4.4, 0),
+              colors: [
+                Colors.white,
+                primaryGreen.withOpacity(0.12),
+                Colors.white,
+              ],
+              stops: const [0.0, 0.5, 1.0],
+            ),
+          ),
+          child: Text(
+            widget.text,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.grey[400],
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w500,
+              letterSpacing: -0.2,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class TurfDetailsPage extends StatefulWidget {
   final TurfModel turf;
 
@@ -209,17 +291,31 @@ class TurfDetailsPage extends StatefulWidget {
 }
 
 class _TurfDetailsPageState extends State<TurfDetailsPage> {
+  static const primaryGreen = Color(0xFF0DAA6C);
+
   int _playerCount = 10;
-  int _selectedDayIndex = 0;
-  int _selectedSlotIndex = 1;
+  int _selectedSlotIndex = 0;
   int _currentImageIndex = 0;
   bool _isBooking = false;
   bool _isLoadingSlots = false;
   bool _isVerifyingPayment = false;
   Set<String> _bookedSlots = {};
+  int _fetchRequestId = 0;
+
+  late double _currentRating;
+  late int _totalReviews;
+  final GlobalKey<TurfReviewsSectionState> _reviewsSectionKey =
+      GlobalKey<TurfReviewsSectionState>();
+
+  late final ScrollController _dateScrollController;
+  late DateTime _selectedMonth;
+  late DateTime _selectedDate;
+  late List<DateTime> _monthDates;
 
   late final List<String> _imageUrls;
-  late final Razorpay _razorpay;
+  Razorpay? _razorpay;
+  bool get _isRazorpaySupported =>
+      !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
   final TurfService _turfService = TurfService();
   final BookingService _bookingService = BookingService();
@@ -240,15 +336,6 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
   final String _razorpayKeyId =
       '${dotenv.env['RAZORPAY']}'; // RAZORPAY_KEY_ID only — never put the secret in the app
 
-  // Real, upcoming dates (today + next 6 days) instead of hardcoded ones —
-  // the old hardcoded "January 2026" days were disconnected from reality,
-  // so whatever got sent to checkAvailability/createBooking almost never
-  // matched an actual bookable date.
-  late final List<DateTime> _dayDates = List.generate(
-    7,
-    (i) => DateTime.now().add(Duration(days: i)),
-  );
-
   static const _weekdayAbbr = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   static const _monthNames = [
     'January',
@@ -264,15 +351,6 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
     'November',
     'December',
   ];
-
-  late final List<DayItem> _days = _dayDates
-      .map(
-        (d) => DayItem(
-          day: _weekdayAbbr[d.weekday - 1],
-          date: d.day.toString().padLeft(2, '0'),
-        ),
-      )
-      .toList();
 
   late final List<String> _slots;
   late final List<AmenityItem> _amenities;
@@ -301,10 +379,21 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
   void initState() {
     super.initState();
 
-    _razorpay = Razorpay();
-    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _onPaymentSuccess);
-    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _onPaymentError);
-    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _onExternalWallet);
+    _currentRating = widget.turf.rating ?? 0.0;
+    _totalReviews = widget.turf.totalReviews;
+
+    final now = DateTime.now();
+    _selectedMonth = DateTime(now.year, now.month, 1);
+    _selectedDate = DateTime(now.year, now.month, now.day);
+    _dateScrollController = ScrollController();
+    _generateMonthDates();
+
+    if (_isRazorpaySupported) {
+      _razorpay = Razorpay();
+      _razorpay!.on(Razorpay.EVENT_PAYMENT_SUCCESS, _onPaymentSuccess);
+      _razorpay!.on(Razorpay.EVENT_PAYMENT_ERROR, _onPaymentError);
+      _razorpay!.on(Razorpay.EVENT_EXTERNAL_WALLET, _onExternalWallet);
+    }
 
     _imageUrls = widget.turf.images.isNotEmpty
         ? widget.turf.images
@@ -338,27 +427,95 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
           ];
 
     _fetchBookedSlots();
+    _scrollToSelectedDate(false);
+  }
+
+  void _generateMonthDates() {
+    final daysInMonth = DateTime(
+      _selectedMonth.year,
+      _selectedMonth.month + 1,
+      0,
+    ).day;
+    _monthDates = List.generate(
+      daysInMonth,
+      (i) => DateTime(_selectedMonth.year, _selectedMonth.month, i + 1),
+    );
+  }
+
+  void _scrollToSelectedDate([bool animate = true]) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_dateScrollController.hasClients) return;
+      final index = _monthDates.indexWhere(
+        (d) =>
+            d.year == _selectedDate.year &&
+            d.month == _selectedDate.month &&
+            d.day == _selectedDate.day,
+      );
+      if (index != -1) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final availableWidth = screenWidth - 32.w;
+        const int visibleDaysCount = 7;
+        final double dateSpacing = 6.w;
+        final double dateItemWidth =
+            (availableWidth - ((visibleDaysCount - 1) * dateSpacing)) /
+            visibleDaysCount;
+
+        final targetOffset =
+            (index * (dateItemWidth + dateSpacing)) -
+            (availableWidth / 2) +
+            (dateItemWidth / 2);
+        final clampedOffset = targetOffset.clamp(
+          0.0,
+          _dateScrollController.position.maxScrollExtent,
+        );
+        if (animate) {
+          _dateScrollController.animateTo(
+            clampedOffset,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        } else {
+          _dateScrollController.jumpTo(clampedOffset);
+        }
+      }
+    });
   }
 
   Future<void> _fetchBookedSlots() async {
     final dateIso = _selectedDateIso();
+    final currentRequestId = ++_fetchRequestId;
     setState(() => _isLoadingSlots = true);
-    final result = await _turfService.getBookedSlots(
-      id: widget.turf.id,
-      date: dateIso,
-    );
-    if (mounted) {
-      setState(() {
-        _isLoadingSlots = false;
-        if (result['success'] == true && result['data'] is List) {
-          _bookedSlots = Set<String>.from(
-            (result['data'] as List).map((e) => e.toString()),
-          );
-        } else {
-          _bookedSlots = {};
+
+    final results = await Future.wait([
+      _turfService.getBookedSlots(id: widget.turf.id, date: dateIso),
+      // Minimum duration to guarantee user sees the smooth loading animation
+      Future.delayed(const Duration(milliseconds: 350)),
+    ]);
+
+    if (!mounted || currentRequestId != _fetchRequestId) return;
+
+    final result = results[0] as Map<String, dynamic>;
+    setState(() {
+      _isLoadingSlots = false;
+      if (result['success'] == true && result['data'] is List) {
+        _bookedSlots = Set<String>.from(
+          (result['data'] as List).map((e) => e.toString()),
+        );
+      } else {
+        _bookedSlots = {};
+      }
+
+      // If currently selected slot is booked, auto-select first available slot
+      if (_selectedSlotIndex >= 0 && _selectedSlotIndex < _slots.length) {
+        if (_isSlotBooked(_slots[_selectedSlotIndex])) {
+          final firstAvail = _slots.indexWhere((s) => !_isSlotBooked(s));
+          _selectedSlotIndex = firstAvail;
         }
-      });
-    }
+      } else {
+        final firstAvail = _slots.indexWhere((s) => !_isSlotBooked(s));
+        _selectedSlotIndex = firstAvail;
+      }
+    });
   }
 
   bool _isSlotBooked(String slot) {
@@ -366,26 +523,238 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
     final clean = slot.replaceAll(RegExp(r'\s+'), '').toLowerCase();
     return _bookedSlots.any((b) {
       final cleanB = b.replaceAll(RegExp(r'\s+'), '').toLowerCase();
-      return cleanB == clean || cleanB.contains(clean) || clean.contains(cleanB);
+      return cleanB == clean ||
+          cleanB.contains(clean) ||
+          clean.contains(cleanB);
     });
+  }
+
+  bool _isPastDate(DateTime d) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(d.year, d.month, d.day);
+    return target.isBefore(today);
+  }
+
+  void _openMonthYearPicker() {
+    int pickerYear = _selectedMonth.year;
+    final now = DateTime.now();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              padding: EdgeInsets.fromLTRB(20.w, 14.h, 20.w, 28.h),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Drag handle
+                  Container(
+                    width: 36.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  // Header Row: Title and Year Navigator
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Select Month & Year',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1C1C1E),
+                        ),
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Colors.grey[300]!,
+                            width: 0.8,
+                          ),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 4.w,
+                          vertical: 2.h,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.chevron_left, size: 20),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(
+                                minWidth: 28,
+                                minHeight: 28,
+                              ),
+                              color: pickerYear <= now.year
+                                  ? Colors.grey[400]
+                                  : primaryGreen,
+                              onPressed: pickerYear <= now.year
+                                  ? null
+                                  : () {
+                                      setModalState(() => pickerYear--);
+                                    },
+                            ),
+                            Text(
+                              '$pickerYear',
+                              style: TextStyle(
+                                fontSize: 13.5.sp,
+                                fontWeight: FontWeight.w700,
+                                color: primaryGreen,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.chevron_right, size: 20),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(
+                                minWidth: 28,
+                                minHeight: 28,
+                              ),
+                              color: pickerYear >= now.year + 2
+                                  ? Colors.grey[400]
+                                  : primaryGreen,
+                              onPressed: pickerYear >= now.year + 2
+                                  ? null
+                                  : () {
+                                      setModalState(() => pickerYear++);
+                                    },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 18.h),
+                  // 12 Months Grid
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          childAspectRatio: 2.3,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                        ),
+                    itemCount: 12,
+                    itemBuilder: (context, i) {
+                      final monthNumber = i + 1;
+                      final isPastMonth =
+                          pickerYear < now.year ||
+                          (pickerYear == now.year && monthNumber < now.month);
+                      final isSelected =
+                          pickerYear == _selectedMonth.year &&
+                          monthNumber == _selectedMonth.month;
+                      final isCurrentMonth =
+                          pickerYear == now.year && monthNumber == now.month;
+
+                      return GestureDetector(
+                        onTap: isPastMonth
+                            ? null
+                            : () {
+                                Navigator.pop(ctx);
+                                _onMonthChanged(pickerYear, monthNumber);
+                              },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? primaryGreen
+                                : (isPastMonth
+                                      ? const Color(0xFFF7F7F7)
+                                      : (isCurrentMonth
+                                            ? primaryGreen.withOpacity(0.08)
+                                            : Colors.white)),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isSelected
+                                  ? primaryGreen
+                                  : (isPastMonth
+                                        ? Colors.grey[200]!
+                                        : (isCurrentMonth
+                                              ? primaryGreen.withOpacity(0.5)
+                                              : Colors.grey[300]!)),
+                              width: isSelected || isCurrentMonth ? 1.5 : 1,
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            _monthNames[i],
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: isSelected
+                                  ? FontWeight.w700
+                                  : (isCurrentMonth
+                                        ? FontWeight.w600
+                                        : FontWeight.w500),
+                              color: isSelected
+                                  ? Colors.white
+                                  : (isPastMonth
+                                        ? Colors.grey[400]
+                                        : (isCurrentMonth
+                                              ? primaryGreen
+                                              : const Color(0xFF333333))),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _onMonthChanged(int year, int month) {
+    final now = DateTime.now();
+    final newMonth = DateTime(year, month, 1);
+    DateTime newDate;
+
+    if (year == now.year && month == now.month) {
+      newDate = DateTime(now.year, now.month, now.day);
+    } else {
+      newDate = DateTime(year, month, 1);
+    }
+
+    setState(() {
+      _selectedMonth = newMonth;
+      _selectedDate = newDate;
+      _generateMonthDates();
+    });
+
+    _fetchBookedSlots();
+    _scrollToSelectedDate();
   }
 
   @override
   void dispose() {
-    _razorpay.clear(); // removes all listeners
+    _dateScrollController.dispose();
+    if (_isRazorpaySupported) {
+      _razorpay?.clear();
+    }
     super.dispose();
   }
 
-  /// "August 2026" normally, or "Aug – Sep 2026" if the 7-day strip
-  /// crosses a month boundary.
   String _visibleMonthLabel() {
-    final first = _dayDates.first;
-    final last = _dayDates.last;
-    if (first.month == last.month) {
-      return '${_monthNames[first.month - 1]} ${first.year}';
-    }
-    return '${_monthNames[first.month - 1].substring(0, 3)} – '
-        '${_monthNames[last.month - 1].substring(0, 3)} ${last.year}';
+    return '${_monthNames[_selectedMonth.month - 1]} ${_selectedMonth.year}';
   }
 
   String _formatSlot(String slot) {
@@ -422,10 +791,9 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
   /// yyyy-MM-dd for the currently selected day chip, using the real
   /// DateTime it was generated from (not a hardcoded month/year).
   String _selectedDateIso() {
-    final d = _dayDates[_selectedDayIndex];
-    return '${d.year.toString().padLeft(4, '0')}-'
-        '${d.month.toString().padLeft(2, '0')}-'
-        '${d.day.toString().padLeft(2, '0')}';
+    return '${_selectedDate.year.toString().padLeft(4, '0')}-'
+        '${_selectedDate.month.toString().padLeft(2, '0')}-'
+        '${_selectedDate.day.toString().padLeft(2, '0')}';
   }
 
   /// Step 1: create PENDING booking via API, real row + real price back.
@@ -510,17 +878,54 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
     if (value is String) return num.tryParse(value) ?? 0;
     return 0;
   }
+
   void _showVerifyingDialog() {
-  Get.dialog(
-    const PopScope(
-      canPop: false,
-      child: _PaymentVerifyingDialog(),
-    ),
-    barrierDismissible: false,
-    barrierColor: Colors.black.withOpacity(0.45),
-  );
-}
+    Get.dialog(
+      const PopScope(canPop: false, child: _PaymentVerifyingDialog()),
+      barrierDismissible: false,
+      barrierColor: Colors.black.withOpacity(0.45),
+    );
+  }
+
   void _openCheckout() {
+    if (!_isRazorpaySupported) {
+      Get.dialog(
+        AlertDialog(
+          title: const Text('Development Payment (macOS)'),
+          content: Text(
+            'Razorpay native SDK is only available on iOS and Android devices.\n\n'
+            'Do you want to simulate payment confirmation for ₹${(_pendingBookingAmount ?? widget.turf.pricePerHour).toStringAsFixed(0)} to verify the booking flow?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: primaryGreen),
+              onPressed: () {
+                Get.back();
+                _processPaymentSuccess(
+                  paymentId: 'pay_dev_${DateTime.now().millisecondsSinceEpoch}',
+                  orderId:
+                      _pendingOrderId ??
+                      'order_dev_${DateTime.now().millisecondsSinceEpoch}',
+                  signature: 'test_sig',
+                );
+              },
+              child: const Text(
+                'Simulate Success',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    final dateStr =
+        '${_weekdayAbbr[_selectedDate.weekday - 1]} ${_selectedDate.day.toString().padLeft(2, '0')} ${_monthNames[_selectedDate.month - 1]}';
     var options = <String, dynamic>{
       'key': _razorpayKeyId,
       'amount': ((_pendingBookingAmount ?? 0) * 100).toInt(), // paise
@@ -528,70 +933,92 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
         'order_id': _pendingOrderId,
       'name': widget.turf.name,
       'description':
-          'Booking for ${_days[_selectedDayIndex].day} ${_days[_selectedDayIndex].date} - ${_formatSlot(_slots[_selectedSlotIndex])}',
+          'Booking for $dateStr - ${_formatSlot(_slots[_selectedSlotIndex])}',
       'notes': {'bookingId': _pendingBookingId},
-      'prefill': {
-        'contact': '',
-        'email': '',
-      },
+      'prefill': {'contact': '', 'email': ''},
       'theme': {'color': '#0DAA6C'},
     };
 
     try {
-      _razorpay.open(options);
+      _razorpay?.open(options);
     } catch (e) {
       debugPrint('Razorpay open error: $e');
       _showMessage('Could not open payment screen.');
     }
   }
 
-Future<void> _onPaymentSuccess(PaymentSuccessResponse response) async {
-  final id = _pendingBookingId;
-  if (id == null) return;
+  Future<void> _onPaymentSuccess(PaymentSuccessResponse response) async {
+    final orderId = (response.orderId != null && response.orderId!.isNotEmpty)
+        ? response.orderId!
+        : (_pendingOrderId ??
+              'order_dev_${DateTime.now().millisecondsSinceEpoch}');
+    final paymentId =
+        (response.paymentId != null && response.paymentId!.isNotEmpty)
+        ? response.paymentId!
+        : 'pay_dev_${DateTime.now().millisecondsSinceEpoch}';
+    final signature = response.signature ?? 'test_sig';
 
-  setState(() => _isVerifyingPayment = true);
-  _showVerifyingDialog();
-
-  final orderId = (response.orderId != null && response.orderId!.isNotEmpty)
-      ? response.orderId!
-      : (_pendingOrderId ?? 'order_dev_${DateTime.now().millisecondsSinceEpoch}');
-  final paymentId = (response.paymentId != null && response.paymentId!.isNotEmpty)
-      ? response.paymentId!
-      : 'pay_dev_${DateTime.now().millisecondsSinceEpoch}';
-  final signature = response.signature ?? 'test_sig';
-
-  final result = await PaymentService().verifyPayment(
-    token: _token,
-    bookingId: id,
-    razorpayOrderId: orderId,
-    razorpayPaymentId: paymentId,
-    razorpaySignature: signature,
-  );
-
-  // Fallback status update if verify API failed
-  if (result['success'] != true) {
-    await _bookingService.updateStatus(token: _token, id: id, status: 'CONFIRMED');
+    await _processPaymentSuccess(
+      paymentId: paymentId,
+      orderId: orderId,
+      signature: signature,
+    );
   }
 
-  if (Get.isRegistered<BookingViewmodel>()) {
-    await Get.find<BookingViewmodel>().fetchMyBookings();
+  Future<void> _processPaymentSuccess({
+    required String paymentId,
+    required String orderId,
+    required String signature,
+  }) async {
+    final id = _pendingBookingId;
+    if (id == null) return;
+
+    setState(() => _isVerifyingPayment = true);
+    _showVerifyingDialog();
+
+    final result = await PaymentService().verifyPayment(
+      token: _token,
+      bookingId: id,
+      razorpayOrderId: orderId,
+      razorpayPaymentId: paymentId,
+      razorpaySignature: signature,
+    );
+
+    // Fallback status update if verify API failed
+    if (result['success'] != true) {
+      await _bookingService.updateStatus(
+        token: _token,
+        id: id,
+        status: 'CONFIRMED',
+      );
+    }
+
+    if (Get.isRegistered<BookingViewmodel>()) {
+      await Get.find<BookingViewmodel>().fetchMyBookings();
+    }
+
+    if (!mounted) return;
+
+    // Close the loading dialog before navigating.
+    if (Get.isDialogOpen ?? false) Get.back();
+    setState(() => _isVerifyingPayment = false);
+
+    final bookingDateStr =
+        '${_weekdayAbbr[_selectedDate.weekday - 1]} ${_selectedDate.day.toString().padLeft(2, '0')} ${_monthNames[_selectedDate.month - 1]} ${_selectedDate.year}';
+
+    Get.off(
+      () => BookingConfirmationPage(
+        bookingId: id,
+        turfName: widget.turf.name,
+        bookingDate: bookingDateStr,
+        timeSlot: _formatSlot(_slots[_selectedSlotIndex]),
+        totalPrice: (_pendingBookingAmount ?? widget.turf.pricePerHour)
+            .toDouble(),
+        turfImage: _imageUrls.isNotEmpty ? _imageUrls.first : null,
+      ),
+    );
   }
 
-  if (!mounted) return;
-
-  // Close the loading dialog before navigating.
-  if (Get.isDialogOpen ?? false) Get.back();
-  setState(() => _isVerifyingPayment = false);
-
-  Get.off(() => BookingConfirmationPage(
-    bookingId: id,
-    turfName: widget.turf.name,
-    bookingDate: '${_days[_selectedDayIndex].day} ${_days[_selectedDayIndex].date}',
-    timeSlot: _formatSlot(_slots[_selectedSlotIndex]),
-    totalPrice: (_pendingBookingAmount ?? widget.turf.pricePerHour).toDouble(),
-    turfImage: _imageUrls.isNotEmpty ? _imageUrls.first : null,
-  ));
-}
   void _onPaymentError(PaymentFailureResponse response) {
     // Leave PENDING or cancel, don't confirm.
     final id = _pendingBookingId;
@@ -619,6 +1046,22 @@ Future<void> _onPaymentSuccess(PaymentSuccessResponse response) async {
     final primaryGreen = const Color(
       0xFF0DAA6C,
     ); // Matching screenshot green exactly
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final availableWidth = screenWidth - 32.w;
+    const int visibleDaysCount = 7;
+    final double dateSpacing = 6.w;
+    final double dateItemWidth =
+        (availableWidth - ((visibleDaysCount - 1) * dateSpacing)) /
+        visibleDaysCount;
+
+    // Slots grid sizing (3 columns, justified edge-to-edge)
+    const int slotColumns = 3;
+    final double slotSpacing = 8.w;
+    final double slotRunSpacing = 10.h;
+    final double slotItemWidth =
+        (availableWidth - ((slotColumns - 1) * slotSpacing)) / slotColumns;
+    final double slotItemHeight = 40.h;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -751,19 +1194,31 @@ Future<void> _onPaymentSuccess(PaymentSuccessResponse response) async {
               SizedBox(height: 8.h),
 
               // Rating + Location
-              Row(
-                children: [
-                  const Icon(Icons.star, color: Color(0xFFFFC107), size: 14),
-                  SizedBox(width: 4.w),
-                  Text(
-                    '${widget.turf.rating ?? 0.0} (${widget.turf.totalReviews})',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[600],
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w500,
+              GestureDetector(
+                onTap: () => _reviewsSectionKey.currentState?.openRateSheet(),
+                child: Row(
+                  children: [
+                    const Icon(Icons.star, color: Color(0xFFFFC107), size: 15),
+                    SizedBox(width: 4.w),
+                    Text(
+                      '${_currentRating > 0 ? _currentRating.toStringAsFixed(1) : "0.0"} ($_totalReviews)',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: Colors.grey[700],
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                ],
+                    SizedBox(width: 6.w),
+                    Text(
+                      '• Rate',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: primaryGreen,
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               SizedBox(height: 4.h),
               Text(
@@ -782,13 +1237,17 @@ Future<void> _onPaymentSuccess(PaymentSuccessResponse response) async {
               // ── Amenities ─────────────────────────
               Builder(
                 builder: (context) {
-                  final String? mapUrl = (widget.turf.googleMapUrl != null && widget.turf.googleMapUrl!.isNotEmpty)
+                  final String? mapUrl =
+                      (widget.turf.googleMapUrl != null &&
+                          widget.turf.googleMapUrl!.isNotEmpty)
                       ? widget.turf.googleMapUrl
-                      : (widget.turf.mapUrl != null && widget.turf.mapUrl!.isNotEmpty)
-                          ? widget.turf.mapUrl
-                          : (widget.turf.latitude != null && widget.turf.longitude != null)
-                              ? 'https://maps.google.com/?q=${widget.turf.latitude},${widget.turf.longitude}'
-                              : null;
+                      : (widget.turf.mapUrl != null &&
+                            widget.turf.mapUrl!.isNotEmpty)
+                      ? widget.turf.mapUrl
+                      : (widget.turf.latitude != null &&
+                            widget.turf.longitude != null)
+                      ? 'https://maps.google.com/?q=${widget.turf.latitude},${widget.turf.longitude}'
+                      : null;
 
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -806,11 +1265,17 @@ Future<void> _onPaymentSuccess(PaymentSuccessResponse response) async {
                           onTap: () async {
                             final uri = Uri.parse(mapUrl);
                             if (await canLaunchUrl(uri)) {
-                              await launchUrl(uri, mode: LaunchMode.externalApplication);
+                              await launchUrl(
+                                uri,
+                                mode: LaunchMode.externalApplication,
+                              );
                             } else {
-                              Get.snackbar('Error', 'Could not launch map URL',
-                                  backgroundColor: Colors.red.shade100,
-                                  snackPosition: SnackPosition.BOTTOM);
+                              Get.snackbar(
+                                'Error',
+                                'Could not launch map URL',
+                                backgroundColor: Colors.red.shade100,
+                                snackPosition: SnackPosition.BOTTOM,
+                              );
                             }
                           },
                           child: Row(
@@ -849,6 +1314,23 @@ Future<void> _onPaymentSuccess(PaymentSuccessResponse response) async {
                       )
                       .toList(),
                 ),
+              ),
+
+              SizedBox(height: 24.h),
+
+              // ── Ratings & Reviews ─────────────────
+              TurfReviewsSection(
+                key: _reviewsSectionKey,
+                turfId: widget.turf.id,
+                turfName: widget.turf.name,
+                initialRating: _currentRating,
+                initialTotalReviews: _totalReviews,
+                onRatingUpdated: (newRating, newTotalReviews) {
+                  setState(() {
+                    _currentRating = newRating;
+                    _totalReviews = newTotalReviews;
+                  });
+                },
               ),
 
               SizedBox(height: 24.h),
@@ -965,79 +1447,135 @@ Future<void> _onPaymentSuccess(PaymentSuccessResponse response) async {
                       fontSize: 13.sp,
                     ),
                   ),
-                  Row(
-                    children: [
-                      Text(
-                        _visibleMonthLabel(),
-                        style: textTheme.bodySmall?.copyWith(
-                          color: primaryGreen,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12.sp,
-                        ),
-                      ),
-                      SizedBox(width: 4.w),
-                      Icon(
-                        Icons.keyboard_arrow_down,
-                        color: primaryGreen,
-                        size: 18,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              SizedBox(height: 16.h),
-
-              // Days List
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: _days.asMap().entries.map((e) {
-                  int i = e.key;
-                  var day = e.value;
-                  bool isSelected = _selectedDayIndex == i;
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() => _selectedDayIndex = i);
-                      _fetchBookedSlots();
-                    },
+                  GestureDetector(
+                    onTap: _openMonthYearPicker,
+                    behavior: HitTestBehavior.opaque,
                     child: Container(
-                      width: 44.w,
-                      height: 50.h,
-                      decoration: BoxDecoration(
-                        color: isSelected ? primaryGreen : Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: isSelected
-                              ? primaryGreen
-                              : primaryGreen.withOpacity(0.4),
-                          width: 1.2,
-                        ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 4.h,
                       ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      decoration: BoxDecoration(
+                        color: primaryGreen.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            day.day,
-                            style: TextStyle(
-                              fontSize: 10.sp,
-                              fontWeight: isSelected
-                                  ? FontWeight.w600
-                                  : FontWeight.w500,
-                              color: isSelected ? Colors.white : primaryGreen,
+                            _visibleMonthLabel(),
+                            style: textTheme.bodySmall?.copyWith(
+                              color: primaryGreen,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12.sp,
                             ),
                           ),
-                          Text(
-                            day.date,
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.bold,
-                              color: isSelected ? Colors.white : primaryGreen,
-                            ),
+                          SizedBox(width: 4.w),
+                          Icon(
+                            Icons.keyboard_arrow_down,
+                            color: primaryGreen,
+                            size: 18,
                           ),
                         ],
                       ),
                     ),
-                  );
-                }).toList(),
+                  ),
+                ],
+              ),
+              SizedBox(height: 14.h),
+
+              // Days List (Horizontally scrollable for all dates in month, justified with equal width)
+              SizedBox(
+                height: 52.h,
+                child: ListView.separated(
+                  controller: _dateScrollController,
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: _monthDates.length,
+                  separatorBuilder: (context, index) =>
+                      SizedBox(width: dateSpacing),
+                  itemBuilder: (context, i) {
+                    final d = _monthDates[i];
+                    final isSelected =
+                        d.year == _selectedDate.year &&
+                        d.month == _selectedDate.month &&
+                        d.day == _selectedDate.day;
+                    final isPast = _isPastDate(d);
+
+                    return GestureDetector(
+                      onTap: isPast
+                          ? () {
+                              Get.snackbar(
+                                'Unavailable',
+                                'Cannot select past dates',
+                                snackPosition: SnackPosition.BOTTOM,
+                                duration: const Duration(seconds: 1),
+                                backgroundColor: Colors.black87,
+                                colorText: Colors.white,
+                                margin: EdgeInsets.all(12.w),
+                              );
+                            }
+                          : () {
+                              setState(() => _selectedDate = d);
+                              _fetchBookedSlots();
+                              _scrollToSelectedDate();
+                            },
+                      child: Container(
+                        width: dateItemWidth,
+                        height: 50.h,
+                        decoration: BoxDecoration(
+                          color: isPast
+                              ? const Color(0xFFF6F6F6)
+                              : (isSelected ? primaryGreen : Colors.white),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isPast
+                                ? const Color(0xFFE5E5E5)
+                                : (isSelected
+                                      ? primaryGreen
+                                      : primaryGreen.withOpacity(0.4)),
+                            width: 1.2,
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              _weekdayAbbr[d.weekday - 1],
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 10.sp,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.w500,
+                                color: isPast
+                                    ? Colors.grey[400]
+                                    : (isSelected
+                                          ? Colors.white
+                                          : primaryGreen),
+                              ),
+                            ),
+                            SizedBox(height: 2.h),
+                            Text(
+                              d.day.toString().padLeft(2, '0'),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.bold,
+                                color: isPast
+                                    ? Colors.grey[400]
+                                    : (isSelected
+                                          ? Colors.white
+                                          : primaryGreen),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ),
 
               SizedBox(height: 16.h),
@@ -1057,66 +1595,140 @@ Future<void> _onPaymentSuccess(PaymentSuccessResponse response) async {
                     ),
                   ),
                   if (_isLoadingSlots)
-                    Text(
-                      'Checking...',
-                      style: textTheme.bodySmall?.copyWith(
-                        color: Colors.grey[400],
-                        fontSize: 11.sp,
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 12.w,
+                          height: 12.w,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              primaryGreen,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 6.w),
+                        Text(
+                          'Checking...',
+                          style: textTheme.bodySmall?.copyWith(
+                            color: primaryGreen,
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                 ],
               ),
               SizedBox(height: 16.h),
-              Wrap(
-                spacing: 12.w,
-                runSpacing: 12.h,
-                children: _slots.asMap().entries.map((e) {
-                  int i = e.key;
-                  var slot = e.value;
-                  bool isSelected = _selectedSlotIndex == i;
-                  bool isBooked = _isSlotBooked(slot);
 
-                  return GestureDetector(
-                    onTap: isBooked
-                        ? null
-                        : () => setState(() => _selectedSlotIndex = i),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 8.h,
+              // Slots with animated loader matching real slots or loaded slots
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: _isLoadingSlots
+                    ? Wrap(
+                        key: const ValueKey('slots_loading'),
+                        spacing: slotSpacing,
+                        runSpacing: slotRunSpacing,
+                        children: _slots
+                            .map(
+                              (slot) => _ShimmerSlotCard(
+                                text: _formatSlot(slot),
+                                width: slotItemWidth,
+                                height: slotItemHeight,
+                              ),
+                            )
+                            .toList(),
+                      )
+                    : Column(
+                        key: const ValueKey('slots_loaded'),
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Wrap(
+                            spacing: slotSpacing,
+                            runSpacing: slotRunSpacing,
+                            children: _slots.asMap().entries.map((e) {
+                              int i = e.key;
+                              var slot = e.value;
+                              bool isSelected = _selectedSlotIndex == i;
+                              bool isBooked = _isSlotBooked(slot);
+
+                              return GestureDetector(
+                                onTap: isBooked
+                                    ? null
+                                    : () => setState(
+                                        () => _selectedSlotIndex = i,
+                                      ),
+                                child: Container(
+                                  width: slotItemWidth,
+                                  height: slotItemHeight,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: isBooked
+                                        ? const Color(0xFFF0F0F0)
+                                        : (isSelected
+                                              ? primaryGreen
+                                              : Colors.white),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: isBooked
+                                          ? const Color(0xFFD0D0D0)
+                                          : (isSelected
+                                                ? primaryGreen
+                                                : primaryGreen.withOpacity(
+                                                    0.4,
+                                                  )),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    _formatSlot(slot),
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: isBooked
+                                          ? Colors.grey[400]
+                                          : (isSelected
+                                                ? Colors.white
+                                                : Colors.grey[700]),
+                                      fontSize: 11.sp,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.w500,
+                                      decoration: isBooked
+                                          ? TextDecoration.lineThrough
+                                          : TextDecoration.none,
+                                      letterSpacing: -0.2,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                          if (_slots.isNotEmpty &&
+                              _slots.every((s) => _isSlotBooked(s)))
+                            Padding(
+                              padding: EdgeInsets.only(top: 10.h),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.info_outline,
+                                    size: 14,
+                                    color: Colors.red[400],
+                                  ),
+                                  SizedBox(width: 6.w),
+                                  Text(
+                                    'All slots are fully booked for this date',
+                                    style: TextStyle(
+                                      fontSize: 11.sp,
+                                      color: Colors.red[400],
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
                       ),
-                      decoration: BoxDecoration(
-                        color: isBooked
-                            ? const Color(0xFFF0F0F0)
-                            : (isSelected ? primaryGreen : Colors.white),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: isBooked
-                              ? const Color(0xFFD0D0D0)
-                              : (isSelected
-                                  ? primaryGreen
-                                  : primaryGreen.withOpacity(0.4)),
-                        ),
-                      ),
-                      child: Text(
-                        _formatSlot(slot),
-                        style: TextStyle(
-                          color: isBooked
-                              ? Colors.grey[400]
-                              : (isSelected ? Colors.white : Colors.grey[700]),
-                          fontSize: 11.sp,
-                          fontWeight: isSelected
-                              ? FontWeight.w600
-                              : FontWeight.w500,
-                          decoration: isBooked
-                              ? TextDecoration.lineThrough
-                              : TextDecoration.none,
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
               ),
 
               SizedBox(height: 32.h),
@@ -1126,10 +1738,14 @@ Future<void> _onPaymentSuccess(PaymentSuccessResponse response) async {
                 width: double.infinity,
                 height: 48.h,
                 child: MyButtons(
-                  text: _isBooking ? "Booking…" : "Continue",
+                  text: _isBooking
+                      ? "Booking…"
+                      : (_isVerifyingPayment ? "Verifying…" : "Continue"),
                   height: 48.h, // Ignored since Parent forces height
                   width: double.infinity, // Ignored since Parent forces width
-                  onTap: _isBooking ? () {} : _startBookingFlow,
+                  onTap: (_isBooking || _isVerifyingPayment)
+                      ? () {}
+                      : _startBookingFlow,
                   textStyle: textTheme.bodyMedium!.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
