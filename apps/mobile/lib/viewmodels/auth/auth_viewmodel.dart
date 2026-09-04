@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobile/data/services/auth_service.dart';
 import 'package:mobile/core/storage/local_storage.dart';
+import 'package:mobile/core/constants/app_constants.dart';
 import 'package:mobile/routes/app_paths.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:async';
@@ -19,10 +20,12 @@ class AuthViewmodel extends GetxController {
   GoogleSignInAccount? get googleAccount => _googleAccount;
 
   Future<void> _ensureGoogleInitialized() async {
+    final serverClientId = AppConstants.googleServerClientId;
+    print('[Google] ensuring initialized with serverClientId: "$serverClientId" (alreadyInit=$_googleSignInInitialized)');
     if (_googleSignInInitialized) return;
+    print('[Google] initializing GoogleSignIn with serverClientId: "$serverClientId"');
     await _googleSignIn.initialize(
-      serverClientId:
-          '961272022138-2f88mhsmpv7ch9cgk7qj7ai510g8so40.apps.googleusercontent.com',
+      serverClientId: serverClientId.isNotEmpty ? serverClientId : null,
     );
     _googleSignInInitialized = true;
     _googleAuthSubscription = _googleSignIn.authenticationEvents.listen((
@@ -206,39 +209,49 @@ class AuthViewmodel extends GetxController {
   // ──────────────────────────────────────────────
   // Google Sign-In (v7 Native)
   // ──────────────────────────────────────────────
-Future<void> loginWithGoogle() async {
+  Future<void> loginWithGoogle() async {
     try {
       isLoading.value = true;
       print('[Google] start');
+      print('[Google] serverClientId from env: "${AppConstants.googleServerClientId}"');
 
       await _ensureGoogleInitialized();
       print('[Google] initialized');
 
-      if (!_googleSignIn.supportsAuthenticate()) {
+      final supported = _googleSignIn.supportsAuthenticate();
+      print('[Google] supportsAuthenticate: $supported');
+      if (!supported) {
         _showError('Google Sign-In is not supported on this platform');
         return;
       }
 
+      print('[Google] calling _googleSignIn.authenticate()...');
       final account = await _googleSignIn.authenticate();
-      print('[Google] account: ${account.email}');
+      _googleAccount = account;
+      print('[Google] authenticated account email: ${account.email}');
 
-      final serverAuth = await account.authorizationClient.authorizeServer([]);
+      print('[Google] requesting server authorization...');
+      final serverAuth = await account.authorizationClient.authorizeServer([
+        'openid',
+        'email',
+        'profile',
+      ]);
       print('[Google] serverAuth: $serverAuth');
       final serverAuthCode = serverAuth?.serverAuthCode;
       print('[Google] serverAuthCode: $serverAuthCode');
 
-      if (serverAuthCode == null) {
+      if (serverAuthCode == null || serverAuthCode.isEmpty) {
         _showError('Google Sign-In failed: could not get auth code');
         return;
       }
 
-      print('[Google] calling backend...');
+      print('[Google] sending serverAuthCode to backend at ${AppConstants.baseUrl}/auth/google/token...');
       final response = await _authService.loginWithGoogle(
-        idToken: serverAuthCode,
+        serverAuthCode: serverAuthCode,
       );
       print('[Google] backend response: $response');
 
-      if (response['success']) {
+      if (response['success'] == true && response['data'] != null) {
         _saveSession(response['data']);
         _showSuccess('Signed in with Google');
         Get.offAllNamed(RoutePaths.home);
@@ -246,9 +259,17 @@ Future<void> loginWithGoogle() async {
         _showError(response['message'] ?? 'Google login failed');
       }
     } on GoogleSignInException catch (e) {
-      print('[Google] GoogleSignInException: ${e.code} ${e.description}');
-      if (e.code == GoogleSignInExceptionCode.canceled) return;
-      _showError('Google Sign-In error: ${e.description ?? e.code.name}');
+      print('[Google] GoogleSignInException: code=${e.code}, description="${e.description}"');
+      final desc = e.description ?? '';
+      final isRealCancel = e.code == GoogleSignInExceptionCode.canceled &&
+          !desc.toLowerCase().contains('reauth') &&
+          !desc.toLowerCase().contains('failed') &&
+          !desc.contains('16');
+      if (isRealCancel) {
+        print('[Google] User dismissed sign-in prompt.');
+        return;
+      }
+      _showError('Google Sign-In error: ${desc.isNotEmpty ? desc : e.code.name}');
     } catch (e) {
       print('[Google] generic error: $e');
       _showError('Google Sign-In error: ${e.toString()}');

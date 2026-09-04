@@ -46,21 +46,30 @@ class AuthService {
   // Email / Password Auth
   // ──────────────────────────────────────────────
 
-/// POST /auth/google/token — send idToken from native Google SDK
-Future<Map<String, dynamic>> loginWithGoogle({
-  required String idToken,
-}) async {
-  try {
-    final response = await http.post(
-      Uri.parse('$_base/google/token'),
-      headers: _headers,
-      body: jsonEncode({'idToken': idToken}),
-    );
-    return _handleResponse(response);
-  } catch (e) {
-    return {'success': false, 'message': e.toString()};
+  /// POST /auth/google/token — send serverAuthCode or idToken from native Google SDK
+  Future<Map<String, dynamic>> loginWithGoogle({
+    String? idToken,
+    String? serverAuthCode,
+  }) async {
+    try {
+      final payload = <String, dynamic>{};
+      if (idToken != null && idToken.isNotEmpty) {
+        payload['idToken'] = idToken;
+      }
+      if (serverAuthCode != null && serverAuthCode.isNotEmpty) {
+        payload['serverAuthCode'] = serverAuthCode;
+      }
+
+      final response = await http.post(
+        Uri.parse('$_base/google/token'),
+        headers: _headers,
+        body: jsonEncode(payload),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
   }
-}
 
   /// POST /auth/register
   Future<Map<String, dynamic>> register({

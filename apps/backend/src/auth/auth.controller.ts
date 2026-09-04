@@ -28,6 +28,7 @@ import {
 } from './dto/otp-request.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UpdateNotificationsDto } from './dto/update-notifications.dto';
+import { GoogleLoginDto } from './dto/google-login.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { ConfigService } from '@nestjs/config';
 import type { Response } from 'express';
@@ -142,5 +143,10 @@ export class AuthController {
       'http://localhost:5173';
 
     return res.redirect(`${frontendUrl}/google-callback?token=${encodeURIComponent(token)}`);
+  }
+
+  @Post('google/token')
+  async googleTokenLogin(@Body() dto: GoogleLoginDto) {
+    return this.authService.loginWithGoogleToken(dto);
   }
 }

@@ -9,10 +9,13 @@ class AppConstants {
       return envUrl;
     }
     if (!kIsWeb && Platform.isAndroid) {
-      return 'http://10.0.2.2:3000';
+      return 'http://10.0.2.2:3100';
     }
-    return 'http://127.0.0.1:3000';
+    return 'http://127.0.0.1:3100';
   }
+
+  static String get googleServerClientId =>
+      dotenv.env['GOOGLE_SERVER_CLIENT_ID'] ?? '';
 }
 
                                 
