@@ -67,12 +67,13 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
       body: ListView(
         padding: EdgeInsets.all(16.w),
         children: [
-          Container(
-            decoration: BoxDecoration(
-              color: colors.white,
+          Material(
+            color: colors.white,
+            shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE8E8E8)),
+              side: const BorderSide(color: Color(0xFFE8E8E8)),
             ),
+            clipBehavior: Clip.antiAlias,
             child: Column(
               children: [
                 SwitchListTile(

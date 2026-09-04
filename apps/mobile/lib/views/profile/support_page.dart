@@ -239,32 +239,37 @@ class _SupportPageState extends State<SupportPage>
           ),
           SizedBox(height: 12.h),
           ..._faqs.map(
-            (faq) => Container(
-              margin: EdgeInsets.only(bottom: 8.h),
-              decoration: BoxDecoration(
+            (faq) => Padding(
+              padding: EdgeInsets.only(bottom: 8.h),
+              child: Material(
                 color: colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFE8E8E8)),
-              ),
-              child: ExpansionTile(
-                title: Text(
-                  faq['question']!,
-                  style: textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: colors.textTitle,
-                  ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: const BorderSide(color: Color(0xFFE8E8E8)),
                 ),
-                children: [
-                  Padding(
-                    padding: EdgeInsets.all(12.w),
-                    child: Text(
-                      faq['answer']!,
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colors.textGrey,
-                      ),
+                clipBehavior: Clip.antiAlias,
+                child: ExpansionTile(
+                  shape: const Border(),
+                  collapsedShape: const Border(),
+                  title: Text(
+                    faq['question']!,
+                    style: textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: colors.textTitle,
                     ),
                   ),
-                ],
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.all(12.w),
+                      child: Text(
+                        faq['answer']!,
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colors.textGrey,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

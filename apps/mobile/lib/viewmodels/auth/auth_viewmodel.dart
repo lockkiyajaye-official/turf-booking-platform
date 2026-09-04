@@ -16,6 +16,7 @@ class AuthViewmodel extends GetxController {
   bool _googleSignInInitialized = false;
   StreamSubscription<GoogleSignInAuthenticationEvent>? _googleAuthSubscription;
   GoogleSignInAccount? _googleAccount;
+  GoogleSignInAccount? get googleAccount => _googleAccount;
 
   Future<void> _ensureGoogleInitialized() async {
     if (_googleSignInInitialized) return;
