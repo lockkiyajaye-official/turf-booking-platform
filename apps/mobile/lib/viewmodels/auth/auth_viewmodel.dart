@@ -21,9 +21,13 @@ class AuthViewmodel extends GetxController {
 
   Future<void> _ensureGoogleInitialized() async {
     final serverClientId = AppConstants.googleServerClientId;
-    print('[Google] ensuring initialized with serverClientId: "$serverClientId" (alreadyInit=$_googleSignInInitialized)');
+    print(
+      '[Google] ensuring initialized with serverClientId: "$serverClientId" (alreadyInit=$_googleSignInInitialized)',
+    );
     if (_googleSignInInitialized) return;
-    print('[Google] initializing GoogleSignIn with serverClientId: "$serverClientId"');
+    print(
+      '[Google] initializing GoogleSignIn with serverClientId: "$serverClientId"',
+    );
     await _googleSignIn.initialize(
       serverClientId: serverClientId.isNotEmpty ? serverClientId : null,
     );
@@ -213,7 +217,9 @@ class AuthViewmodel extends GetxController {
     try {
       isLoading.value = true;
       print('[Google] start');
-      print('[Google] serverClientId from env: "${AppConstants.googleServerClientId}"');
+      print(
+        '[Google] serverClientId from env: "${AppConstants.googleServerClientId}"',
+      );
 
       await _ensureGoogleInitialized();
       print('[Google] initialized');
@@ -245,7 +251,9 @@ class AuthViewmodel extends GetxController {
         return;
       }
 
-      print('[Google] sending serverAuthCode to backend at ${AppConstants.baseUrl}/auth/google/token...');
+      print(
+        '[Google] sending serverAuthCode to backend at ${AppConstants.baseUrl}/auth/google/token...',
+      );
       final response = await _authService.loginWithGoogle(
         serverAuthCode: serverAuthCode,
       );
@@ -259,9 +267,12 @@ class AuthViewmodel extends GetxController {
         _showError(response['message'] ?? 'Google login failed');
       }
     } on GoogleSignInException catch (e) {
-      print('[Google] GoogleSignInException: code=${e.code}, description="${e.description}"');
+      print(
+        '[Google] GoogleSignInException: code=${e.code}, description="${e.description}"',
+      );
       final desc = e.description ?? '';
-      final isRealCancel = e.code == GoogleSignInExceptionCode.canceled &&
+      final isRealCancel =
+          e.code == GoogleSignInExceptionCode.canceled &&
           !desc.toLowerCase().contains('reauth') &&
           !desc.toLowerCase().contains('failed') &&
           !desc.contains('16');
@@ -269,7 +280,9 @@ class AuthViewmodel extends GetxController {
         print('[Google] User dismissed sign-in prompt.');
         return;
       }
-      _showError('Google Sign-In error: ${desc.isNotEmpty ? desc : e.code.name}');
+      _showError(
+        'Google Sign-In error: ${desc.isNotEmpty ? desc : e.code.name}',
+      );
     } catch (e) {
       print('[Google] generic error: $e');
       _showError('Google Sign-In error: ${e.toString()}');
@@ -277,7 +290,7 @@ class AuthViewmodel extends GetxController {
       isLoading.value = false;
       print('[Google] done, isLoading=false');
     }
-  }// ──────────────────────────────────────────────
+  } // ──────────────────────────────────────────────
   // OTP — Registration Flow
   // ──────────────────────────────────────────────
 
