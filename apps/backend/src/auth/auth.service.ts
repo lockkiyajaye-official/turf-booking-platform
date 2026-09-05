@@ -447,7 +447,7 @@ export class AuthService {
             dto.idToken = tokenData.id_token;
             this.logger.log('[Google Auth] Received id_token from code exchange.');
           } else if (tokenData.access_token) {
-            this.logger.log('[Google Auth] Fetching userinfo via access_token...');
+            this.logger.log('[Google Auth] Fetching user info via access_token...');
             const userInfoRes = await fetch(
               'https://www.googleapis.com/oauth2/v3/userinfo',
               { headers: { Authorization: `Bearer ${tokenData.access_token}` } },
@@ -470,9 +470,9 @@ export class AuthService {
       }
     }
 
-    // 2. If we have an idToken, verify it via Google tokeninfo
+    // 2. If we have an idToken, verify it via Google token info
     if (dto.idToken && !email) {
-      this.logger.log('[Google Auth] Verifying idToken with Google tokeninfo endpoint...');
+      this.logger.log('[Google Auth] Verifying idToken with Google token info endpoint...');
       try {
         const verifyRes = await fetch(
           `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(dto.idToken)}`,
