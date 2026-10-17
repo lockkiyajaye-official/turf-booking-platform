@@ -66,11 +66,14 @@ class PrivacyPolicyPage extends StatelessWidget {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(20.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(20.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             Container(
               padding: EdgeInsets.all(16.w),
               decoration: BoxDecoration(
@@ -151,6 +154,8 @@ class PrivacyPolicyPage extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }

@@ -66,8 +66,11 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
             return SingleChildScrollView(
               keyboardDismissBehavior:
                   ScrollViewKeyboardDismissBehavior.onDrag,
@@ -301,6 +304,8 @@ class _LoginPageState extends State<LoginPage> {
           },
         ),
       ),
-    );
-  }
+    ),
+  ),
+);
+}
 }

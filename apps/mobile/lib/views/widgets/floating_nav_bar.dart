@@ -47,20 +47,26 @@ class FloatingNavBar extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 8.h),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(navItems.length, (index) {
-              final isSelected = index == currentIndex;
-              return _NavBarItem(
-                item: navItems[index],
-                isSelected: isSelected,
-                selectedColor: _primaryRed,
-                unselectedColor: _unselectedColor,
-                onTap: () => onTap(index),
-              );
-            }),
+        child: SizedBox(
+          height: 64,
+          child: Align(
+            alignment: Alignment.center,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 680),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: List.generate(navItems.length, (index) {
+                  final isSelected = index == currentIndex;
+                  return _NavBarItem(
+                    item: navItems[index],
+                    isSelected: isSelected,
+                    selectedColor: _primaryRed,
+                    unselectedColor: _unselectedColor,
+                    onTap: () => onTap(index),
+                  );
+                }),
+              ),
+            ),
           ),
         ),
       ),

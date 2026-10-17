@@ -135,8 +135,13 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ];
 
+        final isTablet = context.isTablet;
+
         return SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+          padding: EdgeInsets.symmetric(
+            horizontal: isTablet ? 32.w : 20.w,
+            vertical: 16.h,
+          ),
           child: Column(
             children: [
               // ── AVATAR + NAME + ROLE BADGES ──────────────────
@@ -395,64 +400,174 @@ class _ProfilePageState extends State<ProfilePage> {
                 SizedBox(height: 16.h),
               ],
 
-              // ── MENU LIST ──────────────────────────────────
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: menuItems.length + 1, // +1 for logout
-                separatorBuilder: (context, index) =>
-                    const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                itemBuilder: (context, index) {
-                  // Logout
-                  if (index == menuItems.length) {
-                    return _MenuTile(
+              // ── MENU LIST (Grid on tablet, list on phone) ──
+              if (isTablet)
+                Column(
+                  children: [
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 14,
+                        mainAxisExtent: 64,
+                      ),
+                      itemCount: menuItems.length,
+                      itemBuilder: (context, index) {
+                        final item = menuItems[index];
+                        return _MenuCard(
+                          icon: item.icon,
+                          label: item.label,
+                          onTap: item.onTap,
+                        );
+                      },
+                    ),
+                    SizedBox(height: 14.h),
+                    _MenuCard(
                       icon: Icons.logout_rounded,
                       label: 'Logout',
                       labelColor: colors.error,
                       iconColor: colors.error,
-                      onTap: () {
-                        Get.dialog(
-                          AlertDialog(
-                            title: const Text('Logout'),
-                            content: const Text(
-                              'Are you sure you want to logout?',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Get.back(),
-                                child: const Text('Cancel'),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  Get.back();
-                                  vm.logout();
-                                },
-                                child: Text(
-                                  'Logout',
-                                  style: TextStyle(color: colors.error),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    );
-                  }
+                      onTap: () => _confirmLogout(context, vm, colors),
+                    ),
+                  ],
+                )
+              else
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: menuItems.length + 1, // +1 for logout
+                  separatorBuilder: (context, index) =>
+                      const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                  itemBuilder: (context, index) {
+                    // Logout
+                    if (index == menuItems.length) {
+                      return _MenuTile(
+                        icon: Icons.logout_rounded,
+                        label: 'Logout',
+                        labelColor: colors.error,
+                        iconColor: colors.error,
+                        onTap: () => _confirmLogout(context, vm, colors),
+                      );
+                    }
 
-                  final item = menuItems[index];
-                  return _MenuTile(
-                    icon: item.icon,
-                    label: item.label,
-                    onTap: item.onTap,
-                  );
-                },
-              ),
+                    final item = menuItems[index];
+                    return _MenuTile(
+                      icon: item.icon,
+                      label: item.label,
+                      onTap: item.onTap,
+                    );
+                  },
+                ),
 
               SizedBox(height: 32.h),
             ],
           ),
         );
       }),
+    );
+  }
+
+  void _confirmLogout(BuildContext context, AuthViewmodel vm, AppColors colors) {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Get.back();
+              vm.logout();
+            },
+            child: Text(
+              'Logout',
+              style: TextStyle(color: colors.error),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Menu card for tablet grid ─────────────────────────────────
+class _MenuCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final Color? labelColor;
+  final Color? iconColor;
+
+  const _MenuCard({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.labelColor,
+    this.iconColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: (iconColor ?? colors.primary).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  icon,
+                  size: 20.sp,
+                  color: iconColor ?? colors.primary,
+                ),
+              ),
+              SizedBox(width: 14.w),
+              Expanded(
+                child: Text(
+                  label,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: labelColor ?? colors.textTitle,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 20.sp,
+                color: colors.textGrey,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

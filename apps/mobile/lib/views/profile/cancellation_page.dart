@@ -134,14 +134,20 @@ class _CancellationPageState extends State<CancellationPage> {
           Container(
             color: colors.white,
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-            child: Row(
-              children: [
-                _buildTab('Upcoming', 0, colors, textTheme),
-                SizedBox(width: 8.w),
-                _buildTab('Cancelled', 1, colors, textTheme),
-                SizedBox(width: 8.w),
-                _buildTab('Completed', 2, colors, textTheme),
-              ],
+            child: Align(
+              alignment: Alignment.center,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: Row(
+                  children: [
+                    _buildTab('Upcoming', 0, colors, textTheme),
+                    SizedBox(width: 8.w),
+                    _buildTab('Cancelled', 1, colors, textTheme),
+                    SizedBox(width: 8.w),
+                    _buildTab('Completed', 2, colors, textTheme),
+                  ],
+                ),
+              ),
             ),
           ),
           Expanded(
@@ -161,108 +167,26 @@ class _CancellationPageState extends State<CancellationPage> {
                 : RefreshIndicator(
                     onRefresh: _fetchBookings,
                     color: colors.primary,
-                    child: ListView.builder(
-                      padding: EdgeInsets.all(16.w),
-                      itemCount: _filteredBookings.length,
-                      itemBuilder: (context, index) {
-                        final b = _filteredBookings[index];
-                        final isUpcoming =
-                            b.status == 'CONFIRMED' || b.status == 'PENDING';
-                        return Container(
-                          margin: EdgeInsets.only(bottom: 12.h),
-                          padding: EdgeInsets.all(16.w),
-                          decoration: BoxDecoration(
-                            color: colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE8E8E8)),
+                    child: context.bookingGridColumns > 1
+                        ? GridView.builder(
+                            padding: EdgeInsets.all(16.w),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: context.bookingGridColumns,
+                              crossAxisSpacing: 14.w,
+                              mainAxisSpacing: 14.h,
+                              mainAxisExtent: 165,
+                            ),
+                            itemCount: _filteredBookings.length,
+                            itemBuilder: (context, index) =>
+                                _buildBookingItem(_filteredBookings[index], colors, textTheme),
+                          )
+                        : ListView.builder(
+                            padding: EdgeInsets.all(16.w),
+                            itemCount: _filteredBookings.length,
+                            itemBuilder: (context, index) =>
+                                _buildBookingItem(_filteredBookings[index], colors, textTheme),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      b.turfName,
-                                      style: textTheme.titleSmall?.copyWith(
-                                        fontWeight: FontWeight.w700,
-                                        color: colors.textTitle,
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 8.w,
-                                      vertical: 4.h,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isUpcoming
-                                          ? Colors.green.shade50
-                                          : Colors.red.shade50,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      b.displayStatus.toUpperCase(),
-                                      style: TextStyle(
-                                        fontSize: 10.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: isUpcoming
-                                            ? Colors.green.shade700
-                                            : Colors.red.shade700,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 8.h),
-                              Text(
-                                'Date: ${b.displayDate} • ${b.displayTime}',
-                                style: textTheme.bodySmall?.copyWith(
-                                  color: colors.textGrey,
-                                ),
-                              ),
-                              SizedBox(height: 4.h),
-                              Text(
-                                'Total: ₹${b.totalPrice}',
-                                style: textTheme.bodyMedium?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: colors.primary,
-                                ),
-                              ),
-                              if (isUpcoming) ...[
-                                SizedBox(height: 12.h),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: OutlinedButton(
-                                        onPressed: () => _cancelBooking(b),
-                                        style: OutlinedButton.styleFrom(
-                                          side: BorderSide(color: colors.error),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                          ),
-                                        ),
-                                        child: Text(
-                                          'Cancel Booking',
-                                          style: TextStyle(
-                                            color: colors.error,
-                                            fontSize: 12.sp,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ],
-                          ),
-                        );
-                      },
-                    ),
                   ),
           ),
         ],
@@ -298,6 +222,95 @@ class _CancellationPageState extends State<CancellationPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildBookingItem(BookingModel b, AppColors colors, TextTheme textTheme) {
+    final isUpcoming = b.status == 'CONFIRMED' || b.status == 'PENDING';
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE8E8E8)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  b.turfName,
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: colors.textTitle,
+                  ),
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 8.w,
+                  vertical: 4.h,
+                ),
+                decoration: BoxDecoration(
+                  color: isUpcoming ? Colors.green.shade50 : Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  b.displayStatus.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.bold,
+                    color: isUpcoming ? Colors.green.shade700 : Colors.red.shade700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            'Date: ${b.displayDate} • ${b.displayTime}',
+            style: textTheme.bodySmall?.copyWith(
+              color: colors.textGrey,
+            ),
+          ),
+          SizedBox(height: 4.h),
+          Text(
+            'Total: ₹${b.totalPrice}',
+            style: textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: colors.primary,
+            ),
+          ),
+          if (isUpcoming) ...[
+            SizedBox(height: 12.h),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _cancelBooking(b),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: colors.error),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text(
+                      'Cancel Booking',
+                      style: TextStyle(
+                        color: colors.error,
+                        fontSize: 12.sp,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
       ),
     );
   }

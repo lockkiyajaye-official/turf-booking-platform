@@ -227,25 +227,50 @@ class _AllTurfsPageState extends State<AllTurfsPage> {
                 );
               }
 
+              final isTablet = context.isTablet;
+              final columns = context.turfGridColumns;
+              final horizontalPad = isTablet ? 20.w : 16.w;
+
               return RefreshIndicator(
                 color: colors.primary,
                 onRefresh: () => _turfVm.fetchAllTurfs(),
-                child: ListView.builder(
-                  padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 24.h),
-                  itemCount: filteredTurfs.length,
-                  itemBuilder: (context, index) {
-                    final turf = filteredTurfs[index];
-                    return Padding(
-                      padding: EdgeInsets.only(bottom: 12.h),
-                      child: VenueCard(
-                        turf: turf,
-                        onBookNow: () => Get.to(
-                          () => TurfDetailsPage(turf: turf),
+                child: columns > 1
+                    ? GridView.builder(
+                        padding: EdgeInsets.fromLTRB(horizontalPad, 4.h, horizontalPad, 24.h),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: columns,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          mainAxisExtent: 168,
                         ),
+                        itemCount: filteredTurfs.length,
+                        itemBuilder: (context, index) {
+                          final turf = filteredTurfs[index];
+                          return VenueCard(
+                            turf: turf,
+                            margin: EdgeInsets.zero,
+                            onBookNow: () => Get.to(
+                              () => TurfDetailsPage(turf: turf),
+                            ),
+                          );
+                        },
+                      )
+                    : ListView.builder(
+                        padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 24.h),
+                        itemCount: filteredTurfs.length,
+                        itemBuilder: (context, index) {
+                          final turf = filteredTurfs[index];
+                          return Padding(
+                            padding: EdgeInsets.only(bottom: 12.h),
+                            child: VenueCard(
+                              turf: turf,
+                              onBookNow: () => Get.to(
+                                () => TurfDetailsPage(turf: turf),
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
               );
             }),
           ),

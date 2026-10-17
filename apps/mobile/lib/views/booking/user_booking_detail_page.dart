@@ -287,6 +287,7 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final textTheme = Theme.of(context).textTheme;
+    final isTablet = context.isTablet;
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -313,202 +314,253 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
               onRefresh: _fetchBookingDetails,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.all(16.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Turf Overview Card
-                    _buildOverviewCard(colors, textTheme),
-                    SizedBox(height: 16.h),
-
-                    // Booking Information
-                    _buildSectionCard(
-                      colors: colors,
-                      textTheme: textTheme,
-                      title: 'Booking Details',
-                      children: [
-                        _buildDetailRow('Booking ID', '#${_booking.id}', textTheme, colors),
-                        _buildDetailRow('Date', _booking.displayDate, textTheme, colors),
-                        _buildDetailRow('Time Slot', _booking.displayTime, textTheme, colors),
-                        _buildDetailRow('Category / Type', _booking.turfType, textTheme, colors),
-                        _buildDetailRow(
-                          'Status',
-                          _booking.displayStatus,
-                          textTheme,
-                          colors,
-                          valueColor: _getStatusColor(_booking.status),
-                          isBold: true,
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 16.h),
-
-                    // Venue / Location Information
-                    _buildSectionCard(
-                      colors: colors,
-                      textTheme: textTheme,
-                      title: 'Venue Location',
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.location_on_outlined, color: colors.primary, size: 20),
-                            SizedBox(width: 8.w),
-                            Expanded(
-                              child: Text(
-                                _booking.turfLocation.isNotEmpty
-                                    ? _booking.turfLocation
-                                    : 'Location details available at venue',
-                                style: textTheme.bodyMedium?.copyWith(color: colors.textTitle),
-                              ),
+                padding: EdgeInsets.all(isTablet ? 24.w : 16.w),
+                child: isTablet
+                    ? Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildOverviewCard(colors, textTheme),
+                                SizedBox(height: 16.h),
+                                _buildBookingInfoCard(colors, textTheme),
+                                if (_booking.status.toLowerCase() != 'cancelled') ...[
+                                  SizedBox(height: 16.h),
+                                  _buildRateCard(colors, textTheme),
+                                ],
+                                if (_booking.status.toLowerCase() == 'cancelled') ...[
+                                  SizedBox(height: 16.h),
+                                  _buildCancellationCard(colors, textTheme),
+                                ],
+                              ],
                             ),
+                          ),
+                          SizedBox(width: 20.w),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildLocationCard(colors, textTheme),
+                                SizedBox(height: 16.h),
+                                _buildPaymentCard(colors, textTheme),
+                                SizedBox(height: 20.h),
+                                _buildActionButtons(colors, textTheme),
+                              ],
+                            ),
+                          ),
+                        ],
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildOverviewCard(colors, textTheme),
+                          SizedBox(height: 16.h),
+                          _buildBookingInfoCard(colors, textTheme),
+                          SizedBox(height: 16.h),
+                          _buildLocationCard(colors, textTheme),
+                          SizedBox(height: 16.h),
+                          _buildPaymentCard(colors, textTheme),
+                          if (_booking.status.toLowerCase() != 'cancelled') ...[
+                            SizedBox(height: 16.h),
+                            _buildRateCard(colors, textTheme),
                           ],
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 16.h),
-
-                    // Payment Summary
-                    _buildSectionCard(
-                      colors: colors,
-                      textTheme: textTheme,
-                      title: 'Payment Summary',
-                      children: [
-                        _buildDetailRow('Slot Price', '₹${_booking.totalPrice.toStringAsFixed(2)}', textTheme, colors),
-                        _buildDetailRow('Taxes & Charges', '₹0.00', textTheme, colors),
-                        const Divider(),
-                        _buildDetailRow(
-                          'Total Paid',
-                          '₹${_booking.totalPrice.toStringAsFixed(2)}',
-                          textTheme,
-                          colors,
-                          isBold: true,
-                          valueColor: colors.primary,
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 16.h),
-
-                    // Rate Turf Experience Card
-                    if (_booking.status.toLowerCase() != 'cancelled') ...[
-                      _buildSectionCard(
-                        colors: colors,
-                        textTheme: textTheme,
-                        title: 'Rate Your Experience',
-                        children: [
-                          Text(
-                            'How was your session at ${_booking.turfName}? Your rating and review help fellow players.',
-                            style: textTheme.bodySmall?.copyWith(color: colors.textGrey),
-                          ),
-                          SizedBox(height: 12.h),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 44.h,
-                            child: OutlinedButton.icon(
-                              onPressed: () {
-                                RateTurfBottomSheet.show(
-                                  context: context,
-                                  turfId: _booking.turfId,
-                                  turfName: _booking.turfName,
-                                  bookingId: _booking.id,
-                                );
-                              },
-                              icon: const Icon(Icons.star_rounded, color: Color(0xFFFFB800), size: 22),
-                              label: Text(
-                                'Rate & Review Turf',
-                                style: textTheme.titleSmall?.copyWith(
-                                  color: colors.primary,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              style: OutlinedButton.styleFrom(
-                                side: BorderSide(color: colors.primary.withOpacity(0.5)),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                            ),
-                          ),
+                          if (_booking.status.toLowerCase() == 'cancelled') ...[
+                            SizedBox(height: 16.h),
+                            _buildCancellationCard(colors, textTheme),
+                          ],
+                          SizedBox(height: 20.h),
+                          _buildActionButtons(colors, textTheme),
+                          SizedBox(height: 24.h),
                         ],
                       ),
-                      SizedBox(height: 16.h),
-                    ],
+              ),
+            ),
+    );
+  }
 
-                    // Cancellation Info (if cancelled)
-                    if (_booking.status.toLowerCase() == 'cancelled') ...[
-                      _buildSectionCard(
-                        colors: colors,
-                        textTheme: textTheme,
-                        title: 'Cancellation Summary',
-                        children: [
-                          if (_booking.cancellationReason != null && _booking.cancellationReason!.isNotEmpty)
-                            _buildDetailRow('Reason', _booking.cancellationReason!, textTheme, colors),
-                          _buildDetailRow(
-                            'Refund Status',
-                            _booking.refundAmount > 0
-                                ? '₹${_booking.refundAmount.toStringAsFixed(2)} Refunded via Razorpay'
-                                : 'Non-refundable',
-                            textTheme,
-                            colors,
-                            valueColor: _booking.refundAmount > 0 ? Colors.green.shade700 : colors.textGrey,
-                            isBold: true,
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 16.h),
-                    ],
+  Widget _buildBookingInfoCard(AppColors colors, TextTheme textTheme) {
+    return _buildSectionCard(
+      colors: colors,
+      textTheme: textTheme,
+      title: 'Booking Details',
+      children: [
+        _buildDetailRow('Booking ID', '#${_booking.id}', textTheme, colors),
+        _buildDetailRow('Date', _booking.displayDate, textTheme, colors),
+        _buildDetailRow('Time Slot', _booking.displayTime, textTheme, colors),
+        _buildDetailRow('Category / Type', _booking.turfType, textTheme, colors),
+        _buildDetailRow(
+          'Status',
+          _booking.displayStatus,
+          textTheme,
+          colors,
+          valueColor: _getStatusColor(_booking.status),
+          isBold: true,
+        ),
+      ],
+    );
+  }
 
-                    // Action Buttons
-                    if (!_booking.isPast && _booking.status.toLowerCase() != 'cancelled') ...[
-                      SizedBox(
-                        width: double.infinity,
-                        height: 48.h,
-                        child: OutlinedButton(
-                          onPressed: _handleCancelBooking,
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.red),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: Text(
-                            'Cancel Booking',
-                            style: textTheme.titleMedium?.copyWith(
-                              color: Colors.red,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 12.h),
-                    ],
+  Widget _buildLocationCard(AppColors colors, TextTheme textTheme) {
+    return _buildSectionCard(
+      colors: colors,
+      textTheme: textTheme,
+      title: 'Venue Location',
+      children: [
+        Row(
+          children: [
+            Icon(Icons.location_on_outlined, color: colors.primary, size: 20),
+            SizedBox(width: 8.w),
+            Expanded(
+              child: Text(
+                _booking.turfLocation.isNotEmpty
+                    ? _booking.turfLocation
+                    : 'Location details available at venue',
+                style: textTheme.bodyMedium?.copyWith(color: colors.textTitle),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48.h,
-                      child: ElevatedButton(
-                        onPressed: _isRebooking ? null : _handleRebook,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colors.primary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: _isRebooking
-                            ? const CircularProgressIndicator(color: Colors.white)
-                            : Text(
-                                'Rebook Turf',
-                                style: textTheme.titleMedium?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                      ),
-                    ),
-                    SizedBox(height: 24.h),
-                  ],
+  Widget _buildPaymentCard(AppColors colors, TextTheme textTheme) {
+    return _buildSectionCard(
+      colors: colors,
+      textTheme: textTheme,
+      title: 'Payment Summary',
+      children: [
+        _buildDetailRow('Slot Price', '₹${_booking.totalPrice.toStringAsFixed(2)}', textTheme, colors),
+        _buildDetailRow('Taxes & Charges', '₹0.00', textTheme, colors),
+        const Divider(),
+        _buildDetailRow(
+          'Total Paid',
+          '₹${_booking.totalPrice.toStringAsFixed(2)}',
+          textTheme,
+          colors,
+          isBold: true,
+          valueColor: colors.primary,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRateCard(AppColors colors, TextTheme textTheme) {
+    return _buildSectionCard(
+      colors: colors,
+      textTheme: textTheme,
+      title: 'Rate Your Experience',
+      children: [
+        Text(
+          'How was your session at ${_booking.turfName}? Your rating and review help fellow players.',
+          style: textTheme.bodySmall?.copyWith(color: colors.textGrey),
+        ),
+        SizedBox(height: 12.h),
+        SizedBox(
+          width: double.infinity,
+          height: 44.h,
+          child: OutlinedButton.icon(
+            onPressed: () {
+              RateTurfBottomSheet.show(
+                context: context,
+                turfId: _booking.turfId,
+                turfName: _booking.turfName,
+                bookingId: _booking.id,
+              );
+            },
+            icon: const Icon(Icons.star_rounded, color: Color(0xFFFFB800), size: 22),
+            label: Text(
+              'Rate & Review Turf',
+              style: textTheme.titleSmall?.copyWith(
+                color: colors.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: colors.primary.withOpacity(0.5)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCancellationCard(AppColors colors, TextTheme textTheme) {
+    return _buildSectionCard(
+      colors: colors,
+      textTheme: textTheme,
+      title: 'Cancellation Summary',
+      children: [
+        if (_booking.cancellationReason != null && _booking.cancellationReason!.isNotEmpty)
+          _buildDetailRow('Reason', _booking.cancellationReason!, textTheme, colors),
+        _buildDetailRow(
+          'Refund Status',
+          _booking.refundAmount > 0
+              ? '₹${_booking.refundAmount.toStringAsFixed(2)} Refunded via Razorpay'
+              : 'Non-refundable',
+          textTheme,
+          colors,
+          valueColor: _booking.refundAmount > 0 ? Colors.green.shade700 : colors.textGrey,
+          isBold: true,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons(AppColors colors, TextTheme textTheme) {
+    return Column(
+      children: [
+        if (!_booking.isPast && _booking.status.toLowerCase() != 'cancelled') ...[
+          SizedBox(
+            width: double.infinity,
+            height: 48.h,
+            child: OutlinedButton(
+              onPressed: _handleCancelBooking,
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                'Cancel Booking',
+                style: textTheme.titleMedium?.copyWith(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
+          ),
+          SizedBox(height: 12.h),
+        ],
+        SizedBox(
+          width: double.infinity,
+          height: 48.h,
+          child: ElevatedButton(
+            onPressed: _isRebooking ? null : _handleRebook,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colors.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: _isRebooking
+                ? const CircularProgressIndicator(color: Colors.white)
+                : Text(
+                    'Rebook Turf',
+                    style: textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+          ),
+        ),
+      ],
     );
   }
 

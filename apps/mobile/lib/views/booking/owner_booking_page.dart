@@ -227,6 +227,38 @@ class _BookingList extends StatelessWidget {
 
     final hasMore = vm.bookingsHasMore.value;
     final isFetchingMore = vm.isFetchingMore.value;
+    final isTablet = context.isTablet;
+    final columns = context.bookingGridColumns;
+    final horizontalPad = isTablet ? 20.w : 16.w;
+
+    if (columns > 1) {
+      return GridView.builder(
+        controller: scrollController,
+        padding: EdgeInsets.symmetric(horizontal: horizontalPad, vertical: 16.h),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: columns,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 14,
+          mainAxisExtent: 215,
+        ),
+        itemCount: bookings.length + (hasMore ? 1 : 0),
+        itemBuilder: (context, i) {
+          if (i == bookings.length) {
+            return Center(
+              child: isFetchingMore
+                  ? CircularProgressIndicator(color: colors.primary, strokeWidth: 2)
+                  : Text('Scroll for more', style: TextStyle(color: colors.textGrey, fontSize: 12.sp)),
+            );
+          }
+          return _BookingCard(
+            booking: bookings[i],
+            colors: colors,
+            textTheme: textTheme,
+            vm: vm,
+          );
+        },
+      );
+    }
 
     return ListView.separated(
       controller: scrollController,

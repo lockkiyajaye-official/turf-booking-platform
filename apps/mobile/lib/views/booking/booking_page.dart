@@ -59,7 +59,12 @@ class _BookingPageState extends State<BookingPage>
           preferredSize: Size.fromHeight(52.h),
           child: Padding(
             padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
-            child: _CustomTabBar(controller: _tabController),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 440),
+                child: _CustomTabBar(controller: _tabController),
+              ),
+            ),
           ),
         ),
       ),
@@ -209,15 +214,38 @@ class _BookingList extends StatelessWidget {
       );
     }
 
+    final isTablet = context.isTablet;
+    final columns = context.bookingGridColumns;
+    final horizontalPad = isTablet ? 20.w : 16.w;
+
     return RefreshIndicator(
       onRefresh: onRefresh,
-      child: ListView.separated(
-        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
-        itemCount: bookings.length,
-        separatorBuilder: (_, __) => SizedBox(height: 12.h),
-        itemBuilder: (context, index) =>
-            _BookingCard(booking: bookings[index], isActive: isActive, vm: vm),
-      ),
+      child: columns > 1
+          ? GridView.builder(
+              padding: EdgeInsets.fromLTRB(horizontalPad, 16.h, horizontalPad, 24.h),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: columns,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 14,
+                mainAxisExtent: 156,
+              ),
+              itemCount: bookings.length,
+              itemBuilder: (context, index) => _BookingCard(
+                booking: bookings[index],
+                isActive: isActive,
+                vm: vm,
+              ),
+            )
+          : ListView.separated(
+              padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
+              itemCount: bookings.length,
+              separatorBuilder: (_, __) => SizedBox(height: 12.h),
+              itemBuilder: (context, index) => _BookingCard(
+                booking: bookings[index],
+                isActive: isActive,
+                vm: vm,
+              ),
+            ),
     );
   }
 }
@@ -266,8 +294,8 @@ class _BookingCard extends StatelessWidget {
                     topLeft: Radius.circular(16),
                   ),
                   child: SizedBox(
-                    width: 100.w,
-                    height: 90.h,
+                    width: 100.w.clamp(90.0, 130.0),
+                    height: 90.h.clamp(80.0, 110.0),
                     child: data.turfImage != null
                         ? Image.network(
                             data.turfImage!,

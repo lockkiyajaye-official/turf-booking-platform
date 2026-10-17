@@ -76,10 +76,13 @@ class _SignUpState extends State<SignUp> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: SingleChildScrollView(
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
-          child: Column(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+              child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(height: 12.h),
@@ -391,6 +394,8 @@ class _SignUpState extends State<SignUp> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  ),
+);
+}
 }

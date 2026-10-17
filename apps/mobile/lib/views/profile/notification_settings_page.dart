@@ -64,72 +64,77 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
           ),
         ),
       ),
-      body: ListView(
-        padding: EdgeInsets.all(16.w),
-        children: [
-          Material(
-            color: colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: const BorderSide(color: Color(0xFFE8E8E8)),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              children: [
-                SwitchListTile(
-                  activeColor: colors.primary,
-                  title: Text(
-                    'Booking Confirmations',
-                    style: textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colors.textTitle,
-                    ),
-                  ),
-                  subtitle: Text(
-                    'Receive email notifications when your bookings are confirmed',
-                    style: textTheme.bodySmall?.copyWith(color: colors.textGrey),
-                  ),
-                  value: _emailBookings,
-                  onChanged: (val) => _updateSetting('emailBookings', val),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: ListView(
+            padding: EdgeInsets.all(16.w),
+            children: [
+              Material(
+                color: colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: const BorderSide(color: Color(0xFFE8E8E8)),
                 ),
-                const Divider(height: 1),
-                SwitchListTile(
-                  activeColor: colors.primary,
-                  title: Text(
-                    'Payment Receipts',
-                    style: textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colors.textTitle,
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  children: [
+                    SwitchListTile(
+                      activeColor: colors.primary,
+                      title: Text(
+                        'Booking Confirmations',
+                        style: textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colors.textTitle,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Receive email notifications when your bookings are confirmed',
+                        style: textTheme.bodySmall?.copyWith(color: colors.textGrey),
+                      ),
+                      value: _emailBookings,
+                      onChanged: (val) => _updateSetting('emailBookings', val),
                     ),
-                  ),
-                  subtitle: Text(
-                    'Receive email receipts for completed transactions',
-                    style: textTheme.bodySmall?.copyWith(color: colors.textGrey),
-                  ),
-                  value: _emailPayments,
-                  onChanged: (val) => _updateSetting('emailPayments', val),
-                ),
-                const Divider(height: 1),
-                SwitchListTile(
-                  activeColor: colors.primary,
-                  title: Text(
-                    'Promotions & Updates',
-                    style: textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colors.textTitle,
+                    const Divider(height: 1),
+                    SwitchListTile(
+                      activeColor: colors.primary,
+                      title: Text(
+                        'Payment Receipts',
+                        style: textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colors.textTitle,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Receive email receipts for completed transactions',
+                        style: textTheme.bodySmall?.copyWith(color: colors.textGrey),
+                      ),
+                      value: _emailPayments,
+                      onChanged: (val) => _updateSetting('emailPayments', val),
                     ),
-                  ),
-                  subtitle: Text(
-                    'Receive promotional offers and turf availability announcements',
-                    style: textTheme.bodySmall?.copyWith(color: colors.textGrey),
-                  ),
-                  value: _emailPromos,
-                  onChanged: (val) => _updateSetting('emailPromos', val),
+                    const Divider(height: 1),
+                    SwitchListTile(
+                      activeColor: colors.primary,
+                      title: Text(
+                        'Promotions & Updates',
+                        style: textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colors.textTitle,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Receive promotional offers and turf availability announcements',
+                        style: textTheme.bodySmall?.copyWith(color: colors.textGrey),
+                      ),
+                      value: _emailPromos,
+                      onChanged: (val) => _updateSetting('emailPromos', val),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

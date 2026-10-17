@@ -100,10 +100,13 @@ class _BookingConfirmationPageState extends State<BookingConfirmationPage>
           centerTitle: true,
         ),
         body: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-            child: Column(
-              children: [
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+                child: Column(
+                  children: [
                 Expanded(
                   child: SingleChildScrollView(
                     child: Column(
@@ -283,8 +286,10 @@ class _BookingConfirmationPageState extends State<BookingConfirmationPage>
           ),
         ),
       ),
-    );
-  }
+    ),
+  ),
+);
+}
 
   Widget _buildInfoRow(
     String label,

@@ -82,15 +82,18 @@ class _SupportTicketDetailPageState extends State<SupportTicketDetailPage> {
           ),
         ),
       ),
-      body: RefreshIndicator(
-        onRefresh: _refreshTicket,
-        color: colors.primary,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.all(16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: RefreshIndicator(
+            onRefresh: _refreshTicket,
+            color: colors.primary,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.all(16.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
               // ── TICKET OVERVIEW HEADER ─────────────────────────
               Container(
                 width: double.infinity,
@@ -428,6 +431,8 @@ class _SupportTicketDetailPageState extends State<SupportTicketDetailPage> {
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }
