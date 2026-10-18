@@ -66,99 +66,104 @@ class _OwnerFinancesPageState extends State<OwnerFinancesPage> {
               }
             }
 
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 20.w,
-                right: 20.w,
-                top: 20.h,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 20.h,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40.w,
-                      height: 4.h,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(2),
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 500),
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    left: 20.w,
+                    right: 20.w,
+                    top: 20.h,
+                    bottom: MediaQuery.of(context).viewInsets.bottom + 20.h,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40.w,
+                          height: 4.h,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
+                      SizedBox(height: 16.h),
 
-                  Text(
-                    'Request Payout',
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colors.textTitle,
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    'Available Balance: ₹${available.toStringAsFixed(2)}',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colors.textGrey,
-                    ),
-                  ),
-
-                  SizedBox(height: 20.h),
-
-                  Text(
-                    'Enter Amount (₹)',
-                    style: textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colors.textTitle,
-                    ),
-                  ),
-                  SizedBox(height: 8.h),
-                  MyTextField(
-                    controller: amountController,
-                    height: 50.h,
-                    type: TextInputType.number,
-                    fillColor: colors.background,
-                    hintText: 'e.g. 1000',
-                    prefixIcon: Icon(Icons.currency_rupee_rounded, color: colors.textGrey),
-                  ),
-
-                  SizedBox(height: 12.h),
-
-                  // Quick Amount Chips
-                  Wrap(
-                    spacing: 8.w,
-                    children: [500, 1000, 2000, available.toInt()].map((val) {
-                      if (val <= 0) return const SizedBox.shrink();
-                      return ChoiceChip(
-                        label: Text(val == available.toInt() ? 'Max (₹$val)' : '₹$val'),
-                        selected: false,
-                        onSelected: (_) {
-                          amountController.text = val.toString();
-                        },
-                        backgroundColor: colors.background,
-                        labelStyle: textTheme.bodySmall?.copyWith(
+                      Text(
+                        'Request Payout',
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
                           color: colors.textTitle,
+                        ),
+                      ),
+                      SizedBox(height: 4.h),
+                      Text(
+                        'Available Balance: ₹${available.toStringAsFixed(2)}',
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colors.textGrey,
+                        ),
+                      ),
+
+                      SizedBox(height: 20.h),
+
+                      Text(
+                        'Enter Amount (₹)',
+                        style: textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colors.textTitle,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      MyTextField(
+                        controller: amountController,
+                        height: 50.h,
+                        type: TextInputType.number,
+                        fillColor: colors.background,
+                        hintText: 'e.g. 1000',
+                        prefixIcon: Icon(Icons.currency_rupee_rounded, color: colors.textGrey),
+                      ),
+
+                      SizedBox(height: 12.h),
+
+                      // Quick Amount Chips
+                      Wrap(
+                        spacing: 8.w,
+                        children: [500, 1000, 2000, available.toInt()].map((val) {
+                          if (val <= 0) return const SizedBox.shrink();
+                          return ChoiceChip(
+                            label: Text(val == available.toInt() ? 'Max (₹$val)' : '₹$val'),
+                            selected: false,
+                            onSelected: (_) {
+                              amountController.text = val.toString();
+                            },
+                            backgroundColor: colors.background,
+                            labelStyle: textTheme.bodySmall?.copyWith(
+                              color: colors.textTitle,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          );
+                        }).toList(),
+                      ),
+
+                      SizedBox(height: 24.h),
+
+                      MyButtons(
+                        text: isLoading ? 'Submitting...' : 'Submit Request',
+                        height: 50.h,
+                        width: double.infinity,
+                        onTap: isLoading ? null : submitPayout,
+                        textStyle: textTheme.bodyMedium?.copyWith(
+                          color: Colors.white,
                           fontWeight: FontWeight.w600,
                         ),
-                      );
-                    }).toList(),
+                        backgroundColor: const Color(0xFFE43434),
+                      ),
+                    ],
                   ),
-
-                  SizedBox(height: 24.h),
-
-                  MyButtons(
-                    text: isLoading ? 'Submitting...' : 'Submit Request',
-                    height: 50.h,
-                    width: double.infinity,
-                    onTap: isLoading ? null : submitPayout,
-                    textStyle: textTheme.bodyMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    backgroundColor: const Color(0xFFE43434),
-                  ),
-                ],
+                ),
               ),
             );
           },
@@ -195,112 +200,60 @@ class _OwnerFinancesPageState extends State<OwnerFinancesPage> {
         final wallet = _vm.walletBalance.value;
         final history = _vm.payoutHistory;
 
+        if (context.isTablet) {
+          return RefreshIndicator(
+            color: colors.primary,
+            onRefresh: () => _vm.fetchFinancesSummary(),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(24.w),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 380,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildWalletCard(context, colors, wallet, textTheme),
+                        SizedBox(height: 16.h),
+                        _buildPayoutInfoCard(colors, textTheme),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 24.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Payout History',
+                          style: textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colors.textTitle,
+                          ),
+                        ),
+                        SizedBox(height: 12.h),
+                        if (history.isEmpty)
+                          _buildEmptyHistory(colors, textTheme)
+                        else
+                          _buildHistoryList(history, colors, textTheme),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
         return RefreshIndicator(
           color: colors.primary,
           onRefresh: () => _vm.fetchFinancesSummary(),
           child: ListView(
             padding: EdgeInsets.all(20.w),
             children: [
-              // ── HERO WALLET CARD ──────────────────────────────
-              Container(
-                padding: EdgeInsets.all(20.w),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'AVAILABLE BALANCE',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
-                            fontSize: 11.sp,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.account_balance_wallet_outlined,
-                                  color: Colors.white, size: 14.sp),
-                              SizedBox(width: 4.w),
-                              Text(
-                                'Wallet',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11.sp,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 12.h),
-
-                    Text(
-                      '₹${wallet.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 32.sp,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-
-                    SizedBox(height: 20.h),
-
-                    SizedBox(
-                      width: double.infinity,
-                      height: 46.h,
-                      child: ElevatedButton.icon(
-                        onPressed: wallet > 0
-                            ? () => _showRequestPayoutBottomSheet(context, colors, textTheme)
-                            : null,
-                        icon: const Icon(Icons.arrow_upward_rounded, size: 18),
-                        label: const Text('Request Payout'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE43434),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          textStyle: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
+              _buildWalletCard(context, colors, wallet, textTheme),
               SizedBox(height: 24.h),
-
-              // ── PAYOUT HISTORY HEADER ────────────────────────
               Text(
                 'Payout History',
                 style: textTheme.titleMedium?.copyWith(
@@ -309,149 +262,309 @@ class _OwnerFinancesPageState extends State<OwnerFinancesPage> {
                 ),
               ),
               SizedBox(height: 12.h),
-
               if (history.isEmpty)
-                Container(
-                  padding: EdgeInsets.all(32.w),
-                  decoration: BoxDecoration(
-                    color: colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE8E8E8)),
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(Icons.history_rounded, size: 44.sp, color: colors.textGrey),
-                      SizedBox(height: 8.h),
-                      Text(
-                        'No payout requests yet',
-                        style: textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: colors.textGrey,
-                        ),
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        'Your withdrawal requests will appear here',
-                        style: textTheme.bodySmall?.copyWith(color: colors.textGrey),
-                      ),
-                    ],
-                  ),
-                )
+                _buildEmptyHistory(colors, textTheme)
               else
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: history.length,
-                  separatorBuilder: (_, __) => SizedBox(height: 10.h),
-                  itemBuilder: (context, index) {
-                    final item = history[index];
-                    final amount = item['amount'] ?? 0;
-                    final status = (item['status'] as String? ?? 'pending').toLowerCase();
-                    final createdAt = item['createdAt'] as String? ?? '';
-
-                    Color statusColor;
-                    String statusLabel;
-
-                    if (status == 'approved' || status == 'completed') {
-                      statusColor = Colors.green;
-                      statusLabel = 'Approved';
-                    } else if (status == 'rejected') {
-                      statusColor = Colors.red;
-                      statusLabel = 'Rejected';
-                    } else {
-                      statusColor = Colors.orange;
-                      statusLabel = 'Pending';
-                    }
-
-                    return Container(
-                      padding: EdgeInsets.all(16.w),
-                      decoration: BoxDecoration(
-                        color: colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFE8E8E8)),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 40.w,
-                                height: 40.w,
-                                decoration: BoxDecoration(
-                                  color: statusColor.withOpacity(0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  status == 'approved'
-                                      ? Icons.check_circle_outline_rounded
-                                      : status == 'rejected'
-                                          ? Icons.highlight_off_rounded
-                                          : Icons.schedule_rounded,
-                                  color: statusColor,
-                                  size: 20.sp,
-                                ),
-                              ),
-                              SizedBox(width: 12.w),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Payout Request',
-                                    style: textTheme.bodyMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: colors.textTitle,
-                                    ),
-                                  ),
-                                  if (createdAt.isNotEmpty)
-                                    Text(
-                                      createdAt.split('T').first,
-                                      style: textTheme.bodySmall?.copyWith(
-                                        color: colors.textGrey,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                '₹$amount',
-                                style: textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  color: colors.textTitle,
-                                ),
-                              ),
-                              SizedBox(height: 2.h),
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 8.w, vertical: 2.h),
-                                decoration: BoxDecoration(
-                                  color: statusColor.withOpacity(0.12),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  statusLabel,
-                                  style: TextStyle(
-                                    color: statusColor,
-                                    fontSize: 10.sp,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                _buildHistoryList(history, colors, textTheme),
             ],
           ),
         );
       }),
+    );
+  }
+
+  Widget _buildWalletCard(BuildContext context, AppColors colors, double wallet, TextTheme textTheme) {
+    return Container(
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'AVAILABLE BALANCE',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.7),
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.account_balance_wallet_outlined,
+                        color: Colors.white, size: 14.sp),
+                    SizedBox(width: 4.w),
+                    Text(
+                      'Wallet',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+
+          Text(
+            '₹${wallet.toStringAsFixed(2)}',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 32.sp,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+
+          SizedBox(height: 20.h),
+
+          SizedBox(
+            width: double.infinity,
+            height: 46.h,
+            child: ElevatedButton.icon(
+              onPressed: wallet > 0
+                  ? () => _showRequestPayoutBottomSheet(context, colors, textTheme)
+                  : null,
+              icon: const Icon(Icons.arrow_upward_rounded, size: 18),
+              label: const Text('Request Payout'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE43434),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                textStyle: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPayoutInfoCard(AppColors colors, TextTheme textTheme) {
+    return Container(
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        color: colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE8E8E8)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.info_outline_rounded, color: const Color(0xFFE43434), size: 20.sp),
+              SizedBox(width: 8.w),
+              Text(
+                'Payout Information',
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colors.textTitle,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 14.h),
+          _buildInfoRow(Icons.bolt_rounded, 'Processing Time', 'Settled within 24-48 business hours', colors, textTheme),
+          SizedBox(height: 12.h),
+          _buildInfoRow(Icons.savings_outlined, 'Minimum Payout', '₹500 threshold for payout requests', colors, textTheme),
+          SizedBox(height: 12.h),
+          _buildInfoRow(Icons.account_balance_outlined, 'Direct Transfer', 'Transferred to registered bank account', colors, textTheme),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String title, String subtitle, AppColors colors, TextTheme textTheme) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: colors.textGrey, size: 16.sp),
+        SizedBox(width: 10.w),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold, color: colors.textTitle)),
+              SizedBox(height: 2.h),
+              Text(subtitle, style: textTheme.bodySmall?.copyWith(color: colors.textGrey, fontSize: 11.sp)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyHistory(AppColors colors, TextTheme textTheme) {
+    return Container(
+      padding: EdgeInsets.all(32.w),
+      decoration: BoxDecoration(
+        color: colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE8E8E8)),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.history_rounded, size: 44.sp, color: colors.textGrey),
+          SizedBox(height: 8.h),
+          Text(
+            'No payout requests yet',
+            style: textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: colors.textGrey,
+            ),
+          ),
+          SizedBox(height: 4.h),
+          Text(
+            'Your withdrawal requests will appear here',
+            style: textTheme.bodySmall?.copyWith(color: colors.textGrey),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHistoryList(List history, AppColors colors, TextTheme textTheme) {
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: history.length,
+      separatorBuilder: (_, __) => SizedBox(height: 10.h),
+      itemBuilder: (context, index) {
+        final item = history[index];
+        final amount = item['amount'] ?? 0;
+        final status = (item['status'] as String? ?? 'pending').toLowerCase();
+        final createdAt = item['createdAt'] as String? ?? '';
+
+        Color statusColor;
+        String statusLabel;
+
+        if (status == 'approved' || status == 'completed') {
+          statusColor = Colors.green;
+          statusLabel = 'Approved';
+        } else if (status == 'rejected') {
+          statusColor = Colors.red;
+          statusLabel = 'Rejected';
+        } else {
+          statusColor = Colors.orange;
+          statusLabel = 'Pending';
+        }
+
+        return Container(
+          padding: EdgeInsets.all(16.w),
+          decoration: BoxDecoration(
+            color: colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE8E8E8)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 40.w,
+                    height: 40.w,
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      status == 'approved'
+                          ? Icons.check_circle_outline_rounded
+                          : status == 'rejected'
+                              ? Icons.highlight_off_rounded
+                              : Icons.schedule_rounded,
+                      color: statusColor,
+                      size: 20.sp,
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Payout Request',
+                        style: textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colors.textTitle,
+                        ),
+                      ),
+                      if (createdAt.isNotEmpty)
+                        Text(
+                          createdAt.split('T').first,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colors.textGrey,
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '₹$amount',
+                    style: textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: colors.textTitle,
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 8.w, vertical: 2.h),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      statusLabel,
+                      style: TextStyle(
+                        color: statusColor,
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

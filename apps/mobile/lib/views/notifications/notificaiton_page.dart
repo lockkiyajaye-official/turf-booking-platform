@@ -181,15 +181,12 @@ class _NotificationPageState extends State<NotificationPage> {
                     ],
                   ),
                 )
-              : RefreshIndicator(
-                  onRefresh: _fetchNotifications,
-                  color: _red,
-                  child: ListView.separated(
-                    padding: EdgeInsets.all(16.w),
-                    itemCount: _notifications.length,
-                    separatorBuilder: (_, __) => SizedBox(height: 10.h),
-                    itemBuilder: (context, index) {
-                      final item = _notifications[index];
+              : Builder(
+                  builder: (context) {
+                    final isTablet = context.isTablet;
+                    final horizontalPad = isTablet ? 20.w : 16.w;
+
+                    Widget buildItem(NotificationPageItem item) {
                       return GestureDetector(
                         onTap: () {
                           if (!item.isRead) {
@@ -202,7 +199,9 @@ class _NotificationPageState extends State<NotificationPage> {
                             color: item.isRead ? Colors.white : const Color(0xFFFFF8F8),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: item.isRead ? const Color(0xFFEEEEEE) : _red.withOpacity(0.3),
+                              color: item.isRead
+                                  ? const Color(0xFFEEEEEE)
+                                  : _red.withOpacity(0.3),
                             ),
                           ),
                           child: Row(
@@ -250,8 +249,36 @@ class _NotificationPageState extends State<NotificationPage> {
                           ),
                         ),
                       );
-                    },
-                  ),
+                    }
+
+                    return RefreshIndicator(
+                      onRefresh: _fetchNotifications,
+                      color: _red,
+                      child: isTablet
+                          ? GridView.builder(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: horizontalPad,
+                                vertical: 16.h,
+                              ),
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 14,
+                                mainAxisSpacing: 12,
+                                mainAxisExtent: 105,
+                              ),
+                              itemCount: _notifications.length,
+                              itemBuilder: (context, index) =>
+                                  buildItem(_notifications[index]),
+                            )
+                          : ListView.separated(
+                              padding: EdgeInsets.all(16.w),
+                              itemCount: _notifications.length,
+                              separatorBuilder: (_, __) => SizedBox(height: 10.h),
+                              itemBuilder: (context, index) =>
+                                  buildItem(_notifications[index]),
+                            ),
+                    );
+                  },
                 ),
     );
   }

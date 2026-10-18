@@ -46,20 +46,44 @@ class MyTurfsPage extends StatelessWidget {
         if (vm.myTurfs.isEmpty) {
           return _EmptyTurfs(colors: colors, textTheme: textTheme);
         }
+        final isTablet = context.isTablet;
+        final columns = context.turfGridColumns;
+        final horizontalPad = isTablet ? 20.w : 16.w;
+
         return RefreshIndicator(
           color: colors.primary,
           onRefresh: () => vm.fetchMyTurfs(),
-          child: ListView.separated(
-            padding: EdgeInsets.all(16.w),
-            itemCount: vm.myTurfs.length,
-            separatorBuilder: (_, __) => SizedBox(height: 12.h),
-            itemBuilder: (context, i) => _OwnerTurfCard(
-              turf: vm.myTurfs[i],
-              colors: colors,
-              textTheme: textTheme,
-              vm: vm,
-            ),
-          ),
+          child: columns > 1
+              ? GridView.builder(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: horizontalPad,
+                    vertical: 16.h,
+                  ),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    mainAxisExtent: 295,
+                  ),
+                  itemCount: vm.myTurfs.length,
+                  itemBuilder: (context, i) => _OwnerTurfCard(
+                    turf: vm.myTurfs[i],
+                    colors: colors,
+                    textTheme: textTheme,
+                    vm: vm,
+                  ),
+                )
+              : ListView.separated(
+                  padding: EdgeInsets.all(16.w),
+                  itemCount: vm.myTurfs.length,
+                  separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                  itemBuilder: (context, i) => _OwnerTurfCard(
+                    turf: vm.myTurfs[i],
+                    colors: colors,
+                    textTheme: textTheme,
+                    vm: vm,
+                  ),
+                ),
         );
       }),
       floatingActionButton: FloatingActionButton.extended(

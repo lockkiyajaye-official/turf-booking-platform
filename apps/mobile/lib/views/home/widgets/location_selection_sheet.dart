@@ -51,13 +51,16 @@ class _LocationSelectionSheetState extends State<LocationSelectionSheet> {
       return loc.toLowerCase().contains(_filterText.toLowerCase());
     }).toList();
 
-    return Material(
-      color: colors.white,
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      clipBehavior: Clip.antiAlias,
-      child: SizedBox(
-        height: MediaQuery.of(context).size.height * 0.7,
-        child: Column(
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: Material(
+          color: colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          clipBehavior: Clip.antiAlias,
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height * 0.7,
+            child: Column(
         children: [
           SizedBox(height: 12.h),
           // Drag handle
@@ -271,6 +274,8 @@ class _LocationSelectionSheetState extends State<LocationSelectionSheet> {
         ],
       ),
     ),
-    );
+  ),
+),
+);
   }
 }

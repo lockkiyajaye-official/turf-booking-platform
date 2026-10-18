@@ -8,12 +8,14 @@ class VenueCard extends StatelessWidget {
   final TurfModel turf;
   final VoidCallback? onBookNow;
   final double? distanceKm;
+  final EdgeInsetsGeometry? margin;
 
   const VenueCard({
     super.key,
     required this.turf,
     this.onBookNow,
     this.distanceKm,
+    this.margin,
   });
 
   @override
@@ -25,7 +27,7 @@ class VenueCard extends StatelessWidget {
     return GestureDetector(
       onTap: () => Get.to(() => TurfDetailsPage(turf: turf)),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        margin: margin ?? const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),

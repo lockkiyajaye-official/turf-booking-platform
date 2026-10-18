@@ -120,12 +120,15 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
           onPressed: () => Get.back(),
         ),
       ),
-      body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 24.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            SizedBox(height: 40.h),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(height: 20.h),
 
             Text(
               'Verify Your OTP',
@@ -151,8 +154,8 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: List.generate(6, (index) {
                 return SizedBox(
-                  width: 44.w,
-                  height: 54.h,
+                  width: context.isTablet ? 54.0 : 44.w,
+                  height: context.isTablet ? 60.0 : 54.h,
                   child: KeyboardListener(
                     focusNode: FocusNode(),
                     onKeyEvent: (event) {
@@ -273,6 +276,8 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  ),
+);
+}
 }

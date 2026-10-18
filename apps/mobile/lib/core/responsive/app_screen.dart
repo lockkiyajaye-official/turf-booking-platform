@@ -19,31 +19,41 @@ class AppScreen {
 
     final width = size.width;
     final height = size.height;
+    final isLandscape = width > height;
+    final shortestSide = size.shortestSide;
 
-    /// Detect device type (same logic you already have)
-    if (width < 600) {
+    /// Detect device type accurately based on shortest side and orientation
+    if (shortestSide < 600) {
       device = DeviceType.mobile;
-      designWidth = 375;
-      designHeight = 812;
-    } else if (width < 840) {
-      device = DeviceType.tabletPortrait;
-      designWidth = 768;
-      designHeight = 1024;
-    } else if (width < 1200) {
-      device = DeviceType.tabletLandscape;
-      designWidth = 1024;
-      designHeight = 768;
+      designWidth = isLandscape ? 812 : 375;
+      designHeight = isLandscape ? 375 : 812;
+    } else if (shortestSide < 1000) {
+      if (isLandscape) {
+        device = DeviceType.tabletLandscape;
+        designWidth = 1024;
+        designHeight = 768;
+      } else {
+        device = DeviceType.tabletPortrait;
+        designWidth = 768;
+        designHeight = 1024;
+      }
     } else {
-      device = DeviceType.desktop;
-      designWidth = 1440;
-      designHeight = 1024;
+      if (isLandscape) {
+        device = DeviceType.tabletLandscape;
+        designWidth = 1366;
+        designHeight = 1024;
+      } else {
+        device = DeviceType.tabletPortrait;
+        designWidth = 1024;
+        designHeight = 1366;
+      }
     }
 
-    /// Layout scaling (Display Size is auto handled by Flutter)
+    /// Layout scaling
     scaleW = width / designWidth;
     scaleH = height / designHeight;
 
-    /// NEW: Font size scaling
+    /// Font size scaling
     scaleText = media.textScaler.scale(1.0).clamp(0.9, 1.3);
   }
 
@@ -52,4 +62,8 @@ class AppScreen {
   static bool get isTabletPortrait => device == DeviceType.tabletPortrait;
   static bool get isTabletLandscape => device == DeviceType.tabletLandscape;
   static bool get isDesktop => device == DeviceType.desktop;
+  static bool get isTablet =>
+      device == DeviceType.tabletPortrait ||
+      device == DeviceType.tabletLandscape ||
+      device == DeviceType.desktop;
 }

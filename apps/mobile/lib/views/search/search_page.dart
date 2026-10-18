@@ -412,15 +412,50 @@ class _SearchResultsViewState extends State<_SearchResultsView> {
                     ],
                   ),
                 )
-              : ListView.separated(
-                  padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 32.h),
-                  itemCount: _sortedTurfs.length,
-                  separatorBuilder: (_, __) => SizedBox(height: 12.h),
-                  itemBuilder: (_, i) => _ResultCard(
-                    turf: _sortedTurfs[i],
-                    textTheme: textTheme,
-                    colors: colors,
-                  ),
+              : Builder(
+                  builder: (context) {
+                    final isTablet = context.isTablet;
+                    final columns = context.turfGridColumns;
+                    final horizontalPad = isTablet ? 20.w : 16.w;
+
+                    return columns > 1
+                        ? GridView.builder(
+                            padding: EdgeInsets.fromLTRB(
+                              horizontalPad,
+                              12.h,
+                              horizontalPad,
+                              32.h,
+                            ),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: columns,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 14,
+                              mainAxisExtent: 130,
+                            ),
+                            itemCount: _sortedTurfs.length,
+                            itemBuilder: (_, i) => _ResultCard(
+                              turf: _sortedTurfs[i],
+                              textTheme: textTheme,
+                              colors: colors,
+                            ),
+                          )
+                        : ListView.separated(
+                            padding: EdgeInsets.fromLTRB(
+                              16.w,
+                              12.h,
+                              16.w,
+                              32.h,
+                            ),
+                            itemCount: _sortedTurfs.length,
+                            separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                            itemBuilder: (_, i) => _ResultCard(
+                              turf: _sortedTurfs[i],
+                              textTheme: textTheme,
+                              colors: colors,
+                            ),
+                          );
+                  },
                 ),
         ),
       ],
@@ -475,12 +510,12 @@ class _ResultCard extends StatelessWidget {
                   ),
                   child: Image.network(
                     imageUrl,
-                    width: 130.w,
-                    height: 120.h,
+                    width: 130.w.clamp(120.0, 160.0),
+                    height: 120.h.clamp(110.0, 140.0),
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
-                      width: 130.w,
-                      height: 120.h,
+                      width: 130.w.clamp(120.0, 160.0),
+                      height: 120.h.clamp(110.0, 140.0),
                       color: Colors.grey[200],
                       child: const Icon(
                         Icons.sports_soccer,

@@ -87,16 +87,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   void _showImagePickerModal(AppColors colors, TextTheme textTheme) {
     Get.bottomSheet(
-      Material(
-        color: colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        clipBehavior: Clip.antiAlias,
-        child: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-            child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+      Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: Material(
+            color: colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            clipBehavior: Clip.antiAlias,
+            child: SafeArea(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
               Container(
                 width: 40.w,
                 height: 4.h,
@@ -173,7 +176,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ),
       ),
     ),
-  );
+  ),
+),
+);
 }
 
   Future<void> _handleSave() async {
@@ -231,10 +236,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(20.w),
-        child: Column(
-          children: [
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(20.w),
+            child: Column(
+              children: [
             SizedBox(height: 12.h),
 
             // ── Avatar Upload Section ──────────────────────────────
@@ -437,7 +445,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildAvatarContent(AppColors colors) {

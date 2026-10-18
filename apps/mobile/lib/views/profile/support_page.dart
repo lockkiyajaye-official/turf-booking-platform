@@ -157,56 +157,62 @@ class _SupportPageState extends State<SupportPage>
                 bottom: BorderSide(color: Color(0xFFEEEEEE), width: 1),
               ),
             ),
-            child: TabBar(
-              controller: _tabController,
-              indicatorColor: colors.primary,
-              indicatorWeight: 3,
-              labelColor: colors.primary,
-              unselectedLabelColor: colors.textMuted,
-              labelStyle: textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-              unselectedLabelStyle: textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
-              tabs: [
-                const Tab(text: 'FAQs & Contact'),
-                Tab(
-                  child: Obx(() {
-                    final count = _supportVm.tickets.length;
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text('My Requests'),
-                        if (count > 0) ...[
-                          SizedBox(width: 6.w),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 6.w,
-                              vertical: 2.h,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _supportVm.resolvedCount > 0
-                                  ? const Color(0xFF16A34A)
-                                  : colors.primary,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              '$count',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
+            child: Align(
+              alignment: Alignment.center,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 500),
+                child: TabBar(
+                  controller: _tabController,
+                  indicatorColor: colors.primary,
+                  indicatorWeight: 3,
+                  labelColor: colors.primary,
+                  unselectedLabelColor: colors.textMuted,
+                  labelStyle: textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                  unselectedLabelStyle: textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                  tabs: [
+                    const Tab(text: 'FAQs & Contact'),
+                    Tab(
+                      child: Obx(() {
+                        final count = _supportVm.tickets.length;
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text('My Requests'),
+                            if (count > 0) ...[
+                              SizedBox(width: 6.w),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 6.w,
+                                  vertical: 2.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _supportVm.resolvedCount > 0
+                                      ? const Color(0xFF16A34A)
+                                      : colors.primary,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  '$count',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    );
-                  }),
+                            ],
+                          ],
+                        );
+                      }),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -225,11 +231,14 @@ class _SupportPageState extends State<SupportPage>
   }
 
   Widget _buildFaqsAndContactTab(AppColors colors, TextTheme textTheme) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16.w),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 800),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(16.w),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
           Text(
             'Frequently Asked Questions',
             style: textTheme.titleSmall?.copyWith(
@@ -351,7 +360,9 @@ class _SupportPageState extends State<SupportPage>
           SizedBox(height: 24.h),
         ],
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildMyRequestsTab(AppColors colors, TextTheme textTheme) {
@@ -366,75 +377,83 @@ class _SupportPageState extends State<SupportPage>
 
       if (_supportVm.tickets.isEmpty) {
         return Center(
-          child: Padding(
-            padding: EdgeInsets.all(32.w),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(20.w),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: colors.primary.withValues(alpha: 0.08),
-                  ),
-                  child: Icon(
-                    Icons.chat_bubble_outline_rounded,
-                    size: 48,
-                    color: colors.primary,
-                  ),
-                ),
-                SizedBox(height: 16.h),
-                Text(
-                  'No Support Requests Yet',
-                  style: textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: colors.textTitle,
-                    fontSize: 16.sp,
-                  ),
-                ),
-                SizedBox(height: 8.h),
-                Text(
-                  'Have a question or need assistance with a booking? Submit a request and our support team will respond here.',
-                  textAlign: TextAlign.center,
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colors.textMuted,
-                    height: 1.4,
-                  ),
-                ),
-                SizedBox(height: 20.h),
-                ElevatedButton.icon(
-                  onPressed: () => _tabController.animateTo(0),
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Submit a Request'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: Padding(
+              padding: EdgeInsets.all(32.w),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(20.w),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: colors.primary.withValues(alpha: 0.08),
                     ),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 20.w,
-                      vertical: 12.h,
+                    child: Icon(
+                      Icons.chat_bubble_outline_rounded,
+                      size: 48,
+                      color: colors.primary,
                     ),
                   ),
-                ),
-              ],
+                  SizedBox(height: 16.h),
+                  Text(
+                    'No Support Requests Yet',
+                    style: textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colors.textTitle,
+                      fontSize: 16.sp,
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    'Have a question or need assistance with a booking? Submit a request and our support team will respond here.',
+                    textAlign: TextAlign.center,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colors.textMuted,
+                      height: 1.4,
+                    ),
+                  ),
+                  SizedBox(height: 20.h),
+                  ElevatedButton.icon(
+                    onPressed: () => _tabController.animateTo(0),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Submit a Request'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 20.w,
+                        vertical: 12.h,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
       }
 
-      return RefreshIndicator(
-        onRefresh: _supportVm.fetchMyTickets,
-        color: colors.primary,
-        child: ListView.separated(
-          padding: EdgeInsets.all(16.w),
-          itemCount: _supportVm.tickets.length,
-          separatorBuilder: (context, index) => SizedBox(height: 12.h),
-          itemBuilder: (context, index) {
-            final ticket = _supportVm.tickets[index];
-            return _buildTicketCard(ticket, colors, textTheme);
-          },
+      return Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: RefreshIndicator(
+            onRefresh: _supportVm.fetchMyTickets,
+            color: colors.primary,
+            child: ListView.separated(
+              padding: EdgeInsets.all(16.w),
+              itemCount: _supportVm.tickets.length,
+              separatorBuilder: (context, index) => SizedBox(height: 12.h),
+              itemBuilder: (context, index) {
+                final ticket = _supportVm.tickets[index];
+                return _buildTicketCard(ticket, colors, textTheme);
+              },
+            ),
+          ),
         ),
       );
     });

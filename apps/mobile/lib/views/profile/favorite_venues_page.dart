@@ -84,23 +84,53 @@ class _FavoriteVenuesPageState extends State<FavoriteVenuesPage> {
           );
         }
 
+        final isTablet = context.isTablet;
+        final columns = context.turfGridColumns;
+        final horizontalPad = isTablet ? 20.w : 16.w;
+
         return RefreshIndicator(
           onRefresh: () => _favoriteVm.fetchFavorites(),
           color: colors.primary,
-          child: ListView.builder(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-            itemCount: _favoriteVm.favoriteTurfs.length,
-            itemBuilder: (context, index) {
-              final turf = _favoriteVm.favoriteTurfs[index];
-              return Padding(
-                padding: EdgeInsets.only(bottom: 12.h),
-                child: VenueCard(
-                  turf: turf,
-                  onBookNow: () => Get.to(() => TurfDetailsPage(turf: turf)),
+          child: columns > 1
+              ? GridView.builder(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: horizontalPad,
+                    vertical: 12.h,
+                  ),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    mainAxisExtent: 168,
+                  ),
+                  itemCount: _favoriteVm.favoriteTurfs.length,
+                  itemBuilder: (context, index) {
+                    final turf = _favoriteVm.favoriteTurfs[index];
+                    return VenueCard(
+                      turf: turf,
+                      margin: EdgeInsets.zero,
+                      onBookNow: () => Get.to(() => TurfDetailsPage(turf: turf)),
+                    );
+                  },
+                )
+              : ListView.builder(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
+                  ),
+                  itemCount: _favoriteVm.favoriteTurfs.length,
+                  itemBuilder: (context, index) {
+                    final turf = _favoriteVm.favoriteTurfs[index];
+                    return Padding(
+                      padding: EdgeInsets.only(bottom: 12.h),
+                      child: VenueCard(
+                        turf: turf,
+                        onBookNow: () =>
+                            Get.to(() => TurfDetailsPage(turf: turf)),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
         );
       }),
     );

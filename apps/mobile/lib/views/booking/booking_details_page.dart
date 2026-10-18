@@ -1047,16 +1047,18 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
       0xFF0DAA6C,
     ); // Matching screenshot green exactly
 
+    final isTablet = context.isTablet;
     final screenWidth = MediaQuery.of(context).size.width;
-    final availableWidth = screenWidth - 32.w;
+    final availableWidth = screenWidth - (isTablet ? 40.w : 32.w);
     const int visibleDaysCount = 7;
     final double dateSpacing = 6.w;
-    final double dateItemWidth =
-        (availableWidth - ((visibleDaysCount - 1) * dateSpacing)) /
-        visibleDaysCount;
+    final double dateItemWidth = isTablet
+        ? 64.0
+        : (availableWidth - ((visibleDaysCount - 1) * dateSpacing)) /
+            visibleDaysCount;
 
-    // Slots grid sizing (3 columns, justified edge-to-edge)
-    const int slotColumns = 3;
+    // Slots grid sizing (5 cols on large tablet, 4 on standard tablet, 3 on phone)
+    final int slotColumns = isTablet ? (screenWidth >= 1050 ? 5 : 4) : 3;
     final double slotSpacing = 8.w;
     final double slotRunSpacing = 10.h;
     final double slotItemWidth =
@@ -1118,7 +1120,7 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: SizedBox(
-                      height: 260.h,
+                      height: isTablet ? 360.h.clamp(320.0, 440.0) : 260.h,
                       child: PageView.builder(
                         itemCount: _imageUrls.length,
                         onPageChanged: (i) =>

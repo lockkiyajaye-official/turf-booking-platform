@@ -98,10 +98,13 @@ class _BookingCancelledPageState extends State<BookingCancelledPage>
           centerTitle: true,
         ),
         body: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-            child: Column(
-              children: [
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+                child: Column(
+                  children: [
                 Expanded(
                   child: SingleChildScrollView(
                     child: Column(
@@ -275,8 +278,10 @@ class _BookingCancelledPageState extends State<BookingCancelledPage>
           ),
         ),
       ),
-    );
-  }
+    ),
+  ),
+);
+}
 
   Widget _buildInfoRow(
     String label,

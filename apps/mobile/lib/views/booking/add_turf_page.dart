@@ -427,11 +427,14 @@ class _AddTurfPageState extends State<AddTurfPage> {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(20.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 860),
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(20.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             // ── Section 1: Photos ─────────────────────────────
             _SectionHeader(title: 'Photos', textTheme: textTheme),
             SizedBox(height: 4.h),
@@ -1138,7 +1141,9 @@ class _AddTurfPageState extends State<AddTurfPage> {
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildImageWidget(String path) {

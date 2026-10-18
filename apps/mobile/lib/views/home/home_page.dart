@@ -42,180 +42,209 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
+  Widget _buildLocationSelector(AppColors colors, TextTheme textTheme) {
+    return GestureDetector(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) => const LocationSelectionSheet(),
+        );
+      },
+      child: Container(
+        height: 46.h,
+        padding: EdgeInsets.symmetric(horizontal: 12.w),
+        decoration: BoxDecoration(
+          color: colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: const Color(0xFFE8E8E8),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.location_on_rounded,
+              color: colors.primary,
+              size: 20.sp,
+            ),
+            SizedBox(width: 8.w),
+            Expanded(
+              child: GetX<TurfViewmodel>(
+                builder: (vm) {
+                  final locName = vm.selectedLocationName.value;
+                  final isLocating = vm.isLocationLoading.value;
+                  return Text(
+                    isLocating
+                        ? 'Locating...'
+                        : (locName.isNotEmpty ? locName : 'Select Location'),
+                    style: textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  );
+                },
+              ),
+            ),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: colors.textGrey,
+              size: 20.sp,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(AppColors colors, TextTheme textTheme) {
+    return Container(
+      height: 46.h,
+      padding: EdgeInsets.symmetric(horizontal: 12.w),
+      decoration: BoxDecoration(
+        color: colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE8E8E8)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(Icons.search, color: colors.textGrey, size: 20.sp),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              onChanged: (_) => setState(() {}),
+              style: textTheme.bodyMedium,
+              textAlignVertical: TextAlignVertical.center,
+              decoration: InputDecoration(
+                isDense: true,
+                hintText: 'Search turf by name, location or sport',
+                hintStyle: TextStyle(
+                  color: colors.textGrey.withValues(alpha: 0.6),
+                  fontSize: 14.sp,
+                ),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+          ),
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: _searchController,
+            builder: (_, value, __) {
+              if (value.text.isEmpty) return const SizedBox.shrink();
+              return Padding(
+                padding: EdgeInsets.only(left: 8.w),
+                child: GestureDetector(
+                  onTap: () {
+                    _searchController.clear();
+                    setState(() {});
+                  },
+                  child: Icon(
+                    Icons.close_rounded,
+                    color: colors.textGrey,
+                    size: 18.sp,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final textTheme = Theme.of(context).textTheme;
+    final isTablet = context.isTablet;
+    final horizontalPad = isTablet ? 20.w : 16.w;
 
     return Scaffold(
       backgroundColor: colors.background,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: 56.h),
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: isTablet ? 12.h : 8.h),
 
-          // ── Header ──────────────────────────────────────────
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w),
-            child: Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (_) => const LocationSelectionSheet(),
-                      );
-                    },
-                    child: Container(
-                      height: 46.h,
-                      padding: EdgeInsets.symmetric(horizontal: 12.w),
-                      decoration: BoxDecoration(
-                        color: colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: const Color(0xFFE8E8E8),
-                          width: 1,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.location_on_rounded,
-                            color: colors.primary,
-                            size: 20.sp,
-                          ),
-                          SizedBox(width: 8.w),
-                          Expanded(
-                            child: GetX<TurfViewmodel>(
-                              builder: (vm) {
-                                final locName = vm.selectedLocationName.value;
-                                final isLocating = vm.isLocationLoading.value;
-                                return Text(
-                                  isLocating
-                                      ? 'Locating...'
-                                      : (locName.isNotEmpty
-                                            ? locName
-                                            : 'Select Location'),
-                                  style: textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                );
-                              },
-                            ),
-                          ),
-                          Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            color: colors.textGrey,
-                            size: 20.sp,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                _HeaderIconButton(
-                  icon: Icons.notifications_outlined,
-                  colors: colors,
-                  onTap: () {
-                    Get.to(() => NotificationPage());
-                  },
-                ),
-              ],
-            ),
-          ),
-
-          SizedBox(height: 14.h),
-
-          // ── Search bar ──────────────────────────────────────
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w),
-            child: Container(
-              height: 46.h,
-              padding: EdgeInsets.symmetric(horizontal: 12.w),
-              decoration: BoxDecoration(
-                color: colors.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFE8E8E8)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
+          // ── Header (Unified row on iPad, 2 rows on mobile) ──
+          if (isTablet)
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPad),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Icon(Icons.search, color: colors.textGrey, size: 20.sp),
-                  SizedBox(width: 8.w),
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (_) => setState(() {}),
-                      style: textTheme.bodyMedium,
-                      textAlignVertical: TextAlignVertical.center,
-                      decoration: InputDecoration(
-                        isDense: true,
-                        hintText: 'Search turf by name, location or sport',
-                        hintStyle: TextStyle(
-                          color: colors.textGrey.withValues(alpha: 0.6),
-                          fontSize: 14.sp,
-                        ),
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
+                  SizedBox(
+                    width: 260.w,
+                    child: _buildLocationSelector(colors, textTheme),
                   ),
-                  ValueListenableBuilder<TextEditingValue>(
-                    valueListenable: _searchController,
-                    builder: (_, value, __) {
-                      if (value.text.isEmpty) return const SizedBox.shrink();
-                      return Padding(
-                        padding: EdgeInsets.only(left: 8.w),
-                        child: GestureDetector(
-                          onTap: () {
-                            _searchController.clear();
-                            setState(() {});
-                          },
-                          child: Icon(
-                            Icons.close_rounded,
-                            color: colors.textGrey,
-                            size: 18.sp,
-                          ),
-                        ),
-                      );
-                    },
+                  SizedBox(width: 14.w),
+                  Expanded(
+                    child: _buildSearchBar(colors, textTheme),
+                  ),
+                  SizedBox(width: 14.w),
+                  _HeaderIconButton(
+                    icon: Icons.notifications_outlined,
+                    colors: colors,
+                    onTap: () => Get.to(() => const NotificationPage()),
+                  ),
+                ],
+              ),
+            )
+          else ...[
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPad),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildLocationSelector(colors, textTheme),
+                  ),
+                  SizedBox(width: 12.w),
+                  _HeaderIconButton(
+                    icon: Icons.notifications_outlined,
+                    colors: colors,
+                    onTap: () => Get.to(() => const NotificationPage()),
                   ),
                 ],
               ),
             ),
-          ),
+            SizedBox(height: 14.h),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPad),
+              child: _buildSearchBar(colors, textTheme),
+            ),
+          ],
 
           SizedBox(height: 16.h),
 
           // ── Filter chips ────────────────────────────────────
           SizedBox(
-            height: 36.h,
+            height: 38.h,
             child: ListView.separated(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              padding: EdgeInsets.symmetric(horizontal: horizontalPad),
               scrollDirection: Axis.horizontal,
               itemCount: _filters.length,
-              separatorBuilder: (_, __) => SizedBox(width: 8.w),
+              separatorBuilder: (_, __) => SizedBox(width: isTablet ? 10.w : 8.w),
               itemBuilder: (context, index) {
                 final selected = _selectedFilter == index;
                 return GestureDetector(
@@ -223,7 +252,7 @@ class _HomePageState extends State<HomePage> {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     padding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
+                      horizontal: isTablet ? 18.w : 16.w,
                       vertical: 8.h,
                     ),
                     decoration: BoxDecoration(
@@ -263,7 +292,9 @@ class _HomePageState extends State<HomePage> {
                 // Section title
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isTablet ? 20.w : 16.w,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -271,6 +302,7 @@ class _HomePageState extends State<HomePage> {
                           'Nearby Turfs',
                           style: textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w700,
+                            fontSize: isTablet ? 17.sp : null,
                           ),
                         ),
                         TextButton(
@@ -280,6 +312,7 @@ class _HomePageState extends State<HomePage> {
                             style: textTheme.bodySmall?.copyWith(
                               color: colors.primary,
                               fontWeight: FontWeight.w600,
+                              fontSize: isTablet ? 13.sp : null,
                             ),
                           ),
                         ),
@@ -426,22 +459,53 @@ class _HomePageState extends State<HomePage> {
                       }
 
                       // Cards
+                      final columns = context.turfGridColumns;
                       return Padding(
-                        padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 24.h),
-                        child: Column(
-                          children: [
-                            for (final turf in filteredTurfs)
-                              Padding(
-                                padding: EdgeInsets.only(bottom: 12.h),
-                                child: VenueCard(
-                                  turf: turf,
-                                  distanceKm: vm.getDistanceToTurf(turf),
-                                  onBookNow: () =>
-                                      Get.to(() => TurfDetailsPage(turf: turf)),
-                                ),
-                              ),
-                          ],
+                        padding: EdgeInsets.fromLTRB(
+                          isTablet ? 20.w : 16.w,
+                          4.h,
+                          isTablet ? 20.w : 16.w,
+                          24.h,
                         ),
+                        child: columns > 1
+                            ? GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: columns,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                  mainAxisExtent: 168,
+                                ),
+                                itemCount: filteredTurfs.length,
+                                itemBuilder: (context, i) {
+                                  final turf = filteredTurfs[i];
+                                  return VenueCard(
+                                    turf: turf,
+                                    margin: EdgeInsets.zero,
+                                    distanceKm: vm.getDistanceToTurf(turf),
+                                    onBookNow: () => Get.to(
+                                      () => TurfDetailsPage(turf: turf),
+                                    ),
+                                  );
+                                },
+                              )
+                            : Column(
+                                children: [
+                                  for (final turf in filteredTurfs)
+                                    Padding(
+                                      padding: EdgeInsets.only(bottom: 12.h),
+                                      child: VenueCard(
+                                        turf: turf,
+                                        distanceKm: vm.getDistanceToTurf(turf),
+                                        onBookNow: () => Get.to(
+                                          () => TurfDetailsPage(turf: turf),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
                       );
                     },
                   ),
@@ -451,8 +515,9 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 // ── Reusable header icon button ──────────────────────────────

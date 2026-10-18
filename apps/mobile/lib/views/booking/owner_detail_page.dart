@@ -479,7 +479,7 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage>
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
           SliverAppBar(
-            expandedHeight: 220.h,
+            expandedHeight: context.isTablet ? 320 : 220.h,
             pinned: true,
             backgroundColor: colors.white,
             leading: IconButton(
@@ -518,11 +518,14 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage>
             _OverviewTab(turf: turf, colors: colors, textTheme: textTheme),
 
             // ── EDIT DETAILS TAB ─────────────────────────
-            SingleChildScrollView(
-              padding: EdgeInsets.all(20.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 860),
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(20.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                   // ── Section 1: Photos ─────────────────────────────
                   _SectionHeader(title: 'Photos', textTheme: textTheme),
                   SizedBox(height: 4.h),
@@ -1221,10 +1224,12 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage>
                 ],
               ),
             ),
-          ],
+          ),
         ),
-      ),
-    );
+      ],
+    ),
+  ),
+);
   }
 }
 
@@ -1241,9 +1246,12 @@ class _OverviewTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final locationParts = [turf.address, turf.city, turf.state, turf.pincode].where((s) => s != null && s.isNotEmpty).join(', ');
 
-    return ListView(
-      padding: EdgeInsets.all(20.w),
-      children: [
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 860),
+        child: ListView(
+          padding: EdgeInsets.all(20.w),
+          children: [
         // Name + Price
         Row(
           children: [
@@ -1441,7 +1449,9 @@ class _OverviewTab extends StatelessWidget {
               style: textTheme.bodySmall?.copyWith(color: colors.textGrey, height: 1.4)),
         ],
       ],
-    );
+    ),
+  ),
+);
   }
 }
 

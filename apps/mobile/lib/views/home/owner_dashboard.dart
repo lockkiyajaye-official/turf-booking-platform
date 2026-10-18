@@ -234,6 +234,34 @@ class OwnerDashboardPage extends StatelessWidget {
                     ),
                   );
                 }
+                final isTablet = context.isTablet;
+                final bookingCount = vm.recentBookings.length > 6 ? 6 : vm.recentBookings.length;
+
+                if (isTablet) {
+                  return SliverPadding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    sliver: SliverGrid(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, i) {
+                          final booking = vm.recentBookings[i];
+                          return _BookingRow(
+                            booking: booking,
+                            colors: colors,
+                            textTheme: textTheme,
+                          );
+                        },
+                        childCount: bookingCount,
+                      ),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 12,
+                        mainAxisExtent: 84,
+                      ),
+                    ),
+                  );
+                }
+
                 return SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, i) {
