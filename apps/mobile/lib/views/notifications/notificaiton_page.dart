@@ -63,8 +63,19 @@ class _NotificationPageState extends State<NotificationPage> {
   }
 
   Future<void> _fetchNotifications() async {
+    final token = _authVm.token.value;
+    if (token.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _notifications = [];
+        });
+      }
+      return;
+    }
+
     setState(() => _isLoading = true);
-    final result = await _notificationService.getNotifications(_authVm.token.value);
+    final result = await _notificationService.getNotifications(token);
     if (mounted) {
       setState(() {
         _isLoading = false;

@@ -389,4 +389,23 @@ class AuthService {
   /// Returns the URL to open in a browser / WebView for Google OAuth.
   /// After the flow, the backend redirects to your frontendUrl with ?token=...
   String get googleAuthUrl => '$_base/google';
+
+  /// DELETE /auth/account — permanently deletes current user account
+  Future<Map<String, dynamic>> deleteAccount({
+    required String token,
+    String? reason,
+  }) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$_base/account'),
+        headers: _authHeaders(token),
+        body: jsonEncode({
+          if (reason != null && reason.isNotEmpty) 'reason': reason,
+        }),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
 }

@@ -83,7 +83,27 @@ class _LoginPageState extends State<LoginPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        const Spacer(flex: 2),
+                        // ── SKIP TO GUEST MODE ──
+                        Align(
+                          alignment: Alignment.topRight,
+                          child: TextButton.icon(
+                            onPressed: () => controller.enterGuestMode(),
+                            icon: Text(
+                              'Skip',
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colors.textGrey,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            label: Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 13.sp,
+                              color: colors.textGrey,
+                            ),
+                          ),
+                        ),
+
+                        const Spacer(flex: 1),
 
                         // ── LOGO with subtle shadow to lift it off the page ──
                         Container(
@@ -270,6 +290,35 @@ class _LoginPageState extends State<LoginPage> {
                                 : () => controller.loginWithGoogle(),
                           );
                         }),
+
+                        SizedBox(height: 14.h),
+
+                        // ── BROWSE AS GUEST BUTTON ──
+                        OutlinedButton.icon(
+                          onPressed: () => controller.enterGuestMode(),
+                          icon: Icon(
+                            Icons.explore_outlined,
+                            color: colors.primary,
+                            size: 18.sp,
+                          ),
+                          label: Text(
+                            "Continue as Guest",
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: Size(double.infinity, 50.h),
+                            side: BorderSide(
+                              color: colors.primary.withOpacity(0.5),
+                              width: 1.2,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
 
                         const Spacer(flex: 3),
 

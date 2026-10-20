@@ -85,7 +85,27 @@ class _SignUpState extends State<SignUp> {
               child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(height: 12.h),
+              // ── SKIP TO GUEST MODE ──
+              Align(
+                alignment: Alignment.topRight,
+                child: TextButton.icon(
+                  onPressed: () => controller.enterGuestMode(),
+                  icon: Text(
+                    'Skip',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colors.textGrey,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  label: Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 13.sp,
+                    color: colors.textGrey,
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 4.h),
 
               // ── LOGO with subtle shadow ──
               Container(

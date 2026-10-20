@@ -5,13 +5,14 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User, UserRole } from '../database/entities/user.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService {
     constructor(
         @InjectRepository(User)
         private userRepository: Repository<User>,
+        private dataSource: DataSource,
     ) { }
 
     async findAll(role?: UserRole, search?: string, page?: number, limit?: number) {
@@ -115,7 +116,18 @@ export class UsersService {
 
     async deleteUser(id: string) {
         const user = await this.findOne(id);
-        await this.userRepository.remove(user);
+
+        await this.dataSource.transaction(async (manager) => {
+            // Safely clean up child/associated records across tables
+            await manager.query(`DELETE FROM favorites WHERE "userId" = $1`, [id]).catch(() => null);
+            await manager.query(`DELETE FROM notifications WHERE "userId" = $1`, [id]).catch(() => null);
+            await manager.query(`DELETE FROM reviews WHERE "userId" = $1`, [id]).catch(() => null);
+            await manager.query(`DELETE FROM payments WHERE "userId" = $1`, [id]).catch(() => null);
+            await manager.query(`DELETE FROM bookings WHERE "userId" = $1`, [id]).catch(() => null);
+            await manager.query(`DELETE FROM turfs WHERE "ownerId" = $1`, [id]).catch(() => null);
+            await manager.remove(user);
+        });
+
         return { message: 'User deleted successfully' };
     }
 

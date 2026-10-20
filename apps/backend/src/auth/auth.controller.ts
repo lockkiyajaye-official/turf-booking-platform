@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Post,
   Request,
@@ -154,5 +155,11 @@ export class AuthController {
   @Post('apple/token')
   async appleTokenLogin(@Body() dto: AppleLoginDto) {
     return this.authService.loginWithAppleToken(dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('account')
+  async deleteAccount(@Request() req, @Body() body?: { reason?: string }) {
+    return this.authService.deleteAccount(req.user.id, body?.reason);
   }
 }

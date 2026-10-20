@@ -11,6 +11,7 @@ import 'package:mobile/data/models/turf_model.dart';
 import 'package:mobile/data/services/booking_service.dart';
 import 'package:mobile/data/services/payment_service.dart';
 import 'package:mobile/data/services/turf_service.dart';
+import 'package:mobile/routes/app_paths.dart';
 import 'package:mobile/viewmodels/auth/auth_viewmodel.dart';
 import 'package:mobile/viewmodels/booking/booking_viewmodel.dart';
 import 'package:mobile/viewmodels/favorite/favorite_viewmodel.dart';
@@ -796,16 +797,101 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
         '${_selectedDate.day.toString().padLeft(2, '0')}';
   }
 
+  void _showSignInRequiredDialog({
+    required String title,
+    required String message,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      backgroundColor: Colors.white,
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56.w,
+                height: 56.w,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE43434).withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.lock_outline_rounded,
+                  color: Color(0xFFE43434),
+                  size: 28,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF1E293B),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                message,
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: const Color(0xFF64748B),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 24.h),
+              SizedBox(
+                width: double.infinity,
+                height: 48.h,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Get.toNamed(RoutePaths.login);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE43434),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Sign In / Register',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+              SizedBox(height: 10.h),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  'Continue Browsing',
+                  style: TextStyle(color: Color(0xFF64748B)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   /// Step 1: create PENDING booking via API, real row + real price back.
   /// Step 2: open Razorpay for that amount. Booking only CONFIRMED after
   /// payment success (see _onPaymentSuccess).
   Future<void> _startBookingFlow() async {
     if (_isBooking) return;
     if (_token.isEmpty) {
-      Get.snackbar(
-        'Error',
-        'Not authenticated',
-        backgroundColor: Colors.red.shade100,
+      _showSignInRequiredDialog(
+        title: 'Sign In Required',
+        message: 'Please sign in or create an account to book your turf slot.',
       );
       return;
     }
@@ -1100,7 +1186,17 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                     : const Color(0xFF1C1C1E),
                 size: 24,
               ),
-              onPressed: () => favVm.toggleFavorite(widget.turf),
+              onPressed: () {
+                if (_token.isEmpty) {
+                  _showSignInRequiredDialog(
+                    title: 'Sign In to Save Favorites',
+                    message:
+                        'Create an account or sign in to save your favorite turfs.',
+                  );
+                } else {
+                  favVm.toggleFavorite(widget.turf);
+                }
+              },
             );
           }),
           SizedBox(width: 4.w),

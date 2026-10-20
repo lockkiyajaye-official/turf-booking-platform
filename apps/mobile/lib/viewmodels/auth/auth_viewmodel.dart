@@ -65,6 +65,12 @@ class AuthViewmodel extends GetxController {
   var token = ''.obs;
   var currentUser = <String, dynamic>{}.obs;
 
+  bool get isGuest => token.value.isEmpty;
+
+  void enterGuestMode() {
+    Get.offAllNamed(RoutePaths.home);
+  }
+
   // ──────────────────────────────────────────────
   // Helpers
   // ──────────────────────────────────────────────
@@ -239,25 +245,37 @@ class AuthViewmodel extends GetxController {
       _googleAccount = account;
       print('[Google] authenticated account email: ${account.email}');
 
-      print('[Google] requesting server authorization...');
-      final serverAuth = await account.authorizationClient.authorizeServer([
-        'openid',
-        'email',
-        'profile',
-      ]);
-      print('[Google] serverAuth: $serverAuth');
-      final serverAuthCode = serverAuth?.serverAuthCode;
-      print('[Google] serverAuthCode: $serverAuthCode');
+      // Extract idToken directly from authentication
+      final auth = account.authentication;
+      final idToken = auth.idToken;
+      print('[Google] idToken available: ${idToken != null && idToken.isNotEmpty}');
 
-      if (serverAuthCode == null || serverAuthCode.isEmpty) {
-        _showError('Google Sign-In failed: could not get auth code');
+      // Safely attempt authorizeServer without failing whole sign-in
+      String? serverAuthCode;
+      try {
+        print('[Google] requesting server authorization...');
+        final serverAuth = await account.authorizationClient.authorizeServer([
+          'openid',
+          'email',
+          'profile',
+        ]);
+        serverAuthCode = serverAuth?.serverAuthCode;
+        print('[Google] serverAuthCode: $serverAuthCode');
+      } catch (authErr) {
+        print('[Google] authorizeServer bypass / note: $authErr');
+      }
+
+      if ((serverAuthCode == null || serverAuthCode.isEmpty) &&
+          (idToken == null || idToken.isEmpty)) {
+        _showError('Google Sign-In failed: could not retrieve credentials');
         return;
       }
 
       print(
-        '[Google] sending serverAuthCode to backend at ${AppConstants.baseUrl}/auth/google/token...',
+        '[Google] sending credentials to backend at ${AppConstants.baseUrl}/auth/google/token...',
       );
       final response = await _authService.loginWithGoogle(
+        idToken: idToken,
         serverAuthCode: serverAuthCode,
       );
       print('[Google] backend response: $response');
@@ -876,6 +894,42 @@ class AuthViewmodel extends GetxController {
     _clearControllers();
     Get.find<LocalStorageService>().clearAll();
     Get.offAllNamed(RoutePaths.login);
+  }
+
+  // ──────────────────────────────────────────────
+  // Account Deletion
+  // ──────────────────────────────────────────────
+
+  Future<bool> deleteAccount({String? reason}) async {
+    final t = token.value;
+    if (t.isEmpty) {
+      _showError('No active session found');
+      return false;
+    }
+
+    try {
+      isLoading.value = true;
+      final response = await _authService.deleteAccount(
+        token: t,
+        reason: reason,
+      );
+
+      if (response['success'] == true) {
+        logout();
+        _showSuccess(
+          'Your account and all associated data have been permanently deleted.',
+        );
+        return true;
+      } else {
+        _showError(response['message'] ?? 'Failed to delete account');
+        return false;
+      }
+    } catch (e) {
+      _showError('Error deleting account: $e');
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   // ──────────────────────────────────────────────

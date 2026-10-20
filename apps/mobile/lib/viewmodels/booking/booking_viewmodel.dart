@@ -15,7 +15,6 @@ class BookingViewmodel extends GetxController {
   Future<void> fetchMyBookings() async {
     final token = _authViewmodel.token.value;
     if (token.isEmpty) {
-      Get.snackbar('Error', 'Not authenticated', backgroundColor: Colors.red.shade100);
       return;
     }
 
