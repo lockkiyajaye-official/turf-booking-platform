@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:mobile/core/responsive/screen_extensions.dart';
 import 'package:mobile/data/models/booking_model.dart';
 import 'package:mobile/viewmodels/booking/booking_viewmodel.dart';
+import 'package:mobile/routes/app_paths.dart';
+import 'package:mobile/viewmodels/auth/auth_viewmodel.dart';
 import 'package:mobile/views/booking/user_booking_detail_page.dart';
 
 const _green = Color(0xFF2E7D32);
@@ -69,6 +71,64 @@ class _BookingPageState extends State<BookingPage>
         ),
       ),
       body: Obx(() {
+        final authVm = Get.find<AuthViewmodel>();
+        if (authVm.isGuest) {
+          return Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 32.w),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 72.w,
+                    height: 72.w,
+                    decoration: BoxDecoration(
+                      color: _green.withOpacity(0.08),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.calendar_today_rounded,
+                      size: 36.sp,
+                      color: _green,
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  Text(
+                    'Track Your Turf Bookings',
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    'Sign in to view your upcoming matches and booking receipts.',
+                    style: textTheme.bodySmall?.copyWith(color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 20.h),
+                  ElevatedButton(
+                    onPressed: () => Get.toNamed(RoutePaths.login),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _green,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 24.w,
+                        vertical: 12.h,
+                      ),
+                    ),
+                    child: const Text('Sign In / Register'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
         if (_vm.isLoading.value && _vm.myBookings.isEmpty) {
           return const Center(child: CircularProgressIndicator(color: _green));
         }

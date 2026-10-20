@@ -441,6 +441,27 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 fontSize: 15.sp,
               ),
             ),
+            SizedBox(height: 16.h),
+
+            // ── Delete Account Option ──
+            Center(
+              child: TextButton.icon(
+                onPressed: () => _confirmDeleteAccount(context, colors),
+                icon: Icon(
+                  Icons.delete_forever_rounded,
+                  color: colors.error,
+                  size: 20.sp,
+                ),
+                label: Text(
+                  'Delete Account',
+                  style: TextStyle(
+                    color: colors.error,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14.sp,
+                  ),
+                ),
+              ),
+            ),
             SizedBox(height: 24.h),
           ],
         ),
@@ -448,6 +469,90 @@ class _EditProfilePageState extends State<EditProfilePage> {
     ),
   ),
 );
+  }
+
+  void _confirmDeleteAccount(BuildContext context, AppColors colors) {
+    final vm = Get.find<AuthViewmodel>();
+    final TextEditingController reasonController = TextEditingController();
+
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: colors.error.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.warning_amber_rounded,
+                color: colors.error,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Delete Account',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Are you sure you want to delete your account? This action is permanent and cannot be undone.\n\nAll your personal data, profile details, bookings, and preferences will be permanently erased.',
+              style: TextStyle(fontSize: 14, color: Color(0xFF475569)),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: reasonController,
+              decoration: InputDecoration(
+                hintText: 'Reason for deleting (optional)',
+                hintStyle: TextStyle(fontSize: 13, color: colors.textGrey),
+                isDense: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: colors.textGrey.withOpacity(0.3),
+                  ),
+                ),
+                contentPadding: const EdgeInsets.all(12),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Get.back();
+              await vm.deleteAccount(reason: reasonController.text.trim());
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colors.error,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              elevation: 0,
+            ),
+            child: const Text(
+              'Delete Account',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildAvatarContent(AppColors colors) {

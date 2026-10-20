@@ -6,13 +6,16 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { User } from '../database/entities/user.entity';
+import { AccountDeletionRequest } from '../deletion-requests/deletion-request.entity';
+import { UsersModule } from '../users/users.module';
 import { JwtStrategy } from './jwt.strategy';
 import { OtpModule } from '../otp/otp.module';
 import { GoogleStrategy } from './google.strategy';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, AccountDeletionRequest]),
+    UsersModule,
     PassportModule,
     OtpModule,
     JwtModule.registerAsync({

@@ -12,6 +12,7 @@ import 'package:mobile/views/profile/cancellation_page.dart';
 import 'package:mobile/views/profile/edit_profile_page.dart';
 import 'package:mobile/views/profile/notification_settings_page.dart';
 import 'package:mobile/views/profile/support_page.dart';
+import 'package:mobile/routes/app_paths.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -64,8 +65,26 @@ class _ProfilePageState extends State<ProfilePage> {
         final businessName = currentUser['businessName'] as String?;
         final businessAddress = currentUser['businessAddress'] as String?;
 
-        final List<_ProfileMenuItem> menuItems = isOwner
+        final List<_ProfileMenuItem> menuItems = vm.isGuest
             ? [
+                _ProfileMenuItem(
+                  icon: Icons.help_outline_rounded,
+                  label: 'Help & Support',
+                  onTap: () => Get.to(() => const SupportPage()),
+                ),
+                _ProfileMenuItem(
+                  icon: Icons.cancel_outlined,
+                  label: 'Cancellation & Reschedule',
+                  onTap: () => Get.to(() => const CancellationPage()),
+                ),
+                _ProfileMenuItem(
+                  icon: Icons.info_outline_rounded,
+                  label: 'About App',
+                  onTap: () => Get.to(() => const AboutPage()),
+                ),
+              ]
+            : isOwner
+                ? [
                 _ProfileMenuItem(
                   icon: Icons.person_outline_rounded,
                   label: 'Edit Profile',
@@ -145,9 +164,69 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Column(
             children: [
               // ── AVATAR + NAME + ROLE BADGES ──────────────────
-              Center(
-                child: Column(
-                  children: [
+              if (vm.isGuest)
+                Center(
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 84.w,
+                        height: 84.w,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: colors.primary.withOpacity(0.08),
+                          border: Border.all(
+                            color: colors.primary,
+                            width: 2,
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.person_outline_rounded,
+                          size: 44.sp,
+                          color: colors.primary,
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+                      Text(
+                        'Guest User',
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colors.textTitle,
+                        ),
+                      ),
+                      SizedBox(height: 4.h),
+                      Text(
+                        'Sign in to manage your bookings and account',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colors.textGrey,
+                        ),
+                      ),
+                      SizedBox(height: 14.h),
+                      ElevatedButton(
+                        onPressed: () => Get.toNamed(RoutePaths.login),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colors.primary,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 24.w,
+                            vertical: 10.h,
+                          ),
+                        ),
+                        child: const Text(
+                          'Sign In / Register',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Center(
+                  child: Column(
+                    children: [
                     Container(
                       width: 84.w,
                       height: 84.w,
@@ -423,33 +502,61 @@ class _ProfilePageState extends State<ProfilePage> {
                         );
                       },
                     ),
-                    SizedBox(height: 14.h),
-                    _MenuCard(
-                      icon: Icons.logout_rounded,
-                      label: 'Logout',
-                      labelColor: colors.error,
-                      iconColor: colors.error,
-                      onTap: () => _confirmLogout(context, vm, colors),
-                    ),
+                    if (!vm.isGuest) ...[
+                      SizedBox(height: 14.h),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _MenuCard(
+                              icon: Icons.delete_forever_rounded,
+                              label: 'Delete Account',
+                              labelColor: colors.error,
+                              iconColor: colors.error,
+                              onTap: () => _confirmDeleteAccount(context, vm, colors),
+                            ),
+                          ),
+                          SizedBox(width: 16.w),
+                          Expanded(
+                            child: _MenuCard(
+                              icon: Icons.logout_rounded,
+                              label: 'Logout',
+                              labelColor: colors.error,
+                              iconColor: colors.error,
+                              onTap: () => _confirmLogout(context, vm, colors),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 )
               else
                 ListView.separated(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: menuItems.length + 1, // +1 for logout
+                  itemCount: menuItems.length + (vm.isGuest ? 0 : 2),
                   separatorBuilder: (context, index) =>
                       const Divider(height: 1, color: Color(0xFFF1F5F9)),
                   itemBuilder: (context, index) {
-                    // Logout
-                    if (index == menuItems.length) {
-                      return _MenuTile(
-                        icon: Icons.logout_rounded,
-                        label: 'Logout',
-                        labelColor: colors.error,
-                        iconColor: colors.error,
-                        onTap: () => _confirmLogout(context, vm, colors),
-                      );
+                    if (!vm.isGuest) {
+                      if (index == menuItems.length) {
+                        return _MenuTile(
+                          icon: Icons.delete_forever_rounded,
+                          label: 'Delete Account',
+                          labelColor: colors.error,
+                          iconColor: colors.error,
+                          onTap: () => _confirmDeleteAccount(context, vm, colors),
+                        );
+                      }
+                      if (index == menuItems.length + 1) {
+                        return _MenuTile(
+                          icon: Icons.logout_rounded,
+                          label: 'Logout',
+                          labelColor: colors.error,
+                          iconColor: colors.error,
+                          onTap: () => _confirmLogout(context, vm, colors),
+                        );
+                      }
                     }
 
                     final item = menuItems[index];
@@ -487,6 +594,93 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Text(
               'Logout',
               style: TextStyle(color: colors.error),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeleteAccount(
+    BuildContext context,
+    AuthViewmodel vm,
+    AppColors colors,
+  ) {
+    final TextEditingController reasonController = TextEditingController();
+
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: colors.error.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.warning_amber_rounded,
+                color: colors.error,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Delete Account',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Are you sure you want to delete your account? This action is permanent and cannot be undone.\n\nAll your personal data, profile details, bookings, and preferences will be permanently erased.',
+              style: TextStyle(fontSize: 14, color: Color(0xFF475569)),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: reasonController,
+              decoration: InputDecoration(
+                hintText: 'Reason for deleting (optional)',
+                hintStyle: TextStyle(fontSize: 13, color: colors.textGrey),
+                isDense: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: colors.textGrey.withOpacity(0.3),
+                  ),
+                ),
+                contentPadding: const EdgeInsets.all(12),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Get.back();
+              await vm.deleteAccount(reason: reasonController.text.trim());
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colors.error,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              elevation: 0,
+            ),
+            child: const Text(
+              'Delete Account',
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
         ],

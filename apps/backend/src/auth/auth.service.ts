@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   Logger,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -36,6 +37,8 @@ import { UpdateNotificationsDto } from './dto/update-notifications.dto';
 import { ConfigService } from '@nestjs/config';
 import { GoogleLoginDto } from './dto/google-login.dto';
 import { AppleLoginDto } from './dto/apple-login.dto';
+import { UsersService } from '../users/users.service';
+import { AccountDeletionRequest, DeletionRequestStatus } from '../deletion-requests/deletion-request.entity';
 
 @Injectable()
 export class AuthService {
@@ -44,6 +47,9 @@ export class AuthService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(AccountDeletionRequest)
+    private deletionRepo: Repository<AccountDeletionRequest>,
+    private usersService: UsersService,
     private jwtService: JwtService,
     private otpService: OtpService,
     private configService: ConfigService,
@@ -695,5 +701,36 @@ export class AuthService {
     const { password, ...result } = savedUser;
 
     return result;
+  }
+
+  async deleteAccount(userId: string, reason?: string) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    try {
+      const record = this.deletionRepo.create({
+        email: user.email,
+        userId: user.id,
+        userName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+        reason: reason || 'Deleted by user in-app',
+        confirmDeleteAllData: true,
+        status: DeletionRequestStatus.COMPLETED,
+        adminNotes: `Account permanently purged on user request via mobile app on ${new Date().toISOString()}`,
+        processedAt: new Date(),
+        processedBy: 'mobile-app/user',
+      });
+      await this.deletionRepo.save(record);
+    } catch (e) {
+      this.logger.error('Failed to save account deletion audit record:', e);
+    }
+
+    await this.usersService.deleteUser(user.id);
+
+    return {
+      success: true,
+      message: 'Account deleted successfully',
+    };
   }
 }
