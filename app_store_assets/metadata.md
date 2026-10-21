@@ -3,7 +3,7 @@
 **Subtitle:** Sports Turf & Arena Booking  
 **Category:** Sports / Lifestyle  
 **Bundle ID:** `com.lockkiyajaye.app`  
-**Version:** `1.0`  
+**Version:** `1.0.2`  
 
 ---
 

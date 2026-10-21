@@ -48,11 +48,11 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>Lockkiyajaye needs access to your camera to take a profile picture.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Lockkiyajaye needs access to your location to find nearby turfs and show venues near you.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Lockkiyajaye needs access to your location to find nearby turfs and show venues near you.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Lockkiyajaye needs access to your location to find nearby turfs and show venues near you.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Lockkiyajaye needs access to your location to find nearby turfs and show venues near you.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Lockkiyajaye needs access to your photo library to select a profile picture.</string>
