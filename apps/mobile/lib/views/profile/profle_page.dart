@@ -96,6 +96,13 @@ class _ProfilePageState extends State<ProfilePage> {
                   onTap: () => Get.to(() => const OwnerFinancesPage()),
                 ),
                 _ProfileMenuItem(
+                  icon: Icons.account_balance_outlined,
+                  label: 'Payout Account Details',
+                  onTap: () => Get.to(
+                    () => const OwnerFinancesPage(openPayoutDetails: true),
+                  ),
+                ),
+                _ProfileMenuItem(
                   icon: Icons.sports_soccer_rounded,
                   label: 'My Turf Listings',
                   onTap: () => Get.to(() => const MyTurfsPage()),

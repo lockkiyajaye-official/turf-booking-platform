@@ -70,4 +70,25 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   taxId?: string;
+
+  // Turf Owner Payout Details
+  @IsOptional()
+  @IsString()
+  accountHolderName?: string;
+
+  @IsOptional()
+  @IsString()
+  bankName?: string;
+
+  @IsOptional()
+  @IsString()
+  bankAccountNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  ifscCode?: string;
+
+  @IsOptional()
+  @IsString()
+  upiId?: string;
 }

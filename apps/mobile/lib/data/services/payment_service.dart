@@ -54,12 +54,29 @@ class PaymentService {
     return getOwnerSummary(token);
   }
 
-  /// Fetch owner finance summary (wallet balance, revenue, payout history)
+  /// Fetch owner finance summary (wallet balance, revenue, payout history, payout details)
   Future<Map<String, dynamic>> getOwnerSummary(String token) async {
     try {
       final res = await http.get(
         Uri.parse('$_base/owner/summary'),
         headers: _headers(token),
+      );
+      return _handleResponse(res);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Update owner payout details (Bank Account / UPI)
+  Future<Map<String, dynamic>> updatePayoutDetails(
+    String token,
+    Map<String, dynamic> details,
+  ) async {
+    try {
+      final res = await http.patch(
+        Uri.parse('$_base/owner/payout-details'),
+        headers: _headers(token),
+        body: jsonEncode(details),
       );
       return _handleResponse(res);
     } catch (e) {

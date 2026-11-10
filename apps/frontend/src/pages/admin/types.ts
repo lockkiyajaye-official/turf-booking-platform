@@ -119,11 +119,19 @@ export interface AdminPayout {
     id: string;
     amount: number;
     status: PayoutStatus;
+    notes?: string;
     createdAt: string;
     processedAt?: string;
     ownerId: string;
     ownerName?: string;
     ownerEmail?: string;
+    payoutDetails?: {
+        accountHolderName?: string;
+        bankName?: string;
+        bankAccountNumber?: string;
+        ifscCode?: string;
+        upiId?: string;
+    };
 }
 
 export interface Turf {

@@ -1,21 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobile/core/storage/local_storage.dart';
+import 'package:mobile/data/services/auth_service.dart';
 import 'package:mobile/data/services/booking_service.dart';
 import 'package:mobile/data/services/payment_service.dart';
 import 'package:mobile/data/services/turf_service.dart';
 import 'package:mobile/data/models/turf_model.dart';
+import 'package:mobile/viewmodels/auth/auth_viewmodel.dart';
 
 class OwnerViewmodel extends GetxController {
   final TurfService _turfService = TurfService();
   final BookingService _bookingService = BookingService();
   final PaymentService _paymentService = PaymentService();
+  final AuthService _authService = AuthService();
 
   var isLoading = false.obs;
   var isBookingsLoading = false.obs;
   var isFetchingMore = false.obs;
   var isTurfsLoading = false.obs;
   var isFinancesLoading = false.obs;
+  var isSavingPayoutDetails = false.obs;
 
   var myTurfs = <TurfModel>[].obs;
   var allBookings = <Map<String, dynamic>>[].obs;
@@ -29,10 +33,62 @@ class OwnerViewmodel extends GetxController {
   var bookingsStatusFilter = ''.obs;  // '' means all
   var bookingsSearch = ''.obs;
 
-  // Finances
+  // Finances & Payout Details
   var walletBalance = 0.0.obs;
   var totalEarnings = 0.0.obs;
+  var totalPayouts = 0.0.obs;
   var payoutHistory = <Map<String, dynamic>>[].obs;
+  var payoutDetails = <String, dynamic>{}.obs;
+
+  bool get hasPayoutDetails {
+    final accNum = (payoutDetails['bankAccountNumber'] ?? '').toString().trim();
+    final ifsc = (payoutDetails['ifscCode'] ?? '').toString().trim();
+    final upi = (payoutDetails['upiId'] ?? '').toString().trim();
+    return (accNum.isNotEmpty && ifsc.isNotEmpty) || upi.isNotEmpty;
+  }
+
+  @override
+  void onInit() {
+    super.onInit();
+    _loadInitialPayoutDetails();
+  }
+
+  void _loadInitialPayoutDetails() {
+    try {
+      final local = Get.find<LocalStorageService>().getPayoutDetails();
+      if (local.isNotEmpty) {
+        payoutDetails.value = Map<String, dynamic>.from(local);
+      }
+      if (Get.isRegistered<AuthViewmodel>()) {
+        final user = Get.find<AuthViewmodel>().currentUser;
+        _mergePayoutDetailsFromMap(user);
+      }
+    } catch (_) {}
+  }
+
+  void _mergePayoutDetailsFromMap(Map<dynamic, dynamic> map) {
+    final holder = (map['accountHolderName'] ?? '').toString().trim();
+    final bank = (map['bankName'] ?? '').toString().trim();
+    final accNum = (map['bankAccountNumber'] ?? '').toString().trim();
+    final ifsc = (map['ifscCode'] ?? '').toString().trim();
+    final upi = (map['upiId'] ?? '').toString().trim();
+
+    if (holder.isNotEmpty ||
+        bank.isNotEmpty ||
+        accNum.isNotEmpty ||
+        ifsc.isNotEmpty ||
+        upi.isNotEmpty) {
+      final updated = {
+        'accountHolderName': holder,
+        'bankName': bank,
+        'bankAccountNumber': accNum,
+        'ifscCode': ifsc,
+        'upiId': upi,
+      };
+      payoutDetails.value = updated;
+      Get.find<LocalStorageService>().savePayoutDetails(updated);
+    }
+  }
 
   String get _token => Get.find<LocalStorageService>().getToken() ?? '';
 
@@ -238,11 +294,21 @@ class OwnerViewmodel extends GetxController {
   Future<void> fetchFinancesSummary() async {
     try {
       isFinancesLoading.value = true;
+      _loadInitialPayoutDetails();
       final res = await _paymentService.getOwnerSummary(_token);
       if (res['success']) {
         final data = res['data'] ?? {};
-        walletBalance.value = double.tryParse((data['walletBalance'] ?? 0).toString()) ?? 0.0;
-        totalEarnings.value = double.tryParse((data['totalEarnings'] ?? 0).toString()) ?? 0.0;
+        walletBalance.value =
+            double.tryParse((data['walletBalance'] ?? 0).toString()) ?? 0.0;
+        totalEarnings.value =
+            double.tryParse((data['totalEarnings'] ?? 0).toString()) ?? 0.0;
+        totalPayouts.value =
+            double.tryParse((data['totalPayouts'] ?? 0).toString()) ?? 0.0;
+
+        if (data['payoutDetails'] is Map) {
+          _mergePayoutDetailsFromMap(data['payoutDetails'] as Map);
+        }
+
         final list = data['payouts'] ?? data['history'] ?? [];
         if (list is List) {
           payoutHistory.value = list.cast<Map<String, dynamic>>();
@@ -254,7 +320,88 @@ class OwnerViewmodel extends GetxController {
     }
   }
 
+  Future<bool> savePayoutDetails({
+    required String accountHolderName,
+    required String bankName,
+    required String bankAccountNumber,
+    required String ifscCode,
+    required String upiId,
+  }) async {
+    final holder = accountHolderName.trim();
+    final bank = bankName.trim();
+    final accNum = bankAccountNumber.trim();
+    final ifsc = ifscCode.trim().toUpperCase();
+    final upi = upiId.trim();
+
+    final hasBank = accNum.isNotEmpty && ifsc.isNotEmpty;
+    final hasUpi = upi.isNotEmpty;
+
+    if (!hasBank && !hasUpi) {
+      _showError(
+        'Please enter either Bank Account Number & IFSC Code or a UPI ID',
+      );
+      return false;
+    }
+
+    if (hasBank && holder.isEmpty) {
+      _showError('Please enter the Account Holder Name');
+      return false;
+    }
+
+    final payload = <String, dynamic>{
+      'accountHolderName': holder,
+      'bankName': bank,
+      'bankAccountNumber': accNum,
+      'ifscCode': ifsc,
+      'upiId': upi,
+    };
+
+    try {
+      isSavingPayoutDetails.value = true;
+
+      // Try dedicated payout-details endpoint first
+      final res = await _paymentService.updatePayoutDetails(_token, payload);
+      if (res['success'] == true) {
+        final data = res['data'];
+        if (data is Map && data['payoutDetails'] is Map) {
+          payoutDetails.value =
+              Map<String, dynamic>.from(data['payoutDetails'] as Map);
+        } else {
+          payoutDetails.value = payload;
+        }
+      } else {
+        // Fallback to profile update endpoint
+        await _authService.updateProfile(token: _token, data: payload);
+        payoutDetails.value = payload;
+      }
+
+      // Persist locally & sync with AuthViewmodel
+      Get.find<LocalStorageService>().savePayoutDetails(payoutDetails);
+      if (Get.isRegistered<AuthViewmodel>()) {
+        final authVm = Get.find<AuthViewmodel>();
+        final updatedUser = Map<String, dynamic>.from(authVm.currentUser);
+        updatedUser.addAll(payload);
+        authVm.currentUser.value = updatedUser;
+      }
+
+      _showSuccess('Payout account details saved successfully');
+      return true;
+    } catch (e) {
+      _showError(e.toString());
+      return false;
+    } finally {
+      isSavingPayoutDetails.value = false;
+    }
+  }
+
   Future<bool> requestPayout(double amount) async {
+    if (!hasPayoutDetails) {
+      _showError(
+        'Please add and save your payout account details before requesting a payout',
+      );
+      return false;
+    }
+
     try {
       isFinancesLoading.value = true;
       final res = await _paymentService.requestPayout(_token, amount);

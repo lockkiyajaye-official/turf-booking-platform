@@ -50,14 +50,24 @@ export interface OwnerPayout {
     id: string;
     amount: number;
     status: "requested" | "completed" | "rejected";
+    notes?: string;
     createdAt: string;
     processedAt?: string;
+}
+
+export interface PayoutDetails {
+    accountHolderName?: string;
+    bankName?: string;
+    bankAccountNumber?: string;
+    ifscCode?: string;
+    upiId?: string;
 }
 
 export interface WalletSummary {
     walletBalance: number;
     totalEarnings: number;
     totalPayouts: number;
+    payoutDetails?: PayoutDetails;
     payouts: OwnerPayout[];
 }
 
