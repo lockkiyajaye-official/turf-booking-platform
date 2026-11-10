@@ -87,6 +87,22 @@ export class User {
   @Column({ nullable: true })
   taxId: string;
 
+  // Turf Owner Payout / Bank Account Details
+  @Column({ nullable: true })
+  accountHolderName: string;
+
+  @Column({ nullable: true })
+  bankName: string;
+
+  @Column({ nullable: true })
+  bankAccountNumber: string;
+
+  @Column({ nullable: true })
+  ifscCode: string;
+
+  @Column({ nullable: true })
+  upiId: string;
+
   // User specific fields
   @Column({ nullable: true })
   dateOfBirth: Date;

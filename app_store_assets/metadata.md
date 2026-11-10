@@ -3,7 +3,7 @@
 **Subtitle:** Sports Turf & Arena Booking  
 **Category:** Sports / Lifestyle  
 **Bundle ID:** `com.lockkiyajaye.app`  
-**Version:** `1.0`  
+**Version:** `1.0.2`  
 
 ---
 
@@ -83,8 +83,8 @@ Have feedback, questions, or turf listing queries? We’d love to hear from you:
 ### 5. App Review Information (For Apple Reviewers)
 
 - **Sign-In Required:** Yes (Check the box)
-- **Demo Account Username:** `demo@lockkiyajaye.com` *(or test phone: `+91 9999999999`)*
-- **Demo Account Password:** `TestReviewer2026!` *(or test OTP: `123456`)*
+- **Demo Account Username:** `appstore_user@example.com` *(or test phone: `+19999999998`)*
+- **Demo Account Password / OTP:** `123456`
 - **Contact Information:**
   - First Name: `Karyom`
   - Last Name: `Dirchi`
@@ -98,16 +98,20 @@ Hello Apple Review Team,
 Lock Kiya Jaye is a sports turf and ground booking application connecting sports enthusiasts with local football, cricket, and badminton arenas.
 
 Test Account Credentials:
-- Email / Phone: demo@lockkiyajaye.com / +91 9999999999
-- Password / OTP: TestReviewer2026! / 123456
+- Test Email: appstore_user@example.com
+- Test Phone: +19999999998
+- Test Verification Code (OTP): 123456
 
 Testing Instructions:
-1. Sign in using the test account credentials provided above or via Apple Sign-In.
-2. The Home feed displays nearby sports turfs (e.g. Arena 51 Sports Hub).
-3. Select any turf to view ground specifications, amenities, and available match slots.
-4. Select an available time slot and proceed to the booking review.
-5. In-app checkout supports sandbox/test payment flow to verify complete booking pass generation without requiring actual funds.
-6. The "My Bookings" tab displays the generated digital match entry pass with QR code.
+1. On the Login screen, enter the Test Email: appstore_user@example.com (or Test Phone: +19999999998).
+2. Tap "Send OTP".
+3. On the OTP Verification screen, enter the 6-digit test code: 123456 to log in immediately.
+   (Note: You may also use "Continue with Apple", or tap "Skip" / "Continue as Guest" to explore the app).
+4. The Home feed displays nearby sports turfs (e.g. Arena 51 Sports Hub).
+5. Select any turf to view ground specifications, amenities, and available match slots.
+6. Select an available time slot and proceed to the booking review.
+7. In-app checkout supports sandbox/test payment flow to verify complete booking pass generation without requiring actual funds.
+8. The "My Bookings" tab displays the generated digital match entry pass with QR code.
 
 Please feel free to contact us if you need any additional clarification or testing assistance.
 ```

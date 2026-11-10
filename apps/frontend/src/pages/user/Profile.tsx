@@ -223,6 +223,28 @@ export default function Profile() {
                         </div>
                     </div>
 
+                    {/* Turf Owner Payout Account Link */}
+                    {user.role === "turf_owner" && (
+                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 sm:p-8 mb-6">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div>
+                                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
+                                        Payout & Bank Details
+                                    </h2>
+                                    <p className="text-sm text-gray-500">
+                                        Manage your registered bank account, IFSC code, or UPI ID for turf revenue withdrawals.
+                                    </p>
+                                </div>
+                                <a
+                                    href="/owner/finances"
+                                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#e53935] hover:bg-red-600 text-white font-semibold rounded-lg transition-colors text-sm shadow-sm shrink-0"
+                                >
+                                    Manage Payout Details
+                                </a>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Account Details Section */}
                     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-8 mb-6">
                         <h1 className="text-3xl font-bold text-gray-900 mb-6">Account Details</h1>

@@ -44,6 +44,23 @@ export class PaymentsController {
         return this.paymentsService.getOwnerSummary(req.user);
     }
 
+    @Patch('owner/payout-details')
+    @UseGuards(RolesGuard)
+    @Roles(UserRole.TURF_OWNER)
+    async updatePayoutDetails(
+        @Body()
+        body: {
+            accountHolderName?: string;
+            bankName?: string;
+            bankAccountNumber?: string;
+            ifscCode?: string;
+            upiId?: string;
+        },
+        @Request() req,
+    ) {
+        return this.paymentsService.updatePayoutDetails(req.user, body);
+    }
+
     @Post('owner/payouts')
     @UseGuards(RolesGuard)
     @Roles(UserRole.TURF_OWNER)

@@ -428,6 +428,55 @@ export default function AdminPayments() {
                         </p>
                     </div>
 
+                    {/* Partner Payout Account Details */}
+                    {selectedPayout?.payoutDetails && (
+                        <div className="p-3.5 bg-indigo-50/50 rounded-xl border border-indigo-100 text-xs space-y-1.5">
+                            <p className="font-bold text-indigo-900 uppercase tracking-wider text-[11px]">
+                                Partner Payout Account Details
+                            </p>
+                            {selectedPayout.payoutDetails.bankAccountNumber ? (
+                                <>
+                                    <p className="text-gray-700">
+                                        <strong>Account Holder:</strong>{" "}
+                                        {selectedPayout.payoutDetails.accountHolderName || "—"}
+                                    </p>
+                                    {selectedPayout.payoutDetails.bankName && (
+                                        <p className="text-gray-700">
+                                            <strong>Bank Name:</strong>{" "}
+                                            {selectedPayout.payoutDetails.bankName}
+                                        </p>
+                                    )}
+                                    <p className="text-gray-700">
+                                        <strong>Account Number:</strong>{" "}
+                                        <span className="font-mono font-bold">
+                                            {selectedPayout.payoutDetails.bankAccountNumber}
+                                        </span>
+                                    </p>
+                                    <p className="text-gray-700">
+                                        <strong>IFSC Code:</strong>{" "}
+                                        <span className="font-mono font-bold">
+                                            {selectedPayout.payoutDetails.ifscCode || "—"}
+                                        </span>
+                                    </p>
+                                </>
+                            ) : null}
+                            {selectedPayout.payoutDetails.upiId && (
+                                <p className="text-gray-700">
+                                    <strong>UPI ID:</strong>{" "}
+                                    <span className="font-mono font-bold">
+                                        {selectedPayout.payoutDetails.upiId}
+                                    </span>
+                                </p>
+                            )}
+                            {!selectedPayout.payoutDetails.bankAccountNumber &&
+                                !selectedPayout.payoutDetails.upiId && (
+                                    <p className="text-amber-700">
+                                        No bank account or UPI details saved by partner yet.
+                                    </p>
+                                )}
+                        </div>
+                    )}
+
                     {/* Action Selector */}
                     <div>
                         <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">

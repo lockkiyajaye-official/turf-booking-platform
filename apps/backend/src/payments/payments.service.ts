@@ -227,6 +227,10 @@ export class PaymentsService {
             throw new BadRequestException('Only turf owners have a wallet');
         }
 
+        const currentOwner = await this.userRepository.findOne({
+            where: { id: owner.id },
+        });
+
         const payments = await this.paymentRepository.find({
             where: { ownerId: owner.id, status: PaymentStatus.SUCCESS },
             order: { createdAt: 'DESC' },
@@ -249,18 +253,83 @@ export class PaymentsService {
             0,
         );
 
+        const userEntity = currentOwner || owner;
+
         return {
-            walletBalance: Number(owner.walletBalance || 0),
+            walletBalance: Number(userEntity.walletBalance || 0),
             totalEarnings,
             totalPayouts,
+            payoutDetails: {
+                accountHolderName: userEntity.accountHolderName || '',
+                bankName: userEntity.bankName || '',
+                bankAccountNumber: userEntity.bankAccountNumber || '',
+                ifscCode: userEntity.ifscCode || '',
+                upiId: userEntity.upiId || '',
+            },
             payouts: payouts.map((p) => ({
                 id: p.id,
                 amount: Number(p.amount),
                 status: p.status,
+                notes: p.notes,
                 createdAt: p.createdAt,
                 processedAt: p.processedAt,
             })),
         };
+    }
+
+    /**
+     * Update turf owner's bank / UPI payout details.
+     */
+    async updatePayoutDetails(
+        owner: User,
+        details: {
+            accountHolderName?: string;
+            bankName?: string;
+            bankAccountNumber?: string;
+            ifscCode?: string;
+            upiId?: string;
+        },
+    ) {
+        if (owner.role !== UserRole.TURF_OWNER) {
+            throw new BadRequestException('Only turf owners can update payout details');
+        }
+
+        const currentOwner = await this.userRepository.findOne({
+            where: { id: owner.id },
+        });
+        if (!currentOwner) {
+            throw new NotFoundException('Owner not found');
+        }
+
+        if (details.accountHolderName !== undefined) {
+            currentOwner.accountHolderName = details.accountHolderName.trim();
+        }
+        if (details.bankName !== undefined) {
+            currentOwner.bankName = details.bankName.trim();
+        }
+        if (details.bankAccountNumber !== undefined) {
+            currentOwner.bankAccountNumber = details.bankAccountNumber.trim();
+        }
+        if (details.ifscCode !== undefined) {
+            currentOwner.ifscCode = details.ifscCode.trim().toUpperCase();
+        }
+        if (details.upiId !== undefined) {
+            currentOwner.upiId = details.upiId.trim();
+        }
+
+        const hasBank =
+            Boolean(currentOwner.bankAccountNumber) &&
+            Boolean(currentOwner.ifscCode);
+        const hasUpi = Boolean(currentOwner.upiId);
+
+        if (!hasBank && !hasUpi) {
+            throw new BadRequestException(
+                'Please provide either Bank Account Number & IFSC Code or a valid UPI ID',
+            );
+        }
+
+        await this.userRepository.save(currentOwner);
+        return this.getOwnerSummary(currentOwner);
     }
 
     /**
@@ -284,6 +353,18 @@ export class PaymentsService {
         if (!currentOwner) {
             throw new BadRequestException('Owner not found');
         }
+
+        const hasBank =
+            Boolean(currentOwner.bankAccountNumber) &&
+            Boolean(currentOwner.ifscCode);
+        const hasUpi = Boolean(currentOwner.upiId);
+
+        if (!hasBank && !hasUpi) {
+            throw new BadRequestException(
+                'Please add and save your payout account details (Bank Account or UPI ID) before requesting a payout',
+            );
+        }
+
         const currentBalance = Number(currentOwner.walletBalance || 0);
 
         if (numericAmount > currentBalance) {
@@ -394,6 +475,7 @@ export class PaymentsService {
             id: p.id,
             amount: Number(p.amount),
             status: p.status,
+            notes: p.notes,
             createdAt: p.createdAt,
             processedAt: p.processedAt,
             ownerId: p.ownerId,
@@ -401,6 +483,15 @@ export class PaymentsService {
                 ? `${p.owner.firstName} ${p.owner.lastName}`
                 : undefined,
             ownerEmail: p.owner?.email,
+            payoutDetails: p.owner
+                ? {
+                      accountHolderName: p.owner.accountHolderName || '',
+                      bankName: p.owner.bankName || '',
+                      bankAccountNumber: p.owner.bankAccountNumber || '',
+                      ifscCode: p.owner.ifscCode || '',
+                      upiId: p.owner.upiId || '',
+                  }
+                : undefined,
         }));
     }
 

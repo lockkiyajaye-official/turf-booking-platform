@@ -175,4 +175,18 @@ class LocalStorageService {
     final List? history = appBox.get(StorageKeys.searchHistory);
     return history?.cast<String>() ?? [];
   }
+
+  // ================= PAYOUT DETAILS =================
+
+  void savePayoutDetails(Map<String, dynamic> details) {
+    authBox.put('owner_payout_details', Map<String, dynamic>.from(details));
+  }
+
+  Map<String, dynamic> getPayoutDetails() {
+    final raw = authBox.get('owner_payout_details');
+    if (raw is Map) {
+      return Map<String, dynamic>.from(raw);
+    }
+    return {};
+  }
 }
