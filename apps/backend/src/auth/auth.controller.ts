@@ -111,6 +111,12 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post('profile/request-contact-otp')
+  async requestContactOtp(@Request() req) {
+    return this.authService.requestContactOtp(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Patch('profile')
   async updateProfile(@Request() req, @Body() updateData: UpdateProfileDto) {
     return this.authService.updateProfile(req.user.id, updateData);

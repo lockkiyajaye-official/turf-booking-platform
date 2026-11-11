@@ -67,6 +67,19 @@ export class UsersController {
         return this.usersService.rejectTurfOwner(id, approvalNotes);
     }
 
+    @Patch('turf-owners/:id/commission')
+    updateCommission(
+        @Param('id') id: string,
+        @Body('customPlatformFeePercent') customPlatformFeePercent: number | null,
+        @Body('customGatewayFeePercent') customGatewayFeePercent?: number | null,
+    ) {
+        return this.usersService.updateTurfOwnerCommission(
+            id,
+            customPlatformFeePercent,
+            customGatewayFeePercent,
+        );
+    }
+
     @Patch(':id')
     update(@Param('id') id: string, @Body() updateData: Partial<any>) {
         return this.usersService.updateUser(id, updateData);

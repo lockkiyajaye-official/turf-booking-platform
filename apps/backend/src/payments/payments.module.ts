@@ -6,13 +6,14 @@ import { Booking } from '../database/entities/booking.entity';
 import { Turf } from '../database/entities/turf.entity';
 import { User } from '../database/entities/user.entity';
 import { Payout } from '../database/entities/payout.entity';
+import { PlatformSettings } from '../database/entities/platform-settings.entity';
 import { PaymentsService } from './payments.service';
 import { PaymentsController } from './payments.controller';
 
 @Module({
     imports: [
         ConfigModule,
-        TypeOrmModule.forFeature([Payment, Booking, Turf, User, Payout]),
+        TypeOrmModule.forFeature([Payment, Booking, Turf, User, Payout, PlatformSettings]),
     ],
     controllers: [PaymentsController],
     providers: [PaymentsService],

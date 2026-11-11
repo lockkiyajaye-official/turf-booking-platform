@@ -1829,7 +1829,136 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                       ),
               ),
 
-              SizedBox(height: 32.h),
+              if (_selectedSlotIndex >= 0 &&
+                  _selectedSlotIndex < _slots.length &&
+                  !_isSlotBooked(_slots[_selectedSlotIndex])) ...[
+                SizedBox(height: 20.h),
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(14.w),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Selected Slot',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: colors.textGrey,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            _formatSlot(_slots[_selectedSlotIndex]),
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: colors.textTitle,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Turf Rate',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: colors.textGrey,
+                            ),
+                          ),
+                          Text(
+                            '₹${widget.turf.pricePerHour.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: colors.textTitle,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 6.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Platform Fee (5%)',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: colors.textGrey,
+                            ),
+                          ),
+                          Text(
+                            '+₹${(widget.turf.pricePerHour * 0.05).toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: Colors.purple[700],
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 6.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Gateway & Taxes (2% + 18% GST)',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: colors.textGrey,
+                            ),
+                          ),
+                          Text(
+                            '+₹${((widget.turf.pricePerHour * 1.05) * 0.0236).toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: Colors.blue[700],
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8.h),
+                        child: const Divider(height: 1),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Total Payable',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: colors.textTitle,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          Text(
+                            '₹${(widget.turf.pricePerHour * 1.05 * 1.0236).toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              color: Color(0xFFE33A3A),
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              SizedBox(height: 24.h),
 
               // ── Continue Button ─────────────────
               SizedBox(

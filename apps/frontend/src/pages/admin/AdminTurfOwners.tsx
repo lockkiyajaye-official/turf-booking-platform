@@ -4,7 +4,13 @@ import {
     Clock,
     MapPin,
     Trash2,
-    XCircle,
+    Phone,
+    Mail,
+    FileText,
+    ExternalLink,
+    ShieldCheck,
+    Percent,
+    Eye,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -34,7 +40,9 @@ export default function AdminTurfOwners() {
     const [activeOwner, setActiveOwner] = useState<TurfOwner | null>(null);
     const [reviewAction, setReviewAction] = useState<"approve" | "reject" | null>(null);
     const [reviewNotes, setReviewNotes] = useState("");
+    const [customFeeInput, setCustomFeeInput] = useState<string>("");
     const [submittingReview, setSubmittingReview] = useState(false);
+    const [showApproveConfirmModal, setShowApproveConfirmModal] = useState(false);
 
     // Delete Modal
     const [ownerToDelete, setOwnerToDelete] = useState<TurfOwner | null>(null);
@@ -76,6 +84,16 @@ export default function AdminTurfOwners() {
                 ? "Approved for platform operations and turf listings"
                 : "",
         );
+        setCustomFeeInput(
+            owner.customPlatformFeePercent !== null && owner.customPlatformFeePercent !== undefined
+                ? String(owner.customPlatformFeePercent)
+                : "",
+        );
+    };
+
+    const handleTriggerApproveAction = () => {
+        if (!activeOwner) return;
+        setShowApproveConfirmModal(true);
     };
 
     const handleConfirmReview = async () => {
@@ -92,6 +110,13 @@ export default function AdminTurfOwners() {
                 await api.post(`/users/turf-owners/${activeOwner.id}/approve`, {
                     approvalNotes: reviewNotes.trim(),
                 });
+
+                // If commission override is entered or changed, update it
+                const feeValue = customFeeInput.trim() ? parseFloat(customFeeInput) : null;
+                await api.patch(`/users/turf-owners/${activeOwner.id}/commission`, {
+                    customPlatformFeePercent: feeValue,
+                });
+
                 showFeedback(
                     "success",
                     `Approved ${activeOwner.firstName} ${activeOwner.lastName} (${activeOwner.businessName || "Partner"}).`,
@@ -108,6 +133,7 @@ export default function AdminTurfOwners() {
             await fetchOwners();
             setActiveOwner(null);
             setReviewAction(null);
+            setShowApproveConfirmModal(false);
         } catch (error: unknown) {
             const err = error as { response?: { data?: { message?: string } } };
             showFeedback(
@@ -293,7 +319,9 @@ export default function AdminTurfOwners() {
                                 <thead>
                                     <tr className="bg-gray-50/80 border-b border-gray-200/80 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
                                         <th className="py-3 px-5">Partner</th>
-                                        <th className="py-3 px-5">Business Profile</th>
+                                        <th className="py-3 px-5">Phone Number</th>
+                                        <th className="py-3 px-5">Business & Turfs</th>
+                                        <th className="py-3 px-5">Platform Fee</th>
                                         <th className="py-3 px-5">Status</th>
                                         <th className="py-3 px-5 text-right">Actions</th>
                                     </tr>
@@ -318,10 +346,10 @@ export default function AdminTurfOwners() {
                                                                 {o.firstName} {o.lastName}
                                                             </p>
                                                             <p className="text-[11px] text-gray-500 mt-0.5">
-                                                                {o.email || o.phone || "No direct contact"}
+                                                                {o.email || "No email"}
                                                             </p>
                                                             <p className="text-[10px] text-gray-400">
-                                                                Registered{" "}
+                                                                Joined{" "}
                                                                 {new Date(
                                                                     o.createdAt,
                                                                 ).toLocaleDateString("en-IN", {
@@ -334,24 +362,51 @@ export default function AdminTurfOwners() {
                                                     </div>
                                                 </td>
 
-                                                {/* Business Details */}
+                                                {/* Phone Number */}
                                                 <td className="py-3.5 px-5">
-                                                    <div className="space-y-1 max-w-xs">
-                                                        <p className="font-semibold text-gray-900 flex items-center gap-1.5">
-                                                            <Building2 className="w-3.5 h-3.5 text-gray-400" />
-                                                            {o.businessName || "Unnamed Business"}
-                                                        </p>
-                                                        {o.address ? (
-                                                            <p className="text-[11px] text-gray-500 flex items-center gap-1 line-clamp-1">
-                                                                <MapPin className="w-3 h-3 text-gray-400 shrink-0" />
-                                                                <span>{o.address}</span>
-                                                            </p>
-                                                        ) : (
-                                                            <p className="text-[11px] text-gray-400 italic">
-                                                                No address registered
-                                                            </p>
-                                                        )}
+                                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 rounded-lg border border-gray-200/80 text-xs font-mono font-medium text-gray-800">
+                                                        <Phone className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                                        <span>{o.phone || "—"}</span>
                                                     </div>
+                                                </td>
+
+                                                {/* Business Details & Turfs */}
+                                                <td className="py-3.5 px-5">
+                                                    <div className="space-y-1.5 max-w-xs">
+                                                        <p className="font-semibold text-gray-900 flex items-center gap-1.5">
+                                                            <Building2 className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                                            <span className="truncate">{o.businessName || "Unnamed Business"}</span>
+                                                        </p>
+                                                        <div className="flex items-center gap-2 text-[11px]">
+                                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium ${
+                                                                (o.turfs?.length ?? 0) > 0
+                                                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                                                    : "bg-gray-100 text-gray-500"
+                                                            }`}>
+                                                                {o.turfs?.length ?? 0} {o.turfs?.length === 1 ? "Turf" : "Turfs"}
+                                                            </span>
+                                                            {(o.businessRegistrationDoc || o.identityDoc) && (
+                                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-medium border border-blue-200">
+                                                                    <FileText className="w-3 h-3" />
+                                                                    Docs Attached
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </td>
+
+                                                {/* Platform Fee */}
+                                                <td className="py-3.5 px-5">
+                                                    {o.customPlatformFeePercent !== null && o.customPlatformFeePercent !== undefined ? (
+                                                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 rounded-lg text-xs font-semibold border border-purple-200">
+                                                            <Percent className="w-3 h-3" />
+                                                            {o.customPlatformFeePercent}% (Custom)
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-500 font-medium">
+                                                            Default (5%)
+                                                        </span>
+                                                    )}
                                                 </td>
 
                                                 {/* Verification Status */}
@@ -373,40 +428,23 @@ export default function AdminTurfOwners() {
                                                 {/* Actions */}
                                                 <td className="py-3.5 px-5 text-right">
                                                     <div className="inline-flex items-center gap-1.5">
-                                                        {!o.isApproved ? (
-                                                            <>
-                                                                <button
-                                                                    onClick={() =>
-                                                                        handleOpenReview(
-                                                                            o,
-                                                                            "approve",
-                                                                        )
-                                                                    }
-                                                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 rounded-lg transition-colors"
-                                                                    title="Approve partner"
-                                                                >
-                                                                    <CheckCircle2 className="w-3.5 h-3.5" />
-                                                                    <span>Approve</span>
-                                                                </button>
-                                                                <button
-                                                                    onClick={() =>
-                                                                        handleOpenReview(
-                                                                            o,
-                                                                            "reject",
-                                                                        )
-                                                                    }
-                                                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 rounded-lg transition-colors"
-                                                                    title="Reject partner"
-                                                                >
-                                                                    <XCircle className="w-3.5 h-3.5" />
-                                                                    <span>Reject</span>
-                                                                </button>
-                                                            </>
-                                                        ) : (
-                                                            <span className="text-[11px] font-semibold text-gray-400 px-2">
-                                                                Verified
-                                                            </span>
-                                                        )}
+                                                        <button
+                                                            onClick={() =>
+                                                                handleOpenReview(
+                                                                    o,
+                                                                    o.isApproved ? "reject" : "approve",
+                                                                )
+                                                            }
+                                                            className={`inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors border ${
+                                                                !o.isApproved
+                                                                    ? "text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-200"
+                                                                    : "text-gray-700 bg-gray-50 hover:bg-gray-100 border-gray-200"
+                                                            }`}
+                                                            title="Review partner application"
+                                                        >
+                                                            <Eye className="w-3.5 h-3.5" />
+                                                            <span>{o.isApproved ? "Manage" : "Review"}</span>
+                                                        </button>
 
                                                         <button
                                                             onClick={() => setOwnerToDelete(o)}
@@ -435,7 +473,7 @@ export default function AdminTurfOwners() {
                 )}
             </div>
 
-            {/* Approval / Rejection Modal */}
+            {/* Comprehensive Turf Owner Review & Verification Modal */}
             <AdminModal
                 isOpen={Boolean(activeOwner && reviewAction)}
                 onClose={() => {
@@ -444,87 +482,318 @@ export default function AdminTurfOwners() {
                 }}
                 title={
                     reviewAction === "approve"
-                        ? "Approve Turf Business Partner"
-                        : "Reject Turf Business Application"
+                        ? "Verify & Approve Turf Partner"
+                        : "Manage Turf Business Partner"
                 }
                 description={
                     activeOwner
-                        ? `Application for ${activeOwner.firstName} ${activeOwner.lastName} (${activeOwner.businessName || "Partner"})`
+                        ? `Application details for ${activeOwner.firstName} ${activeOwner.lastName} (${activeOwner.businessName || "Partner"})`
                         : undefined
                 }
-                maxWidth="md"
+                maxWidth="lg"
             >
-                <div className="space-y-4">
-                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-1 text-xs">
-                        <p className="text-gray-500">
-                            <strong>Owner:</strong> {activeOwner?.firstName}{" "}
-                            {activeOwner?.lastName}
-                        </p>
-                        <p className="text-gray-500">
-                            <strong>Email / Phone:</strong> {activeOwner?.email || "—"} /{" "}
-                            {activeOwner?.phone || "—"}
-                        </p>
-                        <p className="text-gray-500">
-                            <strong>Business:</strong>{" "}
-                            {activeOwner?.businessName || "Unnamed Business"}
-                        </p>
-                        {activeOwner?.address && (
-                            <p className="text-gray-500">
-                                <strong>Address:</strong> {activeOwner.address}
-                            </p>
-                        )}
-                    </div>
+                {activeOwner && (
+                    <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+                        {/* Status banner */}
+                        <div className={`p-3 rounded-xl border flex items-center justify-between text-xs ${
+                            activeOwner.isApproved
+                                ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                                : "bg-amber-50 border-amber-200 text-amber-800"
+                        }`}>
+                            <div className="flex items-center gap-2 font-semibold">
+                                <ShieldCheck className="w-4 h-4" />
+                                <span>Verification Status: {activeOwner.isApproved ? "Approved Partner" : "Pending Verification"}</span>
+                            </div>
+                            <span className="text-[11px] opacity-75">
+                                Joined {new Date(activeOwner.createdAt).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })}
+                            </span>
+                        </div>
 
-                    <div>
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                            {reviewAction === "approve"
-                                ? "Approval Notes / Terms"
-                                : "Reason for Rejection (Required)"}
-                        </label>
-                        <textarea
-                            rows={3}
-                            value={reviewNotes}
-                            onChange={(e) => setReviewNotes(e.target.value)}
-                            placeholder={
-                                reviewAction === "approve"
-                                    ? "Add verification notes or approval terms..."
-                                    : "Specify why the application is being rejected (e.g. missing documentation)..."
-                            }
-                            className="w-full p-2.5 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[#E33E33]"
-                        />
-                    </div>
+                        {/* Section 1: Contact & Personal Details */}
+                        <div className="bg-gray-50 rounded-xl p-3.5 border border-gray-100">
+                            <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
+                                Partner Identity & Contact Information
+                            </h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                <div>
+                                    <span className="text-gray-400 block text-[10px] uppercase font-bold">Full Name</span>
+                                    <span className="font-semibold text-gray-900">{activeOwner.firstName} {activeOwner.lastName}</span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-400 block text-[10px] uppercase font-bold">Registered Phone</span>
+                                    <span className="font-semibold text-emerald-700 font-mono text-xs flex items-center gap-1 mt-0.5">
+                                        <Phone className="w-3 h-3 text-emerald-600" />
+                                        {activeOwner.phone || "Not provided"}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-400 block text-[10px] uppercase font-bold">Email Address</span>
+                                    <span className="font-medium text-gray-800 flex items-center gap-1 mt-0.5">
+                                        <Mail className="w-3 h-3 text-gray-400" />
+                                        {activeOwner.email || "Not provided"}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-400 block text-[10px] uppercase font-bold">Personal Address</span>
+                                    <span className="text-gray-700">{activeOwner.address || "Not specified"}</span>
+                                </div>
+                            </div>
+                        </div>
 
-                    <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setActiveOwner(null);
-                                setReviewAction(null);
-                            }}
-                            className="px-4 py-2 text-xs font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl transition-colors"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="button"
-                            onClick={handleConfirmReview}
-                            disabled={submittingReview}
-                            className={`px-4 py-2 text-xs font-semibold rounded-xl text-white transition-colors flex items-center gap-2 disabled:opacity-50 ${
-                                reviewAction === "approve"
-                                    ? "bg-emerald-600 hover:bg-emerald-700"
-                                    : "bg-amber-600 hover:bg-amber-700"
-                            }`}
-                        >
-                            {submittingReview && (
-                                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        {/* Section 2: Business Information */}
+                        <div className="bg-gray-50 rounded-xl p-3.5 border border-gray-100">
+                            <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                                <Building2 className="w-3.5 h-3.5 text-indigo-600" />
+                                Business & Facility Details
+                            </h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                <div>
+                                    <span className="text-gray-400 block text-[10px] uppercase font-bold">Business Name</span>
+                                    <span className="font-semibold text-gray-900">{activeOwner.businessName || "Unnamed Business"}</span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-400 block text-[10px] uppercase font-bold">Business Phone</span>
+                                    <span className="font-mono text-gray-800">{activeOwner.businessPhone || activeOwner.phone || "—"}</span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-400 block text-[10px] uppercase font-bold">Facility Address</span>
+                                    <span className="text-gray-700">{activeOwner.businessAddress || activeOwner.address || "—"}</span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-400 block text-[10px] uppercase font-bold">Tax ID / GSTIN</span>
+                                    <span className="font-mono font-medium text-gray-800">{activeOwner.taxId || "Not registered"}</span>
+                                </div>
+                                {activeOwner.businessDescription && (
+                                    <div className="sm:col-span-2">
+                                        <span className="text-gray-400 block text-[10px] uppercase font-bold">Business Description</span>
+                                        <p className="text-gray-600 text-xs mt-0.5">{activeOwner.businessDescription}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Section 3: Official Verification Documents */}
+                        <div className="bg-gray-50 rounded-xl p-3.5 border border-gray-100">
+                            <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                <span className="flex items-center gap-1.5">
+                                    <FileText className="w-3.5 h-3.5 text-purple-600" />
+                                    Official Verification Documentation
+                                </span>
+                                {(activeOwner.businessRegistrationDoc || activeOwner.identityDoc) ? (
+                                    <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                        Documents Submitted (Fast Track)
+                                    </span>
+                                ) : (
+                                    <span className="text-[10px] font-medium text-gray-400">
+                                        No docs uploaded (Optional)
+                                    </span>
+                                )}
+                            </h4>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-2">
+                                <div className="p-2.5 bg-white rounded-lg border border-gray-200/80 flex items-center justify-between text-xs">
+                                    <div>
+                                        <p className="font-semibold text-gray-800 text-[11px]">Business Registration / License</p>
+                                        <p className="text-[10px] text-gray-500 truncate max-w-[180px]">
+                                            {activeOwner.businessRegistrationDoc ? "Document file provided" : "Not submitted"}
+                                        </p>
+                                    </div>
+                                    {activeOwner.businessRegistrationDoc ? (
+                                        <a
+                                            href={activeOwner.businessRegistrationDoc}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-md font-semibold text-[11px] transition-colors"
+                                        >
+                                            <span>View</span>
+                                            <ExternalLink className="w-3 h-3" />
+                                        </a>
+                                    ) : (
+                                        <span className="text-[11px] text-gray-400 italic">None</span>
+                                    )}
+                                </div>
+
+                                <div className="p-2.5 bg-white rounded-lg border border-gray-200/80 flex items-center justify-between text-xs">
+                                    <div>
+                                        <p className="font-semibold text-gray-800 text-[11px]">Owner Identity Proof (ID/PAN/Aadhaar)</p>
+                                        <p className="text-[10px] text-gray-500 truncate max-w-[180px]">
+                                            {activeOwner.identityDoc ? "ID document attached" : "Not submitted"}
+                                        </p>
+                                    </div>
+                                    {activeOwner.identityDoc ? (
+                                        <a
+                                            href={activeOwner.identityDoc}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-md font-semibold text-[11px] transition-colors"
+                                        >
+                                            <span>View</span>
+                                            <ExternalLink className="w-3 h-3" />
+                                        </a>
+                                    ) : (
+                                        <span className="text-[11px] text-gray-400 italic">None</span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Section 4: Turfs Added by This Owner */}
+                        <div className="bg-gray-50 rounded-xl p-3.5 border border-gray-100">
+                            <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                <span className="flex items-center gap-1.5">
+                                    <MapPin className="w-3.5 h-3.5 text-rose-600" />
+                                    Turfs Created by This Owner ({activeOwner.turfs?.length ?? 0})
+                                </span>
+                            </h4>
+
+                            {activeOwner.turfs && activeOwner.turfs.length > 0 ? (
+                                <div className="space-y-2 mt-2">
+                                    {activeOwner.turfs.map((t) => (
+                                        <div
+                                            key={t.id}
+                                            className="p-2.5 bg-white rounded-lg border border-gray-200/80 flex items-center justify-between text-xs"
+                                        >
+                                            <div>
+                                                <p className="font-bold text-gray-900">{t.name}</p>
+                                                <p className="text-[11px] text-gray-500">
+                                                    {t.location || t.city || "Location not set"} • <span className="font-semibold text-emerald-700">₹{t.pricePerHour}/hr</span>
+                                                </p>
+                                            </div>
+                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                                t.isPublished ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-amber-50 text-amber-700 border border-amber-200"
+                                            }`}>
+                                                {t.isPublished ? "Published" : "Draft / Unpublished"}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="p-3 bg-white rounded-lg border border-dashed border-gray-200 text-center text-xs text-gray-500">
+                                    This partner hasn't added any turfs yet.
+                                </div>
                             )}
-                            {reviewAction === "approve"
-                                ? "Approve Application"
-                                : "Confirm Rejection"}
-                        </button>
+                        </div>
+
+                        {/* Section 5: Custom Platform Commission Rate Override */}
+                        <div className="bg-purple-50/50 rounded-xl p-3.5 border border-purple-100">
+                            <div className="flex items-center justify-between mb-1.5">
+                                <label className="text-xs font-bold text-purple-950 flex items-center gap-1.5">
+                                    <Percent className="w-3.5 h-3.5 text-purple-600" />
+                                    Custom Platform Fee Override (%)
+                                </label>
+                                <span className="text-[10px] text-purple-700 font-medium">Default: 5%</span>
+                            </div>
+                            <input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                max="100"
+                                value={customFeeInput}
+                                onChange={(e) => setCustomFeeInput(e.target.value)}
+                                placeholder="e.g. 3.5 (Leave empty to use global default)"
+                                className="w-full p-2 text-xs bg-white border border-purple-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
+                            />
+                            <p className="text-[10px] text-purple-700 mt-1">
+                                Customize the platform commission fee for this specific partner's turfs.
+                            </p>
+                        </div>
+
+                        {/* Section 6: Approval Notes / Terms */}
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                                {reviewAction === "approve"
+                                    ? "Verification Notes / Terms"
+                                    : "Reason for Rejection (Required)"}
+                            </label>
+                            <textarea
+                                rows={2}
+                                value={reviewNotes}
+                                onChange={(e) => setReviewNotes(e.target.value)}
+                                placeholder={
+                                    reviewAction === "approve"
+                                        ? "Add internal verification notes..."
+                                        : "Specify why the application is being rejected..."
+                                }
+                                className="w-full p-2.5 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[#E33E33]"
+                            />
+                        </div>
+
+                        {/* Modal Action Buttons */}
+                        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setActiveOwner(null);
+                                    setReviewAction(null);
+                                }}
+                                className="px-4 py-2 text-xs font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl transition-colors"
+                            >
+                                Cancel
+                            </button>
+
+                            {reviewAction === "reject" ? (
+                                <button
+                                    type="button"
+                                    onClick={handleConfirmReview}
+                                    disabled={submittingReview}
+                                    className="px-4 py-2 text-xs font-semibold rounded-xl text-white bg-amber-600 hover:bg-amber-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+                                >
+                                    {submittingReview && (
+                                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    )}
+                                    Confirm Rejection
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={handleTriggerApproveAction}
+                                    disabled={submittingReview}
+                                    className="px-5 py-2 text-xs font-bold rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 transition-colors flex items-center gap-2 shadow-sm"
+                                >
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    Approve Partner...
+                                </button>
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
             </AdminModal>
+
+            {/* Step 2: Approval Confirmation Modal */}
+            <AdminConfirmModal
+                isOpen={showApproveConfirmModal}
+                onClose={() => setShowApproveConfirmModal(false)}
+                onConfirm={handleConfirmReview}
+                loading={submittingReview}
+                title="Confirm Partner Approval"
+                variant="primary"
+                confirmText="Yes, Approve & Activate Partner"
+                message={
+                    activeOwner ? (
+                        <div className="space-y-3 text-xs text-gray-600">
+                            <p>
+                                Are you sure you want to approve{" "}
+                                <strong className="text-gray-900 font-bold">
+                                    {activeOwner.firstName} {activeOwner.lastName}
+                                </strong>{" "}
+                                ({activeOwner.businessName || "Partner"})?
+                            </p>
+                            <div className="p-3 bg-gray-50 rounded-xl border border-gray-200/80 space-y-1 font-mono text-[11px]">
+                                <div><strong>Phone:</strong> {activeOwner.phone || "—"}</div>
+                                <div><strong>Turfs:</strong> {activeOwner.turfs?.length || 0} registered</div>
+                                <div>
+                                    <strong>Platform Commission:</strong>{" "}
+                                    {customFeeInput.trim() ? `${customFeeInput}% (Custom)` : "5.00% (Default)"}
+                                </div>
+                            </div>
+                            <p className="text-[11px] text-gray-500">
+                                This will grant the partner immediate authorization to list facilities, accept user bookings, and collect payout balances.
+                            </p>
+                        </div>
+                    ) : null
+                }
+            />
 
             {/* Delete Confirmation Modal */}
             <AdminConfirmModal

@@ -29,6 +29,12 @@ export default function TurfDetail() {
     const [bookedSlots, setBookedSlots] = useState<string[]>([]);
     const [loadingSlots, setLoadingSlots] = useState(false);
     const [booking, setBooking] = useState(false);
+    const [feeBreakdown, setFeeBreakdown] = useState<{
+        basePrice: number;
+        platformFee: number;
+        gatewayFee: number;
+        totalPrice: number;
+    } | null>(null);
     const [activeImage, setActiveImage] = useState(0);
     const [isFavorite, setIsFavorite] = useState(false);
 
@@ -48,6 +54,33 @@ export default function TurfDetail() {
             setBookedSlots([]);
         }
     }, [id, selectedDate]);
+
+    useEffect(() => {
+        if (!id || !selectedSlot) {
+            setFeeBreakdown(null);
+            return;
+        }
+        const [startTime, endTime] = selectedSlot.split("-");
+        const startHour = parseInt(startTime?.split(":")[0] || "0");
+        const endHour = parseInt(endTime?.split(":")[0] || "1");
+        const hours = Math.max(1, endHour - startHour);
+
+        api.get(`/payments/fee-preview?turfId=${id}&hours=${hours}`)
+            .then((res) => setFeeBreakdown(res.data))
+            .catch(() => {
+                if (turf) {
+                    const basePrice = Number(turf.pricePerHour) * hours;
+                    const platformFee = Math.round(basePrice * 0.05 * 100) / 100;
+                    const gatewayFee = Math.round((basePrice + platformFee) * 0.0236 * 100) / 100;
+                    setFeeBreakdown({
+                        basePrice,
+                        platformFee,
+                        gatewayFee,
+                        totalPrice: Math.round((basePrice + platformFee + gatewayFee) * 100) / 100,
+                    });
+                }
+            });
+    }, [id, selectedSlot, turf]);
 
     const fetchBookedSlots = async (date: string) => {
         setLoadingSlots(true);
@@ -442,14 +475,34 @@ export default function TurfDetail() {
 
                                     {/* Price summary */}
                                     {selectedSlot && !isSlotBooked(selectedSlot) && (
-                                        <div className="bg-gray-50 rounded-xl p-3 text-sm">
-                                            <div className="flex justify-between text-gray-600 mb-1">
+                                        <div className="bg-gray-50 rounded-xl p-3.5 text-xs space-y-1.5 border border-gray-100">
+                                            <div className="flex justify-between text-gray-600">
                                                 <span>Slot</span>
-                                                <span className="font-medium">{selectedSlot}</span>
+                                                <span className="font-semibold text-gray-900">{selectedSlot}</span>
                                             </div>
-                                            <div className="flex justify-between font-black text-gray-900 border-t border-gray-200 pt-2 mt-2">
-                                                <span>Total</span>
-                                                <span>₹{turf.pricePerHour.toLocaleString("en-IN")}</span>
+                                            <div className="flex justify-between text-gray-600">
+                                                <span>Slot Rate</span>
+                                                <span className="font-medium">
+                                                    ₹{(feeBreakdown?.basePrice ?? turf.pricePerHour).toLocaleString("en-IN")}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between text-gray-600">
+                                                <span>Platform Convenience Fee</span>
+                                                <span className="font-medium">
+                                                    ₹{(feeBreakdown?.platformFee ?? Math.round(turf.pricePerHour * 0.05)).toLocaleString("en-IN")}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between text-gray-600">
+                                                <span>Gateway & Taxes (2% + 18% GST)</span>
+                                                <span className="font-medium">
+                                                    ₹{(feeBreakdown?.gatewayFee ?? Math.round((turf.pricePerHour * 1.05) * 0.0236)).toLocaleString("en-IN")}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between font-black text-gray-900 border-t border-gray-200 pt-2 mt-2 text-sm">
+                                                <span>Total Payable</span>
+                                                <span className="text-[#E33E33]">
+                                                    ₹{(feeBreakdown?.totalPrice ?? Math.round(turf.pricePerHour * 1.05 * 1.0236)).toLocaleString("en-IN")}
+                                                </span>
                                             </div>
                                         </div>
                                     )}

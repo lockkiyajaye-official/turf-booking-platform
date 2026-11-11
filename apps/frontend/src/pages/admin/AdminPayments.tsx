@@ -5,6 +5,10 @@ import {
     DollarSign,
     ShieldAlert,
     Wallet,
+    Percent,
+    Save,
+    Calculator,
+    Info,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -32,6 +36,13 @@ export default function AdminPayments() {
     const [statusFilter, setStatusFilter] = useState<PayoutStatus | "all">("all");
     const [search, setSearch] = useState("");
 
+    // Fee & Commission Settings state
+    const [platformFeePercent, setPlatformFeePercent] = useState<number>(5.0);
+    const [gatewayFeePercent, setGatewayFeePercent] = useState<number>(2.0);
+    const [gatewayGstPercent, setGatewayGstPercent] = useState<number>(18.0);
+    const [savingSettings, setSavingSettings] = useState(false);
+    const [simulatedBaseRate, setSimulatedBaseRate] = useState<number>(1200);
+
     // Processing Payout Modal
     const [selectedPayout, setSelectedPayout] = useState<AdminPayout | null>(null);
     const [processAction, setProcessAction] = useState<"completed" | "rejected">("completed");
@@ -51,7 +62,38 @@ export default function AdminPayments() {
     useEffect(() => {
         fetchData();
         fetchPayouts();
+        fetchFeeSettings();
     }, []);
+
+    const fetchFeeSettings = async () => {
+        try {
+            const res = await api.get("/payments/admin/settings");
+            if (res.data) {
+                setPlatformFeePercent(Number(res.data.platformFeePercent ?? 5.0));
+                setGatewayFeePercent(Number(res.data.gatewayFeePercent ?? 2.0));
+                setGatewayGstPercent(Number(res.data.gatewayGstPercent ?? 18.0));
+            }
+        } catch (error) {
+            console.error("Failed to fetch platform fee settings:", error);
+        }
+    };
+
+    const handleSaveFeeSettings = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            setSavingSettings(true);
+            await api.patch("/payments/admin/settings", {
+                platformFeePercent: Number(platformFeePercent),
+                gatewayFeePercent: Number(gatewayFeePercent),
+                gatewayGstPercent: Number(gatewayGstPercent),
+            });
+            showFeedback("success", "Platform fee and gateway rates saved successfully!");
+        } catch (error: any) {
+            showFeedback("error", error.response?.data?.message || "Failed to update fee settings.");
+        } finally {
+            setSavingSettings(false);
+        }
+    };
 
     const fetchData = async () => {
         try {
@@ -239,6 +281,169 @@ export default function AdminPayments() {
                     </div>
                 </div>
             ) : null}
+
+            {/* Payment Charges & Commission Configuration Card */}
+            <div className="bg-white rounded-xl border border-gray-200/80 shadow-xs p-5 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                    <div className="flex items-center gap-2">
+                        <div className="p-2 bg-rose-50 text-[#E33E33] rounded-lg">
+                            <Percent className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold text-gray-900">
+                                Payment Charges & Platform Commission Architecture
+                            </h3>
+                            <p className="text-xs text-gray-500">
+                                Configure default platform fee and Razorpay gateway fees applied to turf bookings
+                            </p>
+                        </div>
+                    </div>
+                    <span className="text-xs font-semibold px-2.5 py-1 bg-purple-50 text-purple-700 rounded-full border border-purple-200">
+                        Supports Per-Owner Overrides
+                    </span>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* Form Controls */}
+                    <form onSubmit={handleSaveFeeSettings} className="lg:col-span-7 space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                                    Platform Fee (%)
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        min="0"
+                                        max="100"
+                                        value={platformFeePercent}
+                                        onChange={(e) => setPlatformFeePercent(parseFloat(e.target.value) || 0)}
+                                        className="w-full pl-3 pr-8 py-2 text-xs font-mono font-bold bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[#E33E33]"
+                                        required
+                                    />
+                                    <span className="absolute right-2.5 top-2 text-xs font-bold text-gray-400">%</span>
+                                </div>
+                                <p className="text-[10px] text-gray-500 mt-1">Default platform revenue share</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                                    Gateway Fee (%)
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        min="0"
+                                        max="10"
+                                        value={gatewayFeePercent}
+                                        onChange={(e) => setGatewayFeePercent(parseFloat(e.target.value) || 0)}
+                                        className="w-full pl-3 pr-8 py-2 text-xs font-mono font-bold bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[#E33E33]"
+                                        required
+                                    />
+                                    <span className="absolute right-2.5 top-2 text-xs font-bold text-gray-400">%</span>
+                                </div>
+                                <p className="text-[10px] text-gray-500 mt-1">Razorpay base charge (2%)</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                                    GST on Gateway (%)
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        step="0.5"
+                                        min="0"
+                                        max="28"
+                                        value={gatewayGstPercent}
+                                        onChange={(e) => setGatewayGstPercent(parseFloat(e.target.value) || 0)}
+                                        className="w-full pl-3 pr-8 py-2 text-xs font-mono font-bold bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[#E33E33]"
+                                        required
+                                    />
+                                    <span className="absolute right-2.5 top-2 text-xs font-bold text-gray-400">%</span>
+                                </div>
+                                <p className="text-[10px] text-gray-500 mt-1">18% GST on the 2% fee</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-amber-50 border border-amber-200/80 rounded-xl p-3 flex items-start gap-2.5">
+                            <Info className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                            <div className="text-[11px] text-amber-900 leading-relaxed">
+                                <strong>Individual Partner Rates:</strong> You can set custom commission rates for individual turf owners on the{" "}
+                                <a href="/admin/turf-owners" className="font-bold underline text-amber-950">
+                                    Turf Owners Management
+                                </a>{" "}
+                                page. If a turf owner has a custom rate set, it overrides the global platform fee above.
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end pt-1">
+                            <button
+                                type="submit"
+                                disabled={savingSettings}
+                                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-[#E33E33] hover:bg-red-700 rounded-xl shadow-xs transition-colors disabled:opacity-50"
+                            >
+                                <Save className="w-3.5 h-3.5" />
+                                {savingSettings ? "Saving Settings..." : "Save Default Fee Rates"}
+                            </button>
+                        </div>
+                    </form>
+
+                    {/* Live Calculator Preview */}
+                    <div className="lg:col-span-5 bg-gray-50/80 rounded-xl p-4 border border-gray-200/80 space-y-3">
+                        <div className="flex items-center justify-between pb-2 border-b border-gray-200/80">
+                            <span className="text-xs font-bold text-gray-800 flex items-center gap-1.5 uppercase tracking-wider">
+                                <Calculator className="w-3.5 h-3.5 text-gray-500" />
+                                Live Booking Breakdown Simulator
+                            </span>
+                            <div className="flex items-center gap-1 text-xs">
+                                <span className="text-gray-500 text-[11px]">Base:</span>
+                                <input
+                                    type="number"
+                                    value={simulatedBaseRate}
+                                    onChange={(e) => setSimulatedBaseRate(parseFloat(e.target.value) || 0)}
+                                    className="w-16 px-1.5 py-0.5 text-xs font-bold font-mono text-right bg-white border border-gray-300 rounded"
+                                />
+                            </div>
+                        </div>
+
+                        {(() => {
+                            const simBase = Number(simulatedBaseRate) || 0;
+                            const simPlatform = Math.round(simBase * (Number(platformFeePercent) / 100) * 100) / 100;
+                            const effectiveGatewayRate = Number(gatewayFeePercent) * (1 + Number(gatewayGstPercent) / 100);
+                            const simGateway = Math.round((simBase + simPlatform) * (effectiveGatewayRate / 100) * 100) / 100;
+                            const simTotal = Math.round((simBase + simPlatform + simGateway) * 100) / 100;
+
+                            return (
+                                <div className="space-y-1.5 text-xs">
+                                    <div className="flex justify-between text-gray-600">
+                                        <span>Turf Slot Price</span>
+                                        <span className="font-mono font-medium">₹{simBase.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-gray-600">
+                                        <span>Platform Charge ({platformFeePercent}%)</span>
+                                        <span className="font-mono font-medium text-purple-700">+₹{simPlatform.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-gray-600">
+                                        <span>Razorpay Gateway ({(effectiveGatewayRate).toFixed(2)}% incl. GST)</span>
+                                        <span className="font-mono font-medium text-blue-700">+₹{simGateway.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between pt-2 border-t border-gray-200 font-bold text-gray-900 text-sm">
+                                        <span>Customer Pays Total</span>
+                                        <span className="text-[#E33E33] font-mono">₹{simTotal.toFixed(2)}</span>
+                                    </div>
+                                    <div className="p-2 bg-emerald-50 rounded-lg border border-emerald-200 text-[11px] text-emerald-800 flex justify-between font-semibold mt-2">
+                                        <span>Credited to Owner's Wallet:</span>
+                                        <span className="font-mono font-bold">₹{simBase.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            );
+                        })()}
+                    </div>
+                </div>
+            </div>
 
             {/* Payout Management Section */}
             <div className="space-y-4">

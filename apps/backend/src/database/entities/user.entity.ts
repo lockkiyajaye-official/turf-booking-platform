@@ -87,6 +87,23 @@ export class User {
   @Column({ nullable: true })
   taxId: string;
 
+  // Turf Owner Official Documentation (Optional during onboarding for faster approval)
+  @Column({ nullable: true })
+  businessRegistrationDoc: string;
+
+  @Column({ nullable: true })
+  identityDoc: string;
+
+  @Column({ type: 'simple-json', nullable: true })
+  verificationDocuments: Array<{ name: string; url: string; type: string }>;
+
+  // Custom fee overrides for this turf owner (null = use platform default)
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  customPlatformFeePercent: number | null;
+
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  customGatewayFeePercent: number | null;
+
   // Turf Owner Payout / Bank Account Details
   @Column({ nullable: true })
   accountHolderName: string;

@@ -95,6 +95,31 @@ export class PaymentsController {
         return this.paymentsService.updatePayoutStatus(id, status, notes);
     }
 
+    @Get('fee-preview')
+    @UseGuards(RolesGuard)
+    @Roles(UserRole.USER, UserRole.TURF_OWNER, UserRole.ADMIN)
+    async getFeePreview(
+        @Query('turfId') turfId: string,
+        @Query('hours') hours?: string,
+    ) {
+        const parsedHours = hours ? Math.max(1, parseFloat(hours)) : 1;
+        return this.paymentsService.calculateFeeBreakdown(turfId, parsedHours);
+    }
+
+    @Get('admin/settings')
+    @UseGuards(RolesGuard)
+    @Roles(UserRole.ADMIN)
+    async getPlatformSettings() {
+        return this.paymentsService.getSettings();
+    }
+
+    @Patch('admin/settings')
+    @UseGuards(RolesGuard)
+    @Roles(UserRole.ADMIN)
+    async updatePlatformSettings(@Body() body: any) {
+        return this.paymentsService.updateSettings(body);
+    }
+
     @Get('history')
     @UseGuards(RolesGuard)
     @Roles(UserRole.USER, UserRole.TURF_OWNER, UserRole.ADMIN)

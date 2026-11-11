@@ -53,6 +53,12 @@ class AuthViewmodel extends GetxController {
   final phoneController = TextEditingController();
   final otpController = TextEditingController();
 
+  // Turf Owner Onboarding & Verification Controllers
+  final businessNameController = TextEditingController();
+  final businessAddressController = TextEditingController();
+  final businessDocController = TextEditingController();
+  final identityDocController = TextEditingController();
+
   // ──────────────────────────────────────────────
   // Observable State
   // ──────────────────────────────────────────────
@@ -406,21 +412,13 @@ class AuthViewmodel extends GetxController {
       return;
     }
 
-    final hasEmail = email.isNotEmpty;
-    final hasPhone = phone.isNotEmpty;
-
-    if (!hasEmail && !hasPhone) {
-      _showError('Please enter your email or phone number');
+    if (phone.isEmpty || phone.length < 10) {
+      _showError('Phone number is required (minimum 10 digits)');
       return;
     }
 
-    if (hasEmail && !GetUtils.isEmail(email)) {
+    if (email.isEmpty || !GetUtils.isEmail(email)) {
       _showError('Please enter a valid email address');
-      return;
-    }
-
-    if (hasPhone && phone.length < 10) {
-      _showError('Please enter a valid phone number');
       return;
     }
 
@@ -428,17 +426,11 @@ class AuthViewmodel extends GetxController {
       isSendingOtp.value = true;
       isLoading.value = true;
 
-      Map<String, dynamic> response;
-      if (hasEmail) {
-        response = await _authService.requestEmailOtp(email: email);
-      } else {
-        response = await _authService.requestPhoneOtp(phone: normalizedPhone);
-      }
+      final response = await _authService.requestEmailOtp(email: email);
 
       if (response['success']) {
         otpSent.value = true;
-        final dest = hasEmail ? email : phone;
-        _showSuccess('OTP sent to $dest');
+        _showSuccess('OTP sent to $email');
         Get.toNamed(RoutePaths.otpVerification);
       } else {
         _showError(response['message'] ?? 'Failed to send OTP');
@@ -695,15 +687,25 @@ class AuthViewmodel extends GetxController {
       return;
     }
 
+    if (phone.isEmpty || phone.length < 10) {
+      _showError('Phone number is required');
+      return;
+    }
+
     try {
       isLoading.value = true;
+      final isOwner = selectedRole.value == 'turf_owner';
       final response = await _authService.registerWithEmailOtp(
         email: email,
         otp: otp,
         firstName: firstName,
         lastName: lastName,
         role: selectedRole.value,
-        phone: phone.isNotEmpty ? phone : null,
+        phone: phone,
+        businessName: isOwner ? businessNameController.text.trim() : null,
+        businessAddress: isOwner ? businessAddressController.text.trim() : null,
+        businessRegistrationDoc: isOwner ? businessDocController.text.trim() : null,
+        identityDoc: isOwner ? identityDocController.text.trim() : null,
       );
 
       if (response['success']) {
@@ -805,6 +807,27 @@ class AuthViewmodel extends GetxController {
       _showError(e.toString());
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<bool> requestContactOtp() async {
+    if (token.value.isEmpty) {
+      _showError('Not authenticated');
+      return false;
+    }
+
+    try {
+      final response = await _authService.requestContactOtp(token: token.value);
+      if (response['success'] == true) {
+        _showSuccess(response['message'] ?? 'OTP sent to your email');
+        return true;
+      } else {
+        _showError(response['message'] ?? 'Failed to send OTP to email');
+        return false;
+      }
+    } catch (e) {
+      _showError(e.toString());
+      return false;
     }
   }
 
@@ -943,6 +966,10 @@ class AuthViewmodel extends GetxController {
     lastNameController.clear();
     phoneController.clear();
     otpController.clear();
+    businessNameController.clear();
+    businessAddressController.clear();
+    businessDocController.clear();
+    identityDocController.clear();
     isSendingOtp.value = false;
     isGoogleLoading.value = false;
   }
@@ -956,6 +983,10 @@ class AuthViewmodel extends GetxController {
     lastNameController.dispose();
     phoneController.dispose();
     otpController.dispose();
+    businessNameController.dispose();
+    businessAddressController.dispose();
+    businessDocController.dispose();
+    identityDocController.dispose();
     super.onClose();
   }
 }

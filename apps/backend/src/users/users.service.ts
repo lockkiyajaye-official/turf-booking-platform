@@ -108,6 +108,33 @@ export class UsersService {
         return user;
     }
 
+    async updateTurfOwnerCommission(
+        id: string,
+        customPlatformFeePercent: number | null,
+        customGatewayFeePercent?: number | null,
+    ) {
+        const user = await this.findOne(id);
+
+        if (user.role !== UserRole.TURF_OWNER) {
+            throw new BadRequestException('User is not a turf owner');
+        }
+
+        user.customPlatformFeePercent =
+            customPlatformFeePercent !== undefined && customPlatformFeePercent !== null
+                ? Number(customPlatformFeePercent)
+                : null;
+
+        if (customGatewayFeePercent !== undefined) {
+            user.customGatewayFeePercent =
+                customGatewayFeePercent !== null
+                    ? Number(customGatewayFeePercent)
+                    : null;
+        }
+
+        await this.userRepository.save(user);
+        return user;
+    }
+
     async updateUser(id: string, updateData: Partial<User>) {
         const user = await this.findOne(id);
         Object.assign(user, updateData);

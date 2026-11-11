@@ -99,6 +99,23 @@ class PaymentService {
     }
   }
 
+  /// Fetch itemized fee breakdown for a turf slot
+  Future<Map<String, dynamic>> getFeePreview({
+    required String token,
+    required String turfId,
+    int hours = 1,
+  }) async {
+    try {
+      final res = await http.get(
+        Uri.parse('$_base/fee-preview?turfId=$turfId&hours=$hours'),
+        headers: _headers(token),
+      );
+      return _handleResponse(res);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
   /// Create Razorpay payment order
   Future<Map<String, dynamic>> createOrder({
     required String token,

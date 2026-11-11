@@ -47,6 +47,15 @@ export class Payment {
     @Column()
     ownerId: string;
 
+    @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+    baseAmount: number;
+
+    @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+    platformFee: number;
+
+    @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+    gatewayFee: number;
+
     @Column({ type: 'decimal', precision: 10, scale: 2 })
     amount: number;
 

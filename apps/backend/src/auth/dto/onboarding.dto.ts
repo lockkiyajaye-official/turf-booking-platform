@@ -31,5 +31,16 @@ export class TurfOwnerOnboardingDto {
   @IsOptional()
   @IsString()
   taxId?: string;
+
+  @IsOptional()
+  @IsString()
+  businessRegistrationDoc?: string;
+
+  @IsOptional()
+  @IsString()
+  identityDoc?: string;
+
+  @IsOptional()
+  verificationDocuments?: any[];
 }
 

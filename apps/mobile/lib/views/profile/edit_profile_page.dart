@@ -30,19 +30,23 @@ class _EditProfilePageState extends State<EditProfilePage> {
   File? _selectedImageFile;
   String? _currentAvatarUrl;
   bool _isSaving = false;
+  late String _initialEmail;
+  late String _initialPhone;
 
   @override
   void initState() {
     super.initState();
     final u = _authVm.currentUser;
+    _initialEmail = u['email'] as String? ?? '';
+    _initialPhone = u['phone'] as String? ?? '';
     _firstNameController =
         TextEditingController(text: u['firstName'] as String? ?? '');
     _lastNameController =
         TextEditingController(text: u['lastName'] as String? ?? '');
     _emailController =
-        TextEditingController(text: u['email'] as String? ?? '');
+        TextEditingController(text: _initialEmail);
     _phoneController =
-        TextEditingController(text: u['phone'] as String? ?? '');
+        TextEditingController(text: _initialPhone);
     _bioController = TextEditingController(text: u['bio'] as String? ?? '');
     _cityController = TextEditingController(text: u['city'] as String? ?? '');
     _stateController =
@@ -193,6 +197,39 @@ class _EditProfilePageState extends State<EditProfilePage> {
       avatarData = '';
     }
 
+    final newEmail = _emailController.text.trim();
+    final newPhone = _phoneController.text.trim();
+    final isEmailChanging =
+        newEmail.toLowerCase() != _initialEmail.toLowerCase();
+    final isPhoneChanging = newPhone != _initialPhone;
+
+    // If contact info is changing, verify email OTP first
+    if (isEmailChanging || isPhoneChanging) {
+      if (newEmail.isEmpty || !GetUtils.isEmail(newEmail)) {
+        if (mounted) setState(() => _isSaving = false);
+        Get.snackbar('Invalid Email', 'Please enter a valid email address');
+        return;
+      }
+      if (newPhone.isEmpty || newPhone.length < 10) {
+        if (mounted) setState(() => _isSaving = false);
+        Get.snackbar('Invalid Phone', 'Please enter a valid phone number');
+        return;
+      }
+
+      final otpSent = await _authVm.requestContactOtp();
+      if (mounted) setState(() => _isSaving = false);
+      if (!otpSent) return;
+
+      if (mounted) {
+        _showOtpVerificationSheet(
+          newEmail: newEmail,
+          newPhone: newPhone,
+          avatarData: avatarData,
+        );
+      }
+      return;
+    }
+
     final updateData = <String, dynamic>{
       'firstName': _firstNameController.text.trim(),
       'lastName': _lastNameController.text.trim(),
@@ -207,6 +244,197 @@ class _EditProfilePageState extends State<EditProfilePage> {
     if (success) {
       Get.back();
     }
+  }
+
+  void _showOtpVerificationSheet({
+    required String newEmail,
+    required String newPhone,
+    String? avatarData,
+  }) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final textTheme = Theme.of(context).textTheme;
+    final otpSheetController = TextEditingController();
+    bool isVerifying = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (bottomSheetContext) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Container(
+              padding: EdgeInsets.only(
+                left: 20.w,
+                right: 20.w,
+                top: 20.h,
+                bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 24.h,
+              ),
+              decoration: BoxDecoration(
+                color: colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40.w,
+                      height: 4.h,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(8.w),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.shield_outlined,
+                          color: Color(0xFFE43434),
+                          size: 22,
+                        ),
+                      ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Verify Contact Update',
+                              style: textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: colors.textTitle,
+                              ),
+                            ),
+                            SizedBox(height: 2.h),
+                            Text(
+                              'OTP verification required',
+                              style: textTheme.bodySmall?.copyWith(
+                                color: colors.textGrey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 14.h),
+                  Text(
+                    'A 6-digit verification code was sent to your email ($_initialEmail). Enter it below to confirm:',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colors.textGrey,
+                      height: 1.4,
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  MyTextField(
+                    controller: otpSheetController,
+                    height: 50.h,
+                    width: double.infinity,
+                    type: TextInputType.number,
+                    maxLength: 6,
+                    fillColor: colors.background,
+                    hintText: 'Enter 6-digit OTP',
+                    prefixIcon: Icon(
+                      Icons.lock_clock_outlined,
+                      color: colors.textGrey,
+                    ),
+                  ),
+                  SizedBox(height: 14.h),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: isVerifying
+                            ? null
+                            : () async {
+                                final sent = await _authVm.requestContactOtp();
+                                if (sent) {
+                                  Get.snackbar('OTP Resent', 'A new code was sent to your email');
+                                }
+                              },
+                        child: Text(
+                          'Resend Code',
+                          style: textTheme.bodySmall?.copyWith(
+                            color: const Color(0xFFE43434),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: isVerifying
+                            ? null
+                            : () async {
+                                final code = otpSheetController.text.trim();
+                                if (code.length < 6) {
+                                  Get.snackbar('Invalid OTP', 'Please enter the 6-digit code');
+                                  return;
+                                }
+
+                                setSheetState(() => isVerifying = true);
+
+                                final updateData = <String, dynamic>{
+                                  'firstName': _firstNameController.text.trim(),
+                                  'lastName': _lastNameController.text.trim(),
+                                  'bio': _bioController.text.trim(),
+                                  'city': _cityController.text.trim(),
+                                  'state': _stateController.text.trim(),
+                                  'email': newEmail,
+                                  'phone': newPhone,
+                                  'otp': code,
+                                  if (avatarData != null) 'avatarUrl': avatarData,
+                                };
+
+                                final success = await _authVm.updateProfile(updateData);
+                                setSheetState(() => isVerifying = false);
+
+                                if (success) {
+                                  Navigator.of(bottomSheetContext).pop();
+                                  Get.back(); // exit edit profile
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE43434),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+                        ),
+                        child: isVerifying
+                            ? SizedBox(
+                                width: 16.w,
+                                height: 16.w,
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(
+                                'Confirm & Save',
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -352,7 +580,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             ),
             SizedBox(height: 16.h),
 
-            // ── Section 2: Contact Info (Read-Only) ───────────────
+            // ── Section 2: Contact Info (Editable with Email OTP) ───────────────
             _buildSectionCard(
               colors: colors,
               title: 'Contact Information',
@@ -366,9 +594,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   label: 'Email Address',
                   hint: 'Email',
                   prefixIcon: Icons.email_outlined,
-                  readOnly: true,
+                  readOnly: false,
                   suffixWidget: Icon(
-                    Icons.lock_outline_rounded,
+                    Icons.edit_outlined,
                     size: 16,
                     color: colors.textGrey,
                   ),
@@ -381,12 +609,32 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   label: 'Phone Number',
                   hint: 'Phone',
                   prefixIcon: Icons.phone_android_outlined,
-                  readOnly: true,
+                  readOnly: false,
                   suffixWidget: Icon(
-                    Icons.lock_outline_rounded,
+                    Icons.edit_outlined,
                     size: 16,
                     color: colors.textGrey,
                   ),
+                ),
+                SizedBox(height: 8.h),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.shield_outlined,
+                      size: 13.sp,
+                      color: colors.textGrey,
+                    ),
+                    SizedBox(width: 4.w),
+                    Expanded(
+                      child: Text(
+                        'Requires email OTP verification when updating email or phone',
+                        style: textTheme.bodySmall?.copyWith(
+                          fontSize: 11.sp,
+                          color: colors.textGrey,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

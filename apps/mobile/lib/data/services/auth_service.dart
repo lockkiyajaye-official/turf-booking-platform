@@ -233,8 +233,12 @@ class AuthService {
     required String otp,
     required String firstName,
     required String lastName,
+    required String phone,
     String role = 'user',
-    String? phone,
+    String? businessName,
+    String? businessAddress,
+    String? businessRegistrationDoc,
+    String? identityDoc,
   }) async {
     try {
       final response = await http.post(
@@ -246,7 +250,12 @@ class AuthService {
           'firstName': firstName,
           'lastName': lastName,
           'role': role,
-          if (phone != null) 'phone': phone,
+          'phone': phone,
+          if (businessName != null && businessName.isNotEmpty) 'businessName': businessName,
+          if (businessAddress != null && businessAddress.isNotEmpty) 'businessAddress': businessAddress,
+          if (businessRegistrationDoc != null && businessRegistrationDoc.isNotEmpty)
+            'businessRegistrationDoc': businessRegistrationDoc,
+          if (identityDoc != null && identityDoc.isNotEmpty) 'identityDoc': identityDoc,
         }),
       );
       return _handleResponse(response);
@@ -340,6 +349,19 @@ class AuthService {
     try {
       final response = await http.get(
         Uri.parse('$_base/me'),
+        headers: _authHeaders(token),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// POST /auth/profile/request-contact-otp — requires JWT token
+  Future<Map<String, dynamic>> requestContactOtp({required String token}) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_base/profile/request-contact-otp'),
         headers: _authHeaders(token),
       );
       return _handleResponse(response);

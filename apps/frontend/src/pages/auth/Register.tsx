@@ -5,7 +5,8 @@ import { useAuth } from "../../context/AuthContext";
 import { API_URL } from "../../services/api";
 
 export default function Register() {
-    const [identifier, setIdentifier] = useState("");
+    const [email, setEmail] = useState("");
+    const [phone, setPhone] = useState("");
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [otp, setOtp] = useState("");
@@ -13,12 +14,9 @@ export default function Register() {
     const [countdown, setCountdown] = useState(0);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-    const [method, setMethod] = useState<"phone" | "email" | null>(null);
 
     const {
-        registerWithPhoneOtp,
         registerWithEmailOtp,
-        requestPhoneOtp,
         requestEmailOtp,
     } = useAuth();
     const navigate = useNavigate();
@@ -32,24 +30,22 @@ export default function Register() {
         setError("");
 
         if (!firstName.trim() || !lastName.trim()) {
-            setError("Please fill in your name first.");
+            setError("Please fill in your first and last name.");
             return;
         }
-        if (!identifier.trim()) {
-            setError("Please enter your email or phone number.");
+        if (!email.trim() || !email.includes("@")) {
+            setError("Please enter a valid email address.");
+            return;
+        }
+        if (!phone.trim() || phone.trim().length < 10) {
+            setError("Phone number is required (minimum 10 digits).");
             return;
         }
 
-        const isEmail = identifier.includes("@");
-        setMethod(isEmail ? "email" : "phone");
         setLoading(true);
 
         try {
-            if (isEmail) {
-                await requestEmailOtp(identifier);
-            } else {
-                await requestPhoneOtp(identifier);
-            }
+            await requestEmailOtp(email.trim());
             setOtpSent(true);
             setCountdown(300); // 5 minutes
             const interval = setInterval(() => {
@@ -76,23 +72,14 @@ export default function Register() {
         setError("");
         setLoading(true);
         try {
-            if (method === "email") {
-                await registerWithEmailOtp({
-                    email: identifier,
-                    otp,
-                    firstName,
-                    lastName,
-                    role: "user",
-                });
-            } else {
-                await registerWithPhoneOtp({
-                    phone: identifier,
-                    otp,
-                    firstName,
-                    lastName,
-                    role: "user",
-                });
-            }
+            await registerWithEmailOtp({
+                email: email.trim(),
+                phone: phone.trim(),
+                otp: otp.trim(),
+                firstName: firstName.trim(),
+                lastName: lastName.trim(),
+                role: "user",
+            });
             navigate("/onboarding");
         } catch (err: any) {
             setError(
@@ -191,22 +178,45 @@ export default function Register() {
 
                                 <div>
                                     <label
-                                        htmlFor="identifier"
+                                        htmlFor="email"
                                         className="block text-sm font-bold text-gray-700"
                                     >
-                                        Email Address or Phone Number
+                                        Email Address *
                                     </label>
                                     <div className="mt-2">
                                         <input
-                                            id="identifier"
-                                            name="identifier"
-                                            type="text"
+                                            id="email"
+                                            name="email"
+                                            type="email"
                                             required
                                             className="appearance-none block w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF4D4D] focus:border-transparent transition-all sm:text-sm font-medium"
-                                            placeholder="you@example.com or +1234567890"
-                                            value={identifier}
+                                            placeholder="you@example.com"
+                                            value={email}
                                             onChange={(e) =>
-                                                setIdentifier(e.target.value)
+                                                setEmail(e.target.value)
+                                            }
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label
+                                        htmlFor="phone"
+                                        className="block text-sm font-bold text-gray-700"
+                                    >
+                                        Phone Number *
+                                    </label>
+                                    <div className="mt-2">
+                                        <input
+                                            id="phone"
+                                            name="phone"
+                                            type="tel"
+                                            required
+                                            className="appearance-none block w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF4D4D] focus:border-transparent transition-all sm:text-sm font-medium"
+                                            placeholder="+91 9876543210"
+                                            value={phone}
+                                            onChange={(e) =>
+                                                setPhone(e.target.value)
                                             }
                                         />
                                     </div>
@@ -217,7 +227,8 @@ export default function Register() {
                                         type="submit"
                                         disabled={
                                             loading ||
-                                            !identifier ||
+                                            !email ||
+                                            !phone ||
                                             !firstName ||
                                             !lastName
                                         }
@@ -241,7 +252,7 @@ export default function Register() {
                                     <p className="text-xs text-center text-gray-500 mt-1 mb-4">
                                         We sent a code to{" "}
                                         <span className="font-semibold text-gray-800">
-                                            {identifier}
+                                            {email}
                                         </span>
                                     </p>
                                     <div className="mt-1">

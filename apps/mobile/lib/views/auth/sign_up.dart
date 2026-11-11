@@ -251,7 +251,7 @@ class _SignUpState extends State<SignUp> {
 
                   /// PHONE
                   Text(
-                    "Phone Number",
+                    "Phone Number *",
                     style: textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: colors.textTitle,
@@ -264,7 +264,7 @@ class _SignUpState extends State<SignUp> {
                     width: double.infinity,
                     type: TextInputType.phone,
                     fillColor: colors.background,
-                    hintText: "Enter your phone number",
+                    hintText: "Enter your phone number (Required)",
                     prefixIcon: Icon(
                       Icons.phone_outlined,
                       color: colors.textGrey,
@@ -275,7 +275,7 @@ class _SignUpState extends State<SignUp> {
 
                   /// EMAIL
                   Text(
-                    "Email",
+                    "Email Address *",
                     style: textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: colors.textTitle,
@@ -288,12 +288,143 @@ class _SignUpState extends State<SignUp> {
                     width: double.infinity,
                     type: TextInputType.emailAddress,
                     fillColor: colors.background,
-                    hintText: "Enter your email",
+                    hintText: "Enter your email (Required)",
                     prefixIcon: Icon(
                       Icons.email_outlined,
                       color: colors.textGrey,
                     ),
                   ),
+
+                  // ── TURF OWNER EXTRA DETAILS (OPTIONAL FOR FASTER APPROVAL) ──
+                  Obx(() {
+                    if (controller.selectedRole.value != 'turf_owner') {
+                      return const SizedBox.shrink();
+                    }
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(height: 16.h),
+                        Container(
+                          padding: EdgeInsets.all(12.w),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFFBEB),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFFDE68A)),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(
+                                Icons.info_outline_rounded,
+                                color: Color(0xFFB45309),
+                                size: 18,
+                              ),
+                              SizedBox(width: 8.w),
+                              Expanded(
+                                child: Text(
+                                  "Faster Approval: Adding official verification documents is optional, but applications with verified documents receive faster approval by our verification team.",
+                                  style: textTheme.bodySmall?.copyWith(
+                                    fontSize: 11.sp,
+                                    color: const Color(0xFF92400E),
+                                    height: 1.35,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 14.h),
+
+                        Text(
+                          "Business Name",
+                          style: textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: colors.textTitle,
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        MyTextField(
+                          controller: controller.businessNameController,
+                          height: 50.h,
+                          width: double.infinity,
+                          type: TextInputType.text,
+                          fillColor: colors.background,
+                          hintText: "e.g. Apex Sports Arena",
+                          prefixIcon: Icon(
+                            Icons.business_outlined,
+                            color: colors.textGrey,
+                          ),
+                        ),
+
+                        SizedBox(height: 14.h),
+                        Text(
+                          "Business / Facility Address",
+                          style: textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: colors.textTitle,
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        MyTextField(
+                          controller: controller.businessAddressController,
+                          height: 50.h,
+                          width: double.infinity,
+                          type: TextInputType.text,
+                          fillColor: colors.background,
+                          hintText: "Facility full address",
+                          prefixIcon: Icon(
+                            Icons.location_on_outlined,
+                            color: colors.textGrey,
+                          ),
+                        ),
+
+                        SizedBox(height: 14.h),
+                        Text(
+                          "Registration / License Doc Link (Optional)",
+                          style: textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: colors.textTitle,
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        MyTextField(
+                          controller: controller.businessDocController,
+                          height: 50.h,
+                          width: double.infinity,
+                          type: TextInputType.url,
+                          fillColor: colors.background,
+                          hintText: "https://... (Link to doc / license)",
+                          prefixIcon: Icon(
+                            Icons.file_copy_outlined,
+                            color: colors.textGrey,
+                          ),
+                        ),
+
+                        SizedBox(height: 14.h),
+                        Text(
+                          "Owner ID Proof Link (Optional)",
+                          style: textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: colors.textTitle,
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        MyTextField(
+                          controller: controller.identityDocController,
+                          height: 50.h,
+                          width: double.infinity,
+                          type: TextInputType.url,
+                          fillColor: colors.background,
+                          hintText: "https://... (Govt ID / PAN link)",
+                          prefixIcon: Icon(
+                            Icons.badge_outlined,
+                            color: colors.textGrey,
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
 
                   SizedBox(height: 16.h),
 

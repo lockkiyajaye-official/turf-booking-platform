@@ -21,6 +21,33 @@ export class RegisterWithPhoneOtpDto {
 
     @IsEnum(UserRole)
     role: UserRole;
+
+    @IsOptional()
+    @IsString()
+    businessName?: string;
+
+    @IsOptional()
+    @IsString()
+    businessAddress?: string;
+
+    @IsOptional()
+    @IsString()
+    businessPhone?: string;
+
+    @IsOptional()
+    @IsString()
+    taxId?: string;
+
+    @IsOptional()
+    @IsString()
+    businessRegistrationDoc?: string;
+
+    @IsOptional()
+    @IsString()
+    identityDoc?: string;
+
+    @IsOptional()
+    verificationDocuments?: any[];
 }
 
 export class RegisterWithEmailOtpDto {
@@ -36,11 +63,36 @@ export class RegisterWithEmailOtpDto {
     @IsString()
     lastName: string;
 
-    @IsOptional()
     @IsString()
-    @IsPhoneNumber()
-    phone?: string;
+    phone: string;
 
     @IsEnum(UserRole)
     role: UserRole;
+
+    @IsOptional()
+    @IsString()
+    businessName?: string;
+
+    @IsOptional()
+    @IsString()
+    businessAddress?: string;
+
+    @IsOptional()
+    @IsString()
+    businessPhone?: string;
+
+    @IsOptional()
+    @IsString()
+    taxId?: string;
+
+    @IsOptional()
+    @IsString()
+    businessRegistrationDoc?: string;
+
+    @IsOptional()
+    @IsString()
+    identityDoc?: string;
+
+    @IsOptional()
+    verificationDocuments?: any[];
 }
