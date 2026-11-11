@@ -45,12 +45,12 @@ export default function OwnerTurfs() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this turf?")) return;
+        if (!confirm("Are you sure you want to permanently delete this unpublished turf? This cannot be undone.")) return;
         try {
             await api.delete(`/turfs/${id}`);
             fetchTurfs();
-        } catch {
-            alert("Failed to delete turf");
+        } catch (error: any) {
+            alert(error.response?.data?.message || "Failed to delete turf");
         }
     };
 
@@ -168,10 +168,13 @@ function TurfOwnerCard({ turf, isApproved, onView, onPublish, onUnpublish, onDel
                                 <Eye className="w-4 h-4" /> Publish
                             </button>
                         )}
-                        <button onClick={() => onDelete(turf.id)}
-                            className="px-4 py-2.5 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-colors shrink-0">
-                            <Trash2 className="w-4 h-4" />
-                        </button>
+                        {!turf.isPublished && (
+                            <button onClick={() => onDelete(turf.id)}
+                                title="Delete unpublished turf"
+                                className="px-4 py-2.5 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-colors shrink-0">
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

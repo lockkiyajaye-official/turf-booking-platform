@@ -117,6 +117,7 @@ class _RateTurfBottomSheetState extends State<RateTurfBottomSheet> {
   }
 
   Future<void> _handleSubmit() async {
+    if (_isSubmitting) return;
     final token = _authVm.token.value;
     if (token.isEmpty) {
       Get.snackbar(
@@ -178,6 +179,7 @@ class _RateTurfBottomSheetState extends State<RateTurfBottomSheet> {
   }
 
   Future<void> _handleDelete() async {
+    if (_isDeleting) return;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(

@@ -107,23 +107,28 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage>
   final List<Map<String, String>> _presetTurfPhotos = [
     {
       'name': 'Green Arena',
-      'url': 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?auto=format&fit=crop&w=800&q=80',
+      'url':
+          'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?auto=format&fit=crop&w=800&q=80',
     },
     {
       'name': 'Night Arena',
-      'url': 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=800&q=80',
+      'url':
+          'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=800&q=80',
     },
     {
       'name': 'Badminton Court',
-      'url': 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=800&q=80',
+      'url':
+          'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=800&q=80',
     },
     {
       'name': 'Cricket Turf',
-      'url': 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=800&q=80',
+      'url':
+          'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=800&q=80',
     },
     {
       'name': 'Indoor Stadium',
-      'url': 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=800&q=80',
+      'url':
+          'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=800&q=80',
     },
   ];
 
@@ -182,10 +187,18 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage>
     _cityController = TextEditingController(text: t.city ?? '');
     _stateController = TextEditingController(text: t.state ?? '');
     _pincodeController = TextEditingController(text: t.pincode ?? '');
-    _capacityController = TextEditingController(text: t.capacity?.toString() ?? '');
-    _latitudeController = TextEditingController(text: t.latitude?.toString() ?? '');
-    _longitudeController = TextEditingController(text: t.longitude?.toString() ?? '');
-    _mapUrlController = TextEditingController(text: t.googleMapUrl ?? t.mapUrl ?? '');
+    _capacityController = TextEditingController(
+      text: t.capacity?.toString() ?? '',
+    );
+    _latitudeController = TextEditingController(
+      text: t.latitude?.toString() ?? '',
+    );
+    _longitudeController = TextEditingController(
+      text: t.longitude?.toString() ?? '',
+    );
+    _mapUrlController = TextEditingController(
+      text: t.googleMapUrl ?? t.mapUrl ?? '',
+    );
 
     _contactPhoneController = TextEditingController(text: t.contactPhone ?? '');
     _contactEmailController = TextEditingController(text: t.contactEmail ?? '');
@@ -228,16 +241,22 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage>
   // ── Image Picker Helpers ─────────────────────────────────
   Future<void> _pickImage(ImageSource source) async {
     try {
-      final XFile? file = await _picker.pickImage(source: source, imageQuality: 80);
+      final XFile? file = await _picker.pickImage(
+        source: source,
+        imageQuality: 80,
+      );
       if (file != null) {
         setState(() {
           _imageUrls.add(file.path);
         });
       }
     } catch (e) {
-      Get.snackbar('Error', 'Could not pick image: $e',
-          backgroundColor: Colors.red.shade100,
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'Error',
+        'Could not pick image: $e',
+        backgroundColor: Colors.red.shade100,
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 
@@ -307,7 +326,10 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage>
                       color: colors.primary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.camera_alt_rounded, color: colors.primary),
+                    child: Icon(
+                      Icons.camera_alt_rounded,
+                      color: colors.primary,
+                    ),
                   ),
                   title: Text('Take Photo', style: textTheme.bodyMedium),
                   onTap: () {
@@ -322,9 +344,15 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage>
                       color: colors.primary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.photo_library_rounded, color: colors.primary),
+                    child: Icon(
+                      Icons.photo_library_rounded,
+                      color: colors.primary,
+                    ),
                   ),
-                  title: Text('Choose from Gallery', style: textTheme.bodyMedium),
+                  title: Text(
+                    'Choose from Gallery',
+                    style: textTheme.bodyMedium,
+                  ),
                   onTap: () {
                     Get.back();
                     _pickImage(ImageSource.gallery);
@@ -354,26 +382,37 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage>
   }
 
   Future<void> _save() async {
+    if (_isSaving) return;
+
     final name = _nameController.text.trim();
     final address = _addressController.text.trim();
     final price = _priceController.text.trim();
 
     if (name.isEmpty || address.isEmpty || price.isEmpty) {
-      Get.snackbar('Error', 'Please fill all required fields (*)',
-          backgroundColor: Colors.red.shade100,
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'Error',
+        'Please fill all required fields (*)',
+        backgroundColor: Colors.red.shade100,
+        snackPosition: SnackPosition.BOTTOM,
+      );
       return;
     }
     if (_selectedSports.isEmpty) {
-      Get.snackbar('Error', 'Please select at least one sport',
-          backgroundColor: Colors.red.shade100,
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'Error',
+        'Please select at least one sport',
+        backgroundColor: Colors.red.shade100,
+        snackPosition: SnackPosition.BOTTOM,
+      );
       return;
     }
     if (_selectedSlots.isEmpty) {
-      Get.snackbar('Error', 'Please select at least one available time slot',
-          backgroundColor: Colors.red.shade100,
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'Error',
+        'Please select at least one available time slot',
+        backgroundColor: Colors.red.shade100,
+        snackPosition: SnackPosition.BOTTOM,
+      );
       return;
     }
 
@@ -382,7 +421,8 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage>
 
     try {
       final List<String> orderedImages = List<String>.from(_imageUrls);
-      if (orderedImages.isNotEmpty && _primaryImageIndex < orderedImages.length) {
+      if (orderedImages.isNotEmpty &&
+          _primaryImageIndex < orderedImages.length) {
         final primary = orderedImages.removeAt(_primaryImageIndex);
         orderedImages.insert(0, primary);
       }
@@ -416,25 +456,39 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage>
       };
 
       final res = await _turfService.updateTurf(
-          token: token, id: widget.turf.id, data: data);
+        token: token,
+        id: widget.turf.id,
+        data: data,
+      );
 
       if (res['success']) {
-        Get.snackbar('Saved', 'Turf updated successfully',
-            backgroundColor: Colors.green.shade100,
-            snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar(
+          'Saved',
+          'Turf updated successfully',
+          backgroundColor: Colors.green.shade100,
+          snackPosition: SnackPosition.BOTTOM,
+        );
         Get.find<OwnerViewmodel>().fetchMyTurfs();
         Get.back();
       } else {
-        Get.snackbar('Error', res['message'] ?? 'Update failed',
-            backgroundColor: Colors.red.shade100,
-            snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar(
+          'Error',
+          res['message'] ?? 'Update failed',
+          backgroundColor: Colors.red.shade100,
+          snackPosition: SnackPosition.BOTTOM,
+        );
       }
     } catch (e) {
-      Get.snackbar('Error', e.toString(),
-          backgroundColor: Colors.red.shade100,
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'Error',
+        e.toString(),
+        backgroundColor: Colors.red.shade100,
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
-      setState(() => _isSaving = false);
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
     }
   }
 
@@ -467,769 +521,1169 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage>
     final imageUrl = _imageUrls.isNotEmpty
         ? _imageUrls.first
         : (turf.images.isNotEmpty
-            ? turf.images.first
-            : 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600&q=80');
+              ? turf.images.first
+              : 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600&q=80');
 
     final filteredSlots = _currentGeneratedSlots
         .where((s) => s.toLowerCase().contains(_slotSearch.toLowerCase()))
         .toList();
 
-    return Scaffold(
-      backgroundColor: colors.background,
-      body: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) => [
-          SliverAppBar(
-            expandedHeight: context.isTablet ? 320 : 220.h,
-            pinned: true,
-            backgroundColor: colors.white,
-            leading: IconButton(
-              icon: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: Colors.black26,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.arrow_back_ios_new_rounded,
-                    color: Colors.white, size: 16),
-              ),
-              onPressed: () => Get.back(),
-            ),
-            flexibleSpace: FlexibleSpaceBar(
-              background: _buildImageWidget(imageUrl),
-            ),
-            bottom: TabBar(
-              controller: _tabController,
-              indicatorColor: colors.primary,
-              labelColor: colors.primary,
-              unselectedLabelColor: colors.textGrey,
-              labelStyle: textTheme.bodySmall
-                  ?.copyWith(fontWeight: FontWeight.w600),
-              tabs: const [
-                Tab(text: 'Overview'),
-                Tab(text: 'Edit Details'),
-              ],
-            ),
-          ),
-        ],
-        body: TabBarView(
-          controller: _tabController,
+    return PopScope(
+      canPop: !_isSaving,
+      child: Scaffold(
+        backgroundColor: colors.background,
+        body: Stack(
           children: [
-            // ── OVERVIEW TAB ──────────────────────────────
-            _OverviewTab(turf: turf, colors: colors, textTheme: textTheme),
-
-            // ── EDIT DETAILS TAB ─────────────────────────
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 860),
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.all(20.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                  // ── Section 1: Photos ─────────────────────────────
-                  _SectionHeader(title: 'Photos', textTheme: textTheme),
-                  SizedBox(height: 4.h),
-                  Text(
-                    'Upload photos or choose sample templates. Tap any image to set as Primary Cover.',
-                    style: textTheme.bodySmall?.copyWith(color: colors.textGrey, fontSize: 11.sp),
-                  ),
-                  SizedBox(height: 12.h),
-
-                  // Sample Presets Chips
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        Text('Quick Presets: ', style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold, fontSize: 11.sp)),
-                        ..._presetTurfPhotos.map((preset) {
-                          final url = preset['url']!;
-                          final isAdded = _imageUrls.contains(url);
-                          return Padding(
-                            padding: EdgeInsets.only(right: 6.w),
-                            child: FilterChip(
-                              selected: isAdded,
-                              label: Text(preset['name']!, style: TextStyle(fontSize: 10.sp)),
-                              selectedColor: const Color(0xFFE43434).withValues(alpha: 0.2),
-                              checkmarkColor: const Color(0xFFE43434),
-                              onSelected: (val) {
-                                setState(() {
-                                  if (val) {
-                                    if (!isAdded) _imageUrls.add(url);
-                                  } else {
-                                    _imageUrls.remove(url);
-                                  }
-                                });
-                              },
-                            ),
-                          );
-                        }),
-                      ],
+            NestedScrollView(
+              headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                SliverAppBar(
+                  expandedHeight: context.isTablet ? 320 : 220.h,
+                  pinned: true,
+                  backgroundColor: colors.white,
+                  leading: IconButton(
+                    icon: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.black26,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white,
+                        size: 16,
+                      ),
                     ),
+                    onPressed: _isSaving ? null : () => Get.back(),
                   ),
-                  SizedBox(height: 12.h),
-
-                  // Upload Button & Thumbnail Grid
-                  SizedBox(
-                    height: 110.h,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _imageUrls.length + 1,
-                      itemBuilder: (context, index) {
-                        if (index == _imageUrls.length) {
-                          return GestureDetector(
-                            onTap: () => _showImageSourcePicker(colors, textTheme),
-                            child: Container(
-                              width: 100.w,
-                              margin: EdgeInsets.only(right: 10.w),
-                              decoration: BoxDecoration(
-                                color: colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: const Color(0xFFE43434), style: BorderStyle.solid, width: 1.5),
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.add_a_photo_outlined, color: const Color(0xFFE43434), size: 28.sp),
-                                  SizedBox(height: 6.h),
-                                  Text(
-                                    '+ Add Photo',
-                                    style: TextStyle(color: const Color(0xFFE43434), fontSize: 11.sp, fontWeight: FontWeight.bold),
+                  actions: [
+                    if (!turf.isPublished)
+                      IconButton(
+                        icon: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withValues(alpha: 0.85),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.delete_outline_rounded,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ),
+                        tooltip: 'Delete unpublished turf',
+                        onPressed: _isSaving
+                            ? null
+                            : () {
+                                Get.defaultDialog(
+                                  title: 'Delete Turf',
+                                  titleStyle: const TextStyle(
+                                    fontWeight: FontWeight.bold,
                                   ),
+                                  middleText:
+                                      'Are you sure you want to permanently delete "${turf.name}"? This action cannot be undone.',
+                                  textConfirm: 'Delete',
+                                  textCancel: 'Cancel',
+                                  confirmTextColor: Colors.white,
+                                  buttonColor: const Color(0xFFE43434),
+                                  onConfirm: () async {
+                                    Get.back();
+                                    final success =
+                                        await Get.find<OwnerViewmodel>()
+                                            .deleteTurf(turf.id);
+                                    if (success) {
+                                      Get.back();
+                                    }
+                                  },
+                                );
+                              },
+                      ),
+                  ],
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: _buildImageWidget(imageUrl),
+                  ),
+                  bottom: TabBar(
+                    controller: _tabController,
+                    indicatorColor: colors.primary,
+                    labelColor: colors.primary,
+                    unselectedLabelColor: colors.textGrey,
+                    labelStyle: textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    tabs: const [
+                      Tab(text: 'Overview'),
+                      Tab(text: 'Edit Details'),
+                    ],
+                  ),
+                ),
+              ],
+              body: TabBarView(
+                controller: _tabController,
+                children: [
+                  // ── OVERVIEW TAB ──────────────────────────────
+                  _OverviewTab(
+                    turf: turf,
+                    colors: colors,
+                    textTheme: textTheme,
+                  ),
+
+                  // ── EDIT DETAILS TAB ─────────────────────────
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 860),
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.all(20.w),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // ── Section 1: Photos ─────────────────────────────
+                            _SectionHeader(
+                              title: 'Photos',
+                              textTheme: textTheme,
+                            ),
+                            SizedBox(height: 4.h),
+                            Text(
+                              'Upload photos or choose sample templates. Tap any image to set as Primary Cover.',
+                              style: textTheme.bodySmall?.copyWith(
+                                color: colors.textGrey,
+                                fontSize: 11.sp,
+                              ),
+                            ),
+                            SizedBox(height: 12.h),
+
+                            // Sample Presets Chips
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  Text(
+                                    'Quick Presets: ',
+                                    style: textTheme.bodySmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 11.sp,
+                                    ),
+                                  ),
+                                  ..._presetTurfPhotos.map((preset) {
+                                    final url = preset['url']!;
+                                    final isAdded = _imageUrls.contains(url);
+                                    return Padding(
+                                      padding: EdgeInsets.only(right: 6.w),
+                                      child: FilterChip(
+                                        selected: isAdded,
+                                        label: Text(
+                                          preset['name']!,
+                                          style: TextStyle(fontSize: 10.sp),
+                                        ),
+                                        selectedColor: const Color(
+                                          0xFFE43434,
+                                        ).withValues(alpha: 0.2),
+                                        checkmarkColor: const Color(0xFFE43434),
+                                        onSelected: (val) {
+                                          setState(() {
+                                            if (val) {
+                                              if (!isAdded) _imageUrls.add(url);
+                                            } else {
+                                              _imageUrls.remove(url);
+                                            }
+                                          });
+                                        },
+                                      ),
+                                    );
+                                  }),
                                 ],
                               ),
                             ),
-                          );
-                        }
+                            SizedBox(height: 12.h),
 
-                        final path = _imageUrls[index];
-                        final isPrimary = index == _primaryImageIndex;
+                            // Upload Button & Thumbnail Grid
+                            SizedBox(
+                              height: 110.h,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: _imageUrls.length + 1,
+                                itemBuilder: (context, index) {
+                                  if (index == _imageUrls.length) {
+                                    return GestureDetector(
+                                      onTap: () => _showImageSourcePicker(
+                                        colors,
+                                        textTheme,
+                                      ),
+                                      child: Container(
+                                        width: 100.w,
+                                        margin: EdgeInsets.only(right: 10.w),
+                                        decoration: BoxDecoration(
+                                          color: colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          border: Border.all(
+                                            color: const Color(0xFFE43434),
+                                            style: BorderStyle.solid,
+                                            width: 1.5,
+                                          ),
+                                        ),
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.add_a_photo_outlined,
+                                              color: const Color(0xFFE43434),
+                                              size: 28.sp,
+                                            ),
+                                            SizedBox(height: 6.h),
+                                            Text(
+                                              '+ Add Photo',
+                                              style: TextStyle(
+                                                color: const Color(0xFFE43434),
+                                                fontSize: 11.sp,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }
 
-                        return GestureDetector(
-                          onTap: () => setState(() => _primaryImageIndex = index),
-                          child: Container(
-                            width: 100.w,
-                            margin: EdgeInsets.only(right: 10.w),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isPrimary ? const Color(0xFFE43434) : const Color(0xFFE0E0E0),
-                                width: isPrimary ? 2.5 : 1,
+                                  final path = _imageUrls[index];
+                                  final isPrimary = index == _primaryImageIndex;
+
+                                  return GestureDetector(
+                                    onTap: () => setState(
+                                      () => _primaryImageIndex = index,
+                                    ),
+                                    child: Container(
+                                      width: 100.w,
+                                      margin: EdgeInsets.only(right: 10.w),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: isPrimary
+                                              ? const Color(0xFFE43434)
+                                              : const Color(0xFFE0E0E0),
+                                          width: isPrimary ? 2.5 : 1,
+                                        ),
+                                      ),
+                                      child: Stack(
+                                        children: [
+                                          ClipRRect(
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                            child: SizedBox(
+                                              width: double.infinity,
+                                              height: double.infinity,
+                                              child: _buildImageWidget(path),
+                                            ),
+                                          ),
+                                          if (isPrimary)
+                                            Positioned(
+                                              top: 6.h,
+                                              left: 6.w,
+                                              child: Container(
+                                                padding: EdgeInsets.symmetric(
+                                                  horizontal: 6.w,
+                                                  vertical: 2.h,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: const Color(
+                                                    0xFFE43434,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                child: Text(
+                                                  '★ Cover',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 9.sp,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          Positioned(
+                                            top: 4.h,
+                                            right: 4.w,
+                                            child: GestureDetector(
+                                              onTap: () {
+                                                setState(() {
+                                                  _imageUrls.removeAt(index);
+                                                  if (_primaryImageIndex >=
+                                                      _imageUrls.length) {
+                                                    _primaryImageIndex = 0;
+                                                  }
+                                                });
+                                              },
+                                              child: Container(
+                                                padding: const EdgeInsets.all(
+                                                  4,
+                                                ),
+                                                decoration: const BoxDecoration(
+                                                  color: Colors.black54,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: const Icon(
+                                                  Icons.close_rounded,
+                                                  color: Colors.white,
+                                                  size: 12,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
                             ),
-                            child: Stack(
+
+                            SizedBox(height: 24.h),
+
+                            // ── Section 2: Basic Information ──────────────────
+                            _SectionHeader(
+                              title: 'Basic Information',
+                              textTheme: textTheme,
+                            ),
+                            SizedBox(height: 12.h),
+
+                            _FieldLabel(
+                              label: 'Turf Name *',
+                              textTheme: textTheme,
+                              colors: colors,
+                            ),
+                            SizedBox(height: 8.h),
+                            MyTextField(
+                              controller: _nameController,
+                              height: 50.h,
+                              type: TextInputType.text,
+                              fillColor: colors.white,
+                              hintText: 'e.g. Green Arena Football Ground',
+                              prefixIcon: Icon(
+                                Icons.sports_soccer_outlined,
+                                color: colors.textGrey,
+                              ),
+                            ),
+
+                            SizedBox(height: 16.h),
+                            _FieldLabel(
+                              label: 'Price per Hour (₹) *',
+                              textTheme: textTheme,
+                              colors: colors,
+                            ),
+                            SizedBox(height: 8.h),
+                            MyTextField(
+                              controller: _priceController,
+                              height: 50.h,
+                              type: TextInputType.number,
+                              fillColor: colors.white,
+                              hintText: 'e.g. 1500',
+                              prefixIcon: Icon(
+                                Icons.currency_rupee_rounded,
+                                color: colors.textGrey,
+                              ),
+                            ),
+
+                            SizedBox(height: 16.h),
+                            _FieldLabel(
+                              label: 'Description *',
+                              textTheme: textTheme,
+                              colors: colors,
+                            ),
+                            SizedBox(height: 8.h),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: const Color(0xFFE8E8E8),
+                                ),
+                              ),
+                              child: TextField(
+                                controller: _descriptionController,
+                                maxLines: 3,
+                                style: textTheme.bodyMedium,
+                                decoration: InputDecoration(
+                                  hintText: 'Describe your turf...',
+                                  hintStyle: TextStyle(
+                                    color: colors.textGrey,
+                                    fontSize: 14.sp,
+                                  ),
+                                  contentPadding: EdgeInsets.all(14.w),
+                                  border: InputBorder.none,
+                                ),
+                              ),
+                            ),
+
+                            SizedBox(height: 24.h),
+
+                            // ── Section 3: Location ───────────────────────────
+                            _SectionHeader(
+                              title: 'Location',
+                              textTheme: textTheme,
+                            ),
+                            SizedBox(height: 12.h),
+
+                            _FieldLabel(
+                              label: 'Street Address *',
+                              textTheme: textTheme,
+                              colors: colors,
+                            ),
+                            SizedBox(height: 8.h),
+                            MyTextField(
+                              controller: _addressController,
+                              height: 50.h,
+                              type: TextInputType.streetAddress,
+                              fillColor: colors.white,
+                              hintText: 'e.g., 42, MG Road, Near City Mall',
+                              prefixIcon: Icon(
+                                Icons.location_on_outlined,
+                                color: colors.textGrey,
+                              ),
+                            ),
+
+                            SizedBox(height: 16.h),
+                            Row(
                               children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: SizedBox(
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    child: _buildImageWidget(path),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _FieldLabel(
+                                        label: 'City *',
+                                        textTheme: textTheme,
+                                        colors: colors,
+                                      ),
+                                      SizedBox(height: 8.h),
+                                      MyTextField(
+                                        controller: _cityController,
+                                        height: 50.h,
+                                        type: TextInputType.text,
+                                        fillColor: colors.white,
+                                        hintText: 'e.g. Bengaluru',
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                if (isPrimary)
-                                  Positioned(
-                                    top: 6.h,
-                                    left: 6.w,
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFE43434),
-                                        borderRadius: BorderRadius.circular(8),
+                                SizedBox(width: 12.w),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _FieldLabel(
+                                        label: 'State',
+                                        textTheme: textTheme,
+                                        colors: colors,
                                       ),
-                                      child: Text(
-                                        '★ Cover',
-                                        style: TextStyle(color: Colors.white, fontSize: 9.sp, fontWeight: FontWeight.bold),
+                                      SizedBox(height: 8.h),
+                                      MyTextField(
+                                        controller: _stateController,
+                                        height: 50.h,
+                                        type: TextInputType.text,
+                                        fillColor: colors.white,
+                                        hintText: 'e.g. Karnataka',
                                       ),
-                                    ),
-                                  ),
-                                Positioned(
-                                  top: 4.h,
-                                  right: 4.w,
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        _imageUrls.removeAt(index);
-                                        if (_primaryImageIndex >= _imageUrls.length) {
-                                          _primaryImageIndex = 0;
-                                        }
-                                      });
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: const BoxDecoration(
-                                        color: Colors.black54,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(Icons.close_rounded, color: Colors.white, size: 12),
-                                    ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
 
-                  SizedBox(height: 24.h),
-
-                  // ── Section 2: Basic Information ──────────────────
-                  _SectionHeader(title: 'Basic Information', textTheme: textTheme),
-                  SizedBox(height: 12.h),
-
-                  _FieldLabel(label: 'Turf Name *', textTheme: textTheme, colors: colors),
-                  SizedBox(height: 8.h),
-                  MyTextField(
-                    controller: _nameController,
-                    height: 50.h,
-                    type: TextInputType.text,
-                    fillColor: colors.white,
-                    hintText: 'e.g. Green Arena Football Ground',
-                    prefixIcon: Icon(Icons.sports_soccer_outlined, color: colors.textGrey),
-                  ),
-
-                  SizedBox(height: 16.h),
-                  _FieldLabel(label: 'Price per Hour (₹) *', textTheme: textTheme, colors: colors),
-                  SizedBox(height: 8.h),
-                  MyTextField(
-                    controller: _priceController,
-                    height: 50.h,
-                    type: TextInputType.number,
-                    fillColor: colors.white,
-                    hintText: 'e.g. 1500',
-                    prefixIcon: Icon(Icons.currency_rupee_rounded, color: colors.textGrey),
-                  ),
-
-                  SizedBox(height: 16.h),
-                  _FieldLabel(label: 'Description *', textTheme: textTheme, colors: colors),
-                  SizedBox(height: 8.h),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE8E8E8)),
-                    ),
-                    child: TextField(
-                      controller: _descriptionController,
-                      maxLines: 3,
-                      style: textTheme.bodyMedium,
-                      decoration: InputDecoration(
-                        hintText: 'Describe your turf...',
-                        hintStyle: TextStyle(color: colors.textGrey, fontSize: 14.sp),
-                        contentPadding: EdgeInsets.all(14.w),
-                        border: InputBorder.none,
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: 24.h),
-
-                  // ── Section 3: Location ───────────────────────────
-                  _SectionHeader(title: 'Location', textTheme: textTheme),
-                  SizedBox(height: 12.h),
-
-                  _FieldLabel(label: 'Street Address *', textTheme: textTheme, colors: colors),
-                  SizedBox(height: 8.h),
-                  MyTextField(
-                    controller: _addressController,
-                    height: 50.h,
-                    type: TextInputType.streetAddress,
-                    fillColor: colors.white,
-                    hintText: 'e.g., 42, MG Road, Near City Mall',
-                    prefixIcon: Icon(Icons.location_on_outlined, color: colors.textGrey),
-                  ),
-
-                  SizedBox(height: 16.h),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _FieldLabel(label: 'City *', textTheme: textTheme, colors: colors),
-                            SizedBox(height: 8.h),
-                            MyTextField(
-                              controller: _cityController,
-                              height: 50.h,
-                              type: TextInputType.text,
-                              fillColor: colors.white,
-                              hintText: 'e.g. Bengaluru',
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _FieldLabel(label: 'State', textTheme: textTheme, colors: colors),
-                            SizedBox(height: 8.h),
-                            MyTextField(
-                              controller: _stateController,
-                              height: 50.h,
-                              type: TextInputType.text,
-                              fillColor: colors.white,
-                              hintText: 'e.g. Karnataka',
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 16.h),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _FieldLabel(label: 'Pincode', textTheme: textTheme, colors: colors),
-                            SizedBox(height: 8.h),
-                            MyTextField(
-                              controller: _pincodeController,
-                              height: 50.h,
-                              type: TextInputType.number,
-                              fillColor: colors.white,
-                              hintText: 'e.g. 560001',
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _FieldLabel(label: 'Capacity (players)', textTheme: textTheme, colors: colors),
-                            SizedBox(height: 8.h),
-                            MyTextField(
-                              controller: _capacityController,
-                              height: 50.h,
-                              type: TextInputType.number,
-                              fillColor: colors.white,
-                              hintText: 'e.g. 22',
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 16.h),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _FieldLabel(label: 'Latitude (optional)', textTheme: textTheme, colors: colors),
-                            SizedBox(height: 8.h),
-                            MyTextField(
-                              controller: _latitudeController,
-                              height: 50.h,
-                              type: TextInputType.number,
-                              fillColor: colors.white,
-                              hintText: 'e.g. 12.9716',
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _FieldLabel(label: 'Longitude (optional)', textTheme: textTheme, colors: colors),
-                            SizedBox(height: 8.h),
-                            MyTextField(
-                              controller: _longitudeController,
-                              height: 50.h,
-                              type: TextInputType.number,
-                              fillColor: colors.white,
-                              hintText: 'e.g. 77.5946',
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 16.h),
-                  _FieldLabel(label: 'Google Maps Link / Map URL (optional)', textTheme: textTheme, colors: colors),
-                  SizedBox(height: 8.h),
-                  MyTextField(
-                    controller: _mapUrlController,
-                    height: 50.h,
-                    type: TextInputType.url,
-                    fillColor: colors.white,
-                    hintText: 'e.g. https://maps.google.com/?q=12.9716,77.5946',
-                  ),
-
-                  SizedBox(height: 24.h),
-
-                  // ── Section 4: Sports & Surface ───────────────────
-                  _SectionHeader(title: 'Sports & Surface', textTheme: textTheme),
-                  SizedBox(height: 12.h),
-
-                  _FieldLabel(label: 'Surface Type', textTheme: textTheme, colors: colors),
-                  SizedBox(height: 8.h),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 14.w),
-                    decoration: BoxDecoration(
-                      color: colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE8E8E8)),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: _selectedSurfaceType,
-                        isExpanded: true,
-                        icon: Icon(Icons.keyboard_arrow_down_rounded, color: colors.textGrey),
-                        items: _surfaceTypes.map((type) {
-                          return DropdownMenuItem<String>(
-                            value: type,
-                            child: Text(
-                              type,
-                              style: textTheme.bodyMedium?.copyWith(color: colors.textTitle),
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (val) {
-                          if (val != null) {
-                            setState(() => _selectedSurfaceType = val);
-                          }
-                        },
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: 16.h),
-                  _FieldLabel(label: 'Sports Supported *', textTheme: textTheme, colors: colors),
-                  SizedBox(height: 8.h),
-                  Wrap(
-                    spacing: 8.w,
-                    runSpacing: 8.h,
-                    children: _allSports.map((sport) {
-                      final selected = _selectedSports.contains(sport);
-                      return GestureDetector(
-                        onTap: () => setState(() {
-                          selected
-                              ? _selectedSports.remove(sport)
-                              : _selectedSports.add(sport);
-                        }),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-                          decoration: BoxDecoration(
-                            color: selected ? const Color(0xFFE43434) : colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: selected ? const Color(0xFFE43434) : const Color(0xFFE8E8E8),
-                            ),
-                          ),
-                          child: Text(
-                            sport,
-                            style: textTheme.bodySmall?.copyWith(
-                              color: selected ? Colors.white : colors.textGrey,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-
-                  SizedBox(height: 24.h),
-
-                  // ── Section 5: Amenities ──────────────────────────
-                  _SectionHeader(title: 'Amenities', textTheme: textTheme),
-                  SizedBox(height: 12.h),
-                  Wrap(
-                    spacing: 8.w,
-                    runSpacing: 8.h,
-                    children: _allAmenities.map((amenity) {
-                      final selected = _selectedAmenities.contains(amenity);
-                      return GestureDetector(
-                        onTap: () => setState(() {
-                          selected
-                              ? _selectedAmenities.remove(amenity)
-                              : _selectedAmenities.add(amenity);
-                        }),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-                          decoration: BoxDecoration(
-                            color: selected ? const Color(0xFFE43434) : colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: selected ? const Color(0xFFE43434) : const Color(0xFFE8E8E8),
-                            ),
-                          ),
-                          child: Text(
-                            amenity,
-                            style: textTheme.bodySmall?.copyWith(
-                              color: selected ? Colors.white : colors.textGrey,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-
-                  SizedBox(height: 24.h),
-
-                  // ── Section 6: Available Time Slots ───────────────
-                  _SectionHeader(title: 'Available Time Slots *', textTheme: textTheme),
-                  SizedBox(height: 4.h),
-                  Text(
-                    'Choose slot duration and select all time slots when your turf is open.',
-                    style: textTheme.bodySmall?.copyWith(color: colors.textGrey, fontSize: 11.sp),
-                  ),
-                  SizedBox(height: 12.h),
-
-                  // Duration presets
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: _durationOptions.map((opt) {
-                        final mins = opt['minutes'] as int;
-                        final isSelected = _selectedDuration == mins;
-                        return Padding(
-                          padding: EdgeInsets.only(right: 8.w),
-                          child: ChoiceChip(
-                            label: Text(opt['label'] as String, style: TextStyle(fontSize: 11.sp)),
-                            selected: isSelected,
-                            selectedColor: const Color(0xFFE43434),
-                            labelStyle: TextStyle(
-                              color: isSelected ? Colors.white : colors.textTitle,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            onSelected: (val) {
-                              if (val) {
-                                setState(() {
-                                  _selectedDuration = mins;
-                                  _currentGeneratedSlots = _generate24hSlots(mins);
-                                  _selectedSlots = List<String>.from(_currentGeneratedSlots);
-                                });
-                              }
-                            },
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  SizedBox(height: 12.h),
-
-                  // Slot Controls
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Wrap(
-                          spacing: 6.w,
-                          runSpacing: 6.h,
-                          children: [
-                            OutlinedButton(
-                              onPressed: () {
-                                setState(() {
-                                  _selectedSlots = List<String>.from(_currentGeneratedSlots);
-                                });
-                              },
-                              style: OutlinedButton.styleFrom(
-                                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              ),
-                              child: Text('Select All (24h)', style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.bold)),
-                            ),
-                            OutlinedButton(
-                              onPressed: () {
-                                setState(() {
-                                  _selectedSlots.clear();
-                                });
-                              },
-                              style: OutlinedButton.styleFrom(
-                                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              ),
-                              child: Text('Clear All', style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.bold)),
-                            ),
-                            OutlinedButton(
-                              onPressed: () {
-                                setState(() {
-                                  _selectedSlots = _currentGeneratedSlots.where((s) {
-                                    final mins = _parseStartMinutes12H(s);
-                                    return mins >= 360 && mins < 1320;
-                                  }).toList();
-                                });
-                              },
-                              style: OutlinedButton.styleFrom(
-                                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              ),
-                              child: Text('Daytime (6am-10pm)', style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.bold)),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 10.h),
-
-                  // Slot Filter Search
-                  MyTextField(
-                    controller: _slotSearchController,
-                    height: 44.h,
-                    type: TextInputType.text,
-                    fillColor: colors.white,
-                    hintText: 'Filter slots...',
-                    prefixIcon: Icon(Icons.search_rounded, size: 18, color: colors.textGrey),
-                    onChanged: (val) => setState(() => _slotSearch = val),
-                  ),
-                  SizedBox(height: 12.h),
-
-                  // Slot Grid
-                  Container(
-                    height: 200.h,
-                    padding: EdgeInsets.all(8.w),
-                    decoration: BoxDecoration(
-                      color: colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE8E8E8)),
-                    ),
-                    child: filteredSlots.isEmpty
-                        ? Center(child: Text('No matching slots', style: textTheme.bodySmall?.copyWith(color: colors.textGrey)))
-                        : GridView.builder(
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              childAspectRatio: 2.5,
-                              crossAxisSpacing: 8,
-                              mainAxisSpacing: 8,
-                            ),
-                            itemCount: filteredSlots.length,
-                            itemBuilder: (context, index) {
-                              final slot = filteredSlots[index];
-                              final isSelected = _selectedSlots.contains(slot);
-
-                              return GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    if (isSelected) {
-                                      _selectedSlots.remove(slot);
-                                    } else {
-                                      _selectedSlots.add(slot);
-                                    }
-                                  });
-                                },
-                                child: Container(
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    color: isSelected ? const Color(0xFFE43434) : const Color(0xFFF5F5F5),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: isSelected ? const Color(0xFFE43434) : const Color(0xFFE0E0E0),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    slot,
-                                    style: TextStyle(
-                                      fontSize: 10.sp,
-                                      fontWeight: FontWeight.bold,
-                                      color: isSelected ? Colors.white : colors.textTitle,
-                                    ),
+                            SizedBox(height: 16.h),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _FieldLabel(
+                                        label: 'Pincode',
+                                        textTheme: textTheme,
+                                        colors: colors,
+                                      ),
+                                      SizedBox(height: 8.h),
+                                      MyTextField(
+                                        controller: _pincodeController,
+                                        height: 50.h,
+                                        type: TextInputType.number,
+                                        fillColor: colors.white,
+                                        hintText: 'e.g. 560001',
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              );
-                            },
-                          ),
-                  ),
-                  SizedBox(height: 6.h),
-                  Text(
-                    '${_selectedSlots.length} of ${_currentGeneratedSlots.length} slots selected',
-                    style: textTheme.bodySmall?.copyWith(color: colors.textGrey, fontSize: 11.sp),
-                  ),
+                                SizedBox(width: 12.w),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _FieldLabel(
+                                        label: 'Capacity (players)',
+                                        textTheme: textTheme,
+                                        colors: colors,
+                                      ),
+                                      SizedBox(height: 8.h),
+                                      MyTextField(
+                                        controller: _capacityController,
+                                        height: 50.h,
+                                        type: TextInputType.number,
+                                        fillColor: colors.white,
+                                        hintText: 'e.g. 22',
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
 
-                  SizedBox(height: 24.h),
+                            SizedBox(height: 16.h),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _FieldLabel(
+                                        label: 'Latitude (optional)',
+                                        textTheme: textTheme,
+                                        colors: colors,
+                                      ),
+                                      SizedBox(height: 8.h),
+                                      MyTextField(
+                                        controller: _latitudeController,
+                                        height: 50.h,
+                                        type: TextInputType.number,
+                                        fillColor: colors.white,
+                                        hintText: 'e.g. 12.9716',
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(width: 12.w),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _FieldLabel(
+                                        label: 'Longitude (optional)',
+                                        textTheme: textTheme,
+                                        colors: colors,
+                                      ),
+                                      SizedBox(height: 8.h),
+                                      MyTextField(
+                                        controller: _longitudeController,
+                                        height: 50.h,
+                                        type: TextInputType.number,
+                                        fillColor: colors.white,
+                                        hintText: 'e.g. 77.5946',
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
 
-                  // ── Section 7: Contact Information ─────────────────
-                  _SectionHeader(title: 'Contact Information', textTheme: textTheme),
-                  SizedBox(height: 12.h),
+                            SizedBox(height: 16.h),
+                            _FieldLabel(
+                              label: 'Google Maps Link / Map URL (optional)',
+                              textTheme: textTheme,
+                              colors: colors,
+                            ),
+                            SizedBox(height: 8.h),
+                            MyTextField(
+                              controller: _mapUrlController,
+                              height: 50.h,
+                              type: TextInputType.url,
+                              fillColor: colors.white,
+                              hintText:
+                                  'e.g. https://maps.google.com/?q=12.9716,77.5946',
+                            ),
 
-                  _FieldLabel(label: 'Contact Phone', textTheme: textTheme, colors: colors),
-                  SizedBox(height: 8.h),
-                  MyTextField(
-                    controller: _contactPhoneController,
-                    height: 50.h,
-                    type: TextInputType.phone,
-                    fillColor: colors.white,
-                    hintText: 'e.g. +91 9876543210',
-                    prefixIcon: Icon(Icons.phone_outlined, color: colors.textGrey),
-                  ),
+                            SizedBox(height: 24.h),
 
-                  SizedBox(height: 16.h),
-                  _FieldLabel(label: 'Contact Email', textTheme: textTheme, colors: colors),
-                  SizedBox(height: 8.h),
-                  MyTextField(
-                    controller: _contactEmailController,
-                    height: 50.h,
-                    type: TextInputType.emailAddress,
-                    fillColor: colors.white,
-                    hintText: 'e.g. info@greenarena.com',
-                    prefixIcon: Icon(Icons.email_outlined, color: colors.textGrey),
-                  ),
+                            // ── Section 4: Sports & Surface ───────────────────
+                            _SectionHeader(
+                              title: 'Sports & Surface',
+                              textTheme: textTheme,
+                            ),
+                            SizedBox(height: 12.h),
 
-                  SizedBox(height: 24.h),
+                            _FieldLabel(
+                              label: 'Surface Type',
+                              textTheme: textTheme,
+                              colors: colors,
+                            ),
+                            SizedBox(height: 8.h),
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 14.w),
+                              decoration: BoxDecoration(
+                                color: colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: const Color(0xFFE8E8E8),
+                                ),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: _selectedSurfaceType,
+                                  isExpanded: true,
+                                  icon: Icon(
+                                    Icons.keyboard_arrow_down_rounded,
+                                    color: colors.textGrey,
+                                  ),
+                                  items: _surfaceTypes.map((type) {
+                                    return DropdownMenuItem<String>(
+                                      value: type,
+                                      child: Text(
+                                        type,
+                                        style: textTheme.bodyMedium?.copyWith(
+                                          color: colors.textTitle,
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (val) {
+                                    if (val != null) {
+                                      setState(
+                                        () => _selectedSurfaceType = val,
+                                      );
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
 
-                  // ── Section 8: Rules & Guidelines ──────────────────
-                  _SectionHeader(title: 'Rules & Guidelines', textTheme: textTheme),
-                  SizedBox(height: 12.h),
-                  _FieldLabel(label: 'Turf Rules (optional)', textTheme: textTheme, colors: colors),
-                  SizedBox(height: 8.h),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE8E8E8)),
-                    ),
-                    child: TextField(
-                      controller: _rulesController,
-                      maxLines: 3,
-                      style: textTheme.bodyMedium,
-                      decoration: InputDecoration(
-                        hintText: 'Enter venue rules, footwear guidelines, etc.',
-                        hintStyle: TextStyle(color: colors.textGrey, fontSize: 14.sp),
-                        contentPadding: EdgeInsets.all(14.w),
-                        border: InputBorder.none,
+                            SizedBox(height: 16.h),
+                            _FieldLabel(
+                              label: 'Sports Supported *',
+                              textTheme: textTheme,
+                              colors: colors,
+                            ),
+                            SizedBox(height: 8.h),
+                            Wrap(
+                              spacing: 8.w,
+                              runSpacing: 8.h,
+                              children: _allSports.map((sport) {
+                                final selected = _selectedSports.contains(
+                                  sport,
+                                );
+                                return GestureDetector(
+                                  onTap: () => setState(() {
+                                    selected
+                                        ? _selectedSports.remove(sport)
+                                        : _selectedSports.add(sport);
+                                  }),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 150),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 14.w,
+                                      vertical: 8.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: selected
+                                          ? const Color(0xFFE43434)
+                                          : colors.white,
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: selected
+                                            ? const Color(0xFFE43434)
+                                            : const Color(0xFFE8E8E8),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      sport,
+                                      style: textTheme.bodySmall?.copyWith(
+                                        color: selected
+                                            ? Colors.white
+                                            : colors.textGrey,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+
+                            SizedBox(height: 24.h),
+
+                            // ── Section 5: Amenities ──────────────────────────
+                            _SectionHeader(
+                              title: 'Amenities',
+                              textTheme: textTheme,
+                            ),
+                            SizedBox(height: 12.h),
+                            Wrap(
+                              spacing: 8.w,
+                              runSpacing: 8.h,
+                              children: _allAmenities.map((amenity) {
+                                final selected = _selectedAmenities.contains(
+                                  amenity,
+                                );
+                                return GestureDetector(
+                                  onTap: () => setState(() {
+                                    selected
+                                        ? _selectedAmenities.remove(amenity)
+                                        : _selectedAmenities.add(amenity);
+                                  }),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 150),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 14.w,
+                                      vertical: 8.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: selected
+                                          ? const Color(0xFFE43434)
+                                          : colors.white,
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: selected
+                                            ? const Color(0xFFE43434)
+                                            : const Color(0xFFE8E8E8),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      amenity,
+                                      style: textTheme.bodySmall?.copyWith(
+                                        color: selected
+                                            ? Colors.white
+                                            : colors.textGrey,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+
+                            SizedBox(height: 24.h),
+
+                            // ── Section 6: Available Time Slots ───────────────
+                            _SectionHeader(
+                              title: 'Available Time Slots *',
+                              textTheme: textTheme,
+                            ),
+                            SizedBox(height: 4.h),
+                            Text(
+                              'Choose slot duration and select all time slots when your turf is open.',
+                              style: textTheme.bodySmall?.copyWith(
+                                color: colors.textGrey,
+                                fontSize: 11.sp,
+                              ),
+                            ),
+                            SizedBox(height: 12.h),
+
+                            // Duration presets
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: _durationOptions.map((opt) {
+                                  final mins = opt['minutes'] as int;
+                                  final isSelected = _selectedDuration == mins;
+                                  return Padding(
+                                    padding: EdgeInsets.only(right: 8.w),
+                                    child: ChoiceChip(
+                                      label: Text(
+                                        opt['label'] as String,
+                                        style: TextStyle(fontSize: 11.sp),
+                                      ),
+                                      selected: isSelected,
+                                      selectedColor: const Color(0xFFE43434),
+                                      labelStyle: TextStyle(
+                                        color: isSelected
+                                            ? Colors.white
+                                            : colors.textTitle,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      onSelected: (val) {
+                                        if (val) {
+                                          setState(() {
+                                            _selectedDuration = mins;
+                                            _currentGeneratedSlots =
+                                                _generate24hSlots(mins);
+                                            _selectedSlots = List<String>.from(
+                                              _currentGeneratedSlots,
+                                            );
+                                          });
+                                        }
+                                      },
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                            SizedBox(height: 12.h),
+
+                            // Slot Controls
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Wrap(
+                                    spacing: 6.w,
+                                    runSpacing: 6.h,
+                                    children: [
+                                      OutlinedButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            _selectedSlots = List<String>.from(
+                                              _currentGeneratedSlots,
+                                            );
+                                          });
+                                        },
+                                        style: OutlinedButton.styleFrom(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 10.w,
+                                            vertical: 6.h,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          'Select All (24h)',
+                                          style: TextStyle(
+                                            fontSize: 10.sp,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      OutlinedButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            _selectedSlots.clear();
+                                          });
+                                        },
+                                        style: OutlinedButton.styleFrom(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 10.w,
+                                            vertical: 6.h,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          'Clear All',
+                                          style: TextStyle(
+                                            fontSize: 10.sp,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      OutlinedButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            _selectedSlots =
+                                                _currentGeneratedSlots.where((
+                                                  s,
+                                                ) {
+                                                  final mins =
+                                                      _parseStartMinutes12H(s);
+                                                  return mins >= 360 &&
+                                                      mins < 1320;
+                                                }).toList();
+                                          });
+                                        },
+                                        style: OutlinedButton.styleFrom(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 10.w,
+                                            vertical: 6.h,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          'Daytime (6am-10pm)',
+                                          style: TextStyle(
+                                            fontSize: 10.sp,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 10.h),
+
+                            // Slot Filter Search
+                            MyTextField(
+                              controller: _slotSearchController,
+                              height: 44.h,
+                              type: TextInputType.text,
+                              fillColor: colors.white,
+                              hintText: 'Filter slots...',
+                              prefixIcon: Icon(
+                                Icons.search_rounded,
+                                size: 18,
+                                color: colors.textGrey,
+                              ),
+                              onChanged: (val) =>
+                                  setState(() => _slotSearch = val),
+                            ),
+                            SizedBox(height: 12.h),
+
+                            // Slot Grid
+                            Container(
+                              height: 200.h,
+                              padding: EdgeInsets.all(8.w),
+                              decoration: BoxDecoration(
+                                color: colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: const Color(0xFFE8E8E8),
+                                ),
+                              ),
+                              child: filteredSlots.isEmpty
+                                  ? Center(
+                                      child: Text(
+                                        'No matching slots',
+                                        style: textTheme.bodySmall?.copyWith(
+                                          color: colors.textGrey,
+                                        ),
+                                      ),
+                                    )
+                                  : GridView.builder(
+                                      gridDelegate:
+                                          const SliverGridDelegateWithFixedCrossAxisCount(
+                                            crossAxisCount: 3,
+                                            childAspectRatio: 2.5,
+                                            crossAxisSpacing: 8,
+                                            mainAxisSpacing: 8,
+                                          ),
+                                      itemCount: filteredSlots.length,
+                                      itemBuilder: (context, index) {
+                                        final slot = filteredSlots[index];
+                                        final isSelected = _selectedSlots
+                                            .contains(slot);
+
+                                        return GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              if (isSelected) {
+                                                _selectedSlots.remove(slot);
+                                              } else {
+                                                _selectedSlots.add(slot);
+                                              }
+                                            });
+                                          },
+                                          child: Container(
+                                            alignment: Alignment.center,
+                                            decoration: BoxDecoration(
+                                              color: isSelected
+                                                  ? const Color(0xFFE43434)
+                                                  : const Color(0xFFF5F5F5),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              border: Border.all(
+                                                color: isSelected
+                                                    ? const Color(0xFFE43434)
+                                                    : const Color(0xFFE0E0E0),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              slot,
+                                              style: TextStyle(
+                                                fontSize: 10.sp,
+                                                fontWeight: FontWeight.bold,
+                                                color: isSelected
+                                                    ? Colors.white
+                                                    : colors.textTitle,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                            ),
+                            SizedBox(height: 6.h),
+                            Text(
+                              '${_selectedSlots.length} of ${_currentGeneratedSlots.length} slots selected',
+                              style: textTheme.bodySmall?.copyWith(
+                                color: colors.textGrey,
+                                fontSize: 11.sp,
+                              ),
+                            ),
+
+                            SizedBox(height: 24.h),
+
+                            // ── Section 7: Contact Information ─────────────────
+                            _SectionHeader(
+                              title: 'Contact Information',
+                              textTheme: textTheme,
+                            ),
+                            SizedBox(height: 12.h),
+
+                            _FieldLabel(
+                              label: 'Contact Phone',
+                              textTheme: textTheme,
+                              colors: colors,
+                            ),
+                            SizedBox(height: 8.h),
+                            MyTextField(
+                              controller: _contactPhoneController,
+                              height: 50.h,
+                              type: TextInputType.phone,
+                              fillColor: colors.white,
+                              hintText: 'e.g. +91 9876543210',
+                              prefixIcon: Icon(
+                                Icons.phone_outlined,
+                                color: colors.textGrey,
+                              ),
+                            ),
+
+                            SizedBox(height: 16.h),
+                            _FieldLabel(
+                              label: 'Contact Email',
+                              textTheme: textTheme,
+                              colors: colors,
+                            ),
+                            SizedBox(height: 8.h),
+                            MyTextField(
+                              controller: _contactEmailController,
+                              height: 50.h,
+                              type: TextInputType.emailAddress,
+                              fillColor: colors.white,
+                              hintText: 'e.g. info@greenarena.com',
+                              prefixIcon: Icon(
+                                Icons.email_outlined,
+                                color: colors.textGrey,
+                              ),
+                            ),
+
+                            SizedBox(height: 24.h),
+
+                            // ── Section 8: Rules & Guidelines ──────────────────
+                            _SectionHeader(
+                              title: 'Rules & Guidelines',
+                              textTheme: textTheme,
+                            ),
+                            SizedBox(height: 12.h),
+                            _FieldLabel(
+                              label: 'Turf Rules (optional)',
+                              textTheme: textTheme,
+                              colors: colors,
+                            ),
+                            SizedBox(height: 8.h),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: const Color(0xFFE8E8E8),
+                                ),
+                              ),
+                              child: TextField(
+                                controller: _rulesController,
+                                maxLines: 3,
+                                style: textTheme.bodyMedium,
+                                decoration: InputDecoration(
+                                  hintText:
+                                      'Enter venue rules, footwear guidelines, etc.',
+                                  hintStyle: TextStyle(
+                                    color: colors.textGrey,
+                                    fontSize: 14.sp,
+                                  ),
+                                  contentPadding: EdgeInsets.all(14.w),
+                                  border: InputBorder.none,
+                                ),
+                              ),
+                            ),
+
+                            SizedBox(height: 32.h),
+                            MyButtons(
+                              text: _isSaving ? 'Saving...' : 'Save Changes',
+                              isLoading: _isSaving,
+                              loadingText: 'Saving...',
+                              height: 52.h,
+                              width: double.infinity,
+                              onTap: _isSaving ? null : _save,
+                              textStyle: textTheme.bodyMedium?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              backgroundColor: _isSaving
+                                  ? const Color(
+                                      0xFFE43434,
+                                    ).withValues(alpha: 0.5)
+                                  : const Color(0xFFE43434),
+                            ),
+                            SizedBox(height: 32.h),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-
-                  SizedBox(height: 32.h),
-                  MyButtons(
-                    text: _isSaving ? 'Saving...' : 'Save Changes',
-                    height: 52.h,
-                    width: double.infinity,
-                    onTap: _isSaving ? null : _save,
-                    textStyle: textTheme.bodyMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    backgroundColor: _isSaving
-                        ? const Color(0xFFE43434).withOpacity(0.5)
-                        : const Color(0xFFE43434),
-                  ),
-                  SizedBox(height: 32.h),
                 ],
               ),
             ),
-          ),
+            if (_isSaving)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.4),
+                  child: Center(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 28.w,
+                        vertical: 24.h,
+                      ),
+                      margin: EdgeInsets.symmetric(horizontal: 32.w),
+                      decoration: BoxDecoration(
+                        color: colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.2),
+                            blurRadius: 16,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(color: colors.primary),
+                          SizedBox(height: 18.h),
+                          Text(
+                            'Updating Turf Details',
+                            style: textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colors.textTitle,
+                            ),
+                          ),
+                          SizedBox(height: 6.h),
+                          Text(
+                            'Please wait while changes are saved to the server...',
+                            textAlign: TextAlign.center,
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colors.textGrey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
-      ],
-    ),
-  ),
-);
+      ),
+    );
   }
 }
 
@@ -1239,12 +1693,20 @@ class _OverviewTab extends StatelessWidget {
   final AppColors colors;
   final TextTheme textTheme;
 
-  const _OverviewTab(
-      {required this.turf, required this.colors, required this.textTheme});
+  const _OverviewTab({
+    required this.turf,
+    required this.colors,
+    required this.textTheme,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final locationParts = [turf.address, turf.city, turf.state, turf.pincode].where((s) => s != null && s.isNotEmpty).join(', ');
+    final locationParts = [
+      turf.address,
+      turf.city,
+      turf.state,
+      turf.pincode,
+    ].where((s) => s != null && s.isNotEmpty).join(', ');
 
     return Center(
       child: ConstrainedBox(
@@ -1252,206 +1714,261 @@ class _OverviewTab extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.all(20.w),
           children: [
-        // Name + Price
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                turf.name,
-                style: textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w700),
-              ),
-            ),
-            Text(
-              '₹${turf.pricePerHour}/hr',
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: colors.primary,
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 6.h),
-
-        // Address
-        Row(
-          children: [
-            Icon(Icons.location_on_rounded,
-                size: 16, color: colors.textGrey),
-            SizedBox(width: 4.w),
-            Expanded(
-              child: Text(
-                locationParts.isNotEmpty ? locationParts : turf.address,
-                style:
-                    textTheme.bodySmall?.copyWith(color: colors.textGrey),
-              ),
-            ),
-          ],
-        ),
-
-        // Surface & Capacity
-        if (turf.surfaceType != null || turf.capacity != null) ...[
-          SizedBox(height: 8.h),
-          Row(
-            children: [
-              if (turf.surfaceType != null) ...[
-                Icon(Icons.grass_rounded, size: 16, color: colors.primary),
-                SizedBox(width: 4.w),
-                Text(
-                  turf.surfaceType!,
-                  style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                SizedBox(width: 16.w),
-              ],
-              if (turf.capacity != null) ...[
-                Icon(Icons.groups_rounded, size: 16, color: colors.primary),
-                SizedBox(width: 4.w),
-                Text(
-                  '${turf.capacity} Players',
-                  style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
-                ),
-              ],
-            ],
-          ),
-        ],
-
-        // Rating
-        if (turf.rating != null) ...[
-          SizedBox(height: 8.h),
-          Row(
-            children: [
-              const Icon(Icons.star_rounded,
-                  size: 16, color: Colors.amber),
-              SizedBox(width: 4.w),
-              Text(
-                '${turf.rating!.toStringAsFixed(1)} (${turf.totalReviews} reviews)',
-                style: textTheme.bodySmall?.copyWith(
-                    color: colors.textTitle,
-                    fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-        ],
-
-        SizedBox(height: 16.h),
-        const Divider(color: Color(0xFFF0F0F0)),
-        SizedBox(height: 16.h),
-
-        // Description
-        if (turf.description != null && turf.description!.isNotEmpty) ...[
-          Text('Description',
-              style:
-                  textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
-          SizedBox(height: 8.h),
-          Text(turf.description!,
-              style:
-                  textTheme.bodyMedium?.copyWith(color: colors.textGrey, height: 1.5)),
-          SizedBox(height: 20.h),
-        ],
-
-        // Sports
-        if ((turf.sports).isNotEmpty) ...[
-          Text('Sports',
-              style:
-                  textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
-          SizedBox(height: 10.h),
-          Wrap(
-            spacing: 8.w,
-            runSpacing: 8.h,
-            children: (turf.sports)
-                .map((s) => _Chip(
-                    label: s, color: colors.primary, textTheme: textTheme))
-                .toList(),
-          ),
-          SizedBox(height: 20.h),
-        ],
-
-        // Amenities
-        if ((turf.amenities).isNotEmpty) ...[
-          Text('Amenities',
-              style:
-                  textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
-          SizedBox(height: 10.h),
-          Wrap(
-            spacing: 8.w,
-            runSpacing: 8.h,
-            children: (turf.amenities)
-                .map((a) => _Chip(
-                    label: a,
-                    color: const Color(0xFF4F46E5),
-                    textTheme: textTheme))
-                .toList(),
-          ),
-          SizedBox(height: 20.h),
-        ],
-
-        // Available Slots summary
-        if ((turf.availableSlots).isNotEmpty) ...[
-          Text('Available Time Slots (${turf.availableSlots.length})',
-              style:
-                  textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
-          SizedBox(height: 10.h),
-          Wrap(
-            spacing: 6.w,
-            runSpacing: 6.h,
-            children: (turf.availableSlots)
-                .map((slot) => Container(
-                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        slot,
-                        style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w600, color: colors.textTitle),
-                      ),
-                    ))
-                .toList(),
-          ),
-          SizedBox(height: 20.h),
-        ],
-
-        // Contact Info
-        if ((turf.contactPhone != null && turf.contactPhone!.isNotEmpty) ||
-            (turf.contactEmail != null && turf.contactEmail!.isNotEmpty)) ...[
-          Text('Contact Information',
-              style:
-                  textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
-          SizedBox(height: 8.h),
-          if (turf.contactPhone != null && turf.contactPhone!.isNotEmpty)
+            // Name + Price
             Row(
               children: [
-                Icon(Icons.phone_rounded, size: 16, color: colors.primary),
-                SizedBox(width: 8.w),
-                Text(turf.contactPhone!, style: textTheme.bodySmall),
+                Expanded(
+                  child: Text(
+                    turf.name,
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Text(
+                  '₹${turf.pricePerHour}/hr',
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: colors.primary,
+                  ),
+                ),
               ],
             ),
-          if (turf.contactEmail != null && turf.contactEmail!.isNotEmpty) ...[
             SizedBox(height: 6.h),
+
+            // Address
             Row(
               children: [
-                Icon(Icons.email_rounded, size: 16, color: colors.primary),
-                SizedBox(width: 8.w),
-                Text(turf.contactEmail!, style: textTheme.bodySmall),
+                Icon(
+                  Icons.location_on_rounded,
+                  size: 16,
+                  color: colors.textGrey,
+                ),
+                SizedBox(width: 4.w),
+                Expanded(
+                  child: Text(
+                    locationParts.isNotEmpty ? locationParts : turf.address,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colors.textGrey,
+                    ),
+                  ),
+                ),
               ],
             ),
-          ],
-          SizedBox(height: 20.h),
-        ],
 
-        // Rules
-        if (turf.rules != null && turf.rules!.isNotEmpty) ...[
-          Text('Rules & Guidelines',
-              style:
-                  textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
-          SizedBox(height: 8.h),
-          Text(turf.rules!,
-              style: textTheme.bodySmall?.copyWith(color: colors.textGrey, height: 1.4)),
-        ],
-      ],
-    ),
-  ),
-);
+            // Surface & Capacity
+            if (turf.surfaceType != null || turf.capacity != null) ...[
+              SizedBox(height: 8.h),
+              Row(
+                children: [
+                  if (turf.surfaceType != null) ...[
+                    Icon(Icons.grass_rounded, size: 16, color: colors.primary),
+                    SizedBox(width: 4.w),
+                    Text(
+                      turf.surfaceType!,
+                      style: textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(width: 16.w),
+                  ],
+                  if (turf.capacity != null) ...[
+                    Icon(Icons.groups_rounded, size: 16, color: colors.primary),
+                    SizedBox(width: 4.w),
+                    Text(
+                      '${turf.capacity} Players',
+                      style: textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+
+            // Rating
+            if (turf.rating != null) ...[
+              SizedBox(height: 8.h),
+              Row(
+                children: [
+                  const Icon(Icons.star_rounded, size: 16, color: Colors.amber),
+                  SizedBox(width: 4.w),
+                  Text(
+                    '${turf.rating!.toStringAsFixed(1)} (${turf.totalReviews} reviews)',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colors.textTitle,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+
+            SizedBox(height: 16.h),
+            const Divider(color: Color(0xFFF0F0F0)),
+            SizedBox(height: 16.h),
+
+            // Description
+            if (turf.description != null && turf.description!.isNotEmpty) ...[
+              Text(
+                'Description',
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                turf.description!,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: colors.textGrey,
+                  height: 1.5,
+                ),
+              ),
+              SizedBox(height: 20.h),
+            ],
+
+            // Sports
+            if ((turf.sports).isNotEmpty) ...[
+              Text(
+                'Sports',
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(height: 10.h),
+              Wrap(
+                spacing: 8.w,
+                runSpacing: 8.h,
+                children: (turf.sports)
+                    .map(
+                      (s) => _Chip(
+                        label: s,
+                        color: colors.primary,
+                        textTheme: textTheme,
+                      ),
+                    )
+                    .toList(),
+              ),
+              SizedBox(height: 20.h),
+            ],
+
+            // Amenities
+            if ((turf.amenities).isNotEmpty) ...[
+              Text(
+                'Amenities',
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(height: 10.h),
+              Wrap(
+                spacing: 8.w,
+                runSpacing: 8.h,
+                children: (turf.amenities)
+                    .map(
+                      (a) => _Chip(
+                        label: a,
+                        color: const Color(0xFF4F46E5),
+                        textTheme: textTheme,
+                      ),
+                    )
+                    .toList(),
+              ),
+              SizedBox(height: 20.h),
+            ],
+
+            // Available Slots summary
+            if ((turf.availableSlots).isNotEmpty) ...[
+              Text(
+                'Available Time Slots (${turf.availableSlots.length})',
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(height: 10.h),
+              Wrap(
+                spacing: 6.w,
+                runSpacing: 6.h,
+                children: (turf.availableSlots)
+                    .map(
+                      (slot) => Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10.w,
+                          vertical: 6.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          slot,
+                          style: TextStyle(
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textTitle,
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+              SizedBox(height: 20.h),
+            ],
+
+            // Contact Info
+            if ((turf.contactPhone != null && turf.contactPhone!.isNotEmpty) ||
+                (turf.contactEmail != null &&
+                    turf.contactEmail!.isNotEmpty)) ...[
+              Text(
+                'Contact Information',
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              if (turf.contactPhone != null && turf.contactPhone!.isNotEmpty)
+                Row(
+                  children: [
+                    Icon(Icons.phone_rounded, size: 16, color: colors.primary),
+                    SizedBox(width: 8.w),
+                    Text(turf.contactPhone!, style: textTheme.bodySmall),
+                  ],
+                ),
+              if (turf.contactEmail != null &&
+                  turf.contactEmail!.isNotEmpty) ...[
+                SizedBox(height: 6.h),
+                Row(
+                  children: [
+                    Icon(Icons.email_rounded, size: 16, color: colors.primary),
+                    SizedBox(width: 8.w),
+                    Text(turf.contactEmail!, style: textTheme.bodySmall),
+                  ],
+                ),
+              ],
+              SizedBox(height: 20.h),
+            ],
+
+            // Rules
+            if (turf.rules != null && turf.rules!.isNotEmpty) ...[
+              Text(
+                'Rules & Guidelines',
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                turf.rules!,
+                style: textTheme.bodySmall?.copyWith(
+                  color: colors.textGrey,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -1459,15 +1976,18 @@ class _Chip extends StatelessWidget {
   final String label;
   final Color color;
   final TextTheme textTheme;
-  const _Chip(
-      {required this.label, required this.color, required this.textTheme});
+  const _Chip({
+    required this.label,
+    required this.color,
+    required this.textTheme,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -1499,10 +2019,11 @@ class _FieldLabel extends StatelessWidget {
   final String label;
   final TextTheme textTheme;
   final AppColors colors;
-  const _FieldLabel(
-      {required this.label,
-      required this.textTheme,
-      required this.colors});
+  const _FieldLabel({
+    required this.label,
+    required this.textTheme,
+    required this.colors,
+  });
 
   @override
   Widget build(BuildContext context) {

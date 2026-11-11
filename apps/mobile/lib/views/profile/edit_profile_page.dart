@@ -7,6 +7,7 @@ import 'package:mobile/core/responsive/screen_extensions.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/viewmodels/auth/auth_viewmodel.dart';
 import 'package:mobile/views/widgets/my_buttons.dart';
+import 'package:mobile/views/widgets/my_text_field.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -39,18 +40,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final u = _authVm.currentUser;
     _initialEmail = u['email'] as String? ?? '';
     _initialPhone = u['phone'] as String? ?? '';
-    _firstNameController =
-        TextEditingController(text: u['firstName'] as String? ?? '');
-    _lastNameController =
-        TextEditingController(text: u['lastName'] as String? ?? '');
-    _emailController =
-        TextEditingController(text: _initialEmail);
-    _phoneController =
-        TextEditingController(text: _initialPhone);
+    _firstNameController = TextEditingController(
+      text: u['firstName'] as String? ?? '',
+    );
+    _lastNameController = TextEditingController(
+      text: u['lastName'] as String? ?? '',
+    );
+    _emailController = TextEditingController(text: _initialEmail);
+    _phoneController = TextEditingController(text: _initialPhone);
     _bioController = TextEditingController(text: u['bio'] as String? ?? '');
     _cityController = TextEditingController(text: u['city'] as String? ?? '');
-    _stateController =
-        TextEditingController(text: u['state'] as String? ?? '');
+    _stateController = TextEditingController(text: u['state'] as String? ?? '');
     _currentAvatarUrl = u['avatarUrl'] as String?;
   }
 
@@ -104,88 +104,103 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-              Container(
-                width: 40.w,
-                height: 4.h,
-                margin: EdgeInsets.only(bottom: 16.h),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE0E0E0),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Text(
-                'Profile Photo',
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colors.textTitle,
-                ),
-              ),
-              SizedBox(height: 16.h),
-              ListTile(
-                leading: Container(
-                  padding: EdgeInsets.all(8.w),
-                  decoration: BoxDecoration(
-                    color: colors.primary.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.camera_alt_rounded, color: colors.primary),
-                ),
-                title: Text('Take Photo', style: textTheme.bodyMedium),
-                onTap: () {
-                  Get.back();
-                  _pickImage(ImageSource.camera);
-                },
-              ),
-              ListTile(
-                leading: Container(
-                  padding: EdgeInsets.all(8.w),
-                  decoration: BoxDecoration(
-                    color: colors.primary.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.photo_library_rounded, color: colors.primary),
-                ),
-                title: Text('Choose from Gallery', style: textTheme.bodyMedium),
-                onTap: () {
-                  Get.back();
-                  _pickImage(ImageSource.gallery);
-                },
-              ),
-              if (_selectedImageFile != null ||
-                  (_currentAvatarUrl != null && _currentAvatarUrl!.isNotEmpty))
-                ListTile(
-                  leading: Container(
-                    padding: EdgeInsets.all(8.w),
-                    decoration: BoxDecoration(
-                      color: colors.error.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
+                    Container(
+                      width: 40.w,
+                      height: 4.h,
+                      margin: EdgeInsets.only(bottom: 16.h),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE0E0E0),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
-                    child: Icon(Icons.delete_outline_rounded,
-                        color: colors.error),
-                  ),
-                  title: Text(
-                    'Remove Photo',
-                    style: textTheme.bodyMedium?.copyWith(color: colors.error),
-                  ),
-                  onTap: () {
-                    Get.back();
-                    setState(() {
-                      _selectedImageFile = null;
-                      _currentAvatarUrl = '';
-                    });
-                  },
+                    Text(
+                      'Profile Photo',
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colors.textTitle,
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    ListTile(
+                      leading: Container(
+                        padding: EdgeInsets.all(8.w),
+                        decoration: BoxDecoration(
+                          color: colors.primary.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.camera_alt_rounded,
+                          color: colors.primary,
+                        ),
+                      ),
+                      title: Text('Take Photo', style: textTheme.bodyMedium),
+                      onTap: () {
+                        Get.back();
+                        _pickImage(ImageSource.camera);
+                      },
+                    ),
+                    ListTile(
+                      leading: Container(
+                        padding: EdgeInsets.all(8.w),
+                        decoration: BoxDecoration(
+                          color: colors.primary.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.photo_library_rounded,
+                          color: colors.primary,
+                        ),
+                      ),
+                      title: Text(
+                        'Choose from Gallery',
+                        style: textTheme.bodyMedium,
+                      ),
+                      onTap: () {
+                        Get.back();
+                        _pickImage(ImageSource.gallery);
+                      },
+                    ),
+                    if (_selectedImageFile != null ||
+                        (_currentAvatarUrl != null &&
+                            _currentAvatarUrl!.isNotEmpty))
+                      ListTile(
+                        leading: Container(
+                          padding: EdgeInsets.all(8.w),
+                          decoration: BoxDecoration(
+                            color: colors.error.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.delete_outline_rounded,
+                            color: colors.error,
+                          ),
+                        ),
+                        title: Text(
+                          'Remove Photo',
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: colors.error,
+                          ),
+                        ),
+                        onTap: () {
+                          Get.back();
+                          setState(() {
+                            _selectedImageFile = null;
+                            _currentAvatarUrl = '';
+                          });
+                        },
+                      ),
+                  ],
                 ),
-            ],
+              ),
+            ),
           ),
         ),
       ),
-    ),
-  ),
-),
-);
-}
+    );
+  }
 
   Future<void> _handleSave() async {
+    if (_isSaving) return;
     setState(() => _isSaving = true);
 
     String? avatarData;
@@ -268,11 +283,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 left: 20.w,
                 right: 20.w,
                 top: 20.h,
-                bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 24.h,
+                bottom:
+                    MediaQuery.of(bottomSheetContext).viewInsets.bottom + 24.h,
               ),
               decoration: BoxDecoration(
                 color: colors.white,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -359,7 +377,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                             : () async {
                                 final sent = await _authVm.requestContactOtp();
                                 if (sent) {
-                                  Get.snackbar('OTP Resent', 'A new code was sent to your email');
+                                  Get.snackbar(
+                                    'OTP Resent',
+                                    'A new code was sent to your email',
+                                  );
                                 }
                               },
                         child: Text(
@@ -376,7 +397,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                             : () async {
                                 final code = otpSheetController.text.trim();
                                 if (code.length < 6) {
-                                  Get.snackbar('Invalid OTP', 'Please enter the 6-digit code');
+                                  Get.snackbar(
+                                    'Invalid OTP',
+                                    'Please enter the 6-digit code',
+                                  );
                                   return;
                                 }
 
@@ -391,10 +415,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                   'email': newEmail,
                                   'phone': newPhone,
                                   'otp': code,
-                                  if (avatarData != null) 'avatarUrl': avatarData,
+                                  if (avatarData != null)
+                                    'avatarUrl': avatarData,
                                 };
 
-                                final success = await _authVm.updateProfile(updateData);
+                                final success = await _authVm.updateProfile(
+                                  updateData,
+                                );
                                 setSheetState(() => isVerifying = false);
 
                                 if (success) {
@@ -407,7 +434,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 20.w,
+                            vertical: 12.h,
+                          ),
                         ),
                         child: isVerifying
                             ? SizedBox(
@@ -471,252 +501,249 @@ class _EditProfilePageState extends State<EditProfilePage> {
             padding: EdgeInsets.all(20.w),
             child: Column(
               children: [
-            SizedBox(height: 12.h),
+                SizedBox(height: 12.h),
 
-            // ── Avatar Upload Section ──────────────────────────────
-            Center(
-              child: Stack(
-                children: [
-                  GestureDetector(
-                    onTap: () => _showImagePickerModal(colors, textTheme),
-                    child: Container(
-                      width: 100.w,
-                      height: 100.w,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: colors.white,
-                        border: Border.all(
-                          color: colors.primary,
-                          width: 3,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
+                // ── Avatar Upload Section ──────────────────────────────
+                Center(
+                  child: Stack(
+                    children: [
+                      GestureDetector(
+                        onTap: () => _showImagePickerModal(colors, textTheme),
+                        child: Container(
+                          width: 100.w,
+                          height: 100.w,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: colors.white,
+                            border: Border.all(color: colors.primary, width: 3),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.08),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                        ],
+                          child: ClipOval(child: _buildAvatarContent(colors)),
+                        ),
                       ),
-                      child: ClipOval(
-                        child: _buildAvatarContent(colors),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 2,
-                    right: 2,
-                    child: GestureDetector(
-                      onTap: () => _showImagePickerModal(colors, textTheme),
-                      child: Container(
-                        padding: EdgeInsets.all(8.w),
-                        decoration: BoxDecoration(
-                          color: colors.primary,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: colors.white, width: 2),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.15),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
+                      Positioned(
+                        bottom: 2,
+                        right: 2,
+                        child: GestureDetector(
+                          onTap: () => _showImagePickerModal(colors, textTheme),
+                          child: Container(
+                            padding: EdgeInsets.all(8.w),
+                            decoration: BoxDecoration(
+                              color: colors.primary,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: colors.white, width: 2),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.15),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.camera_alt_rounded,
-                          color: Colors.white,
-                          size: 16,
+                            child: const Icon(
+                              Icons.camera_alt_rounded,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              'Tap photo to update',
-              style: textTheme.bodySmall?.copyWith(
-                color: colors.textGrey,
-                fontSize: 12.sp,
-              ),
-            ),
-            SizedBox(height: 24.h),
-
-            // ── Section 1: Personal Information ───────────────────
-            _buildSectionCard(
-              colors: colors,
-              title: 'Personal Details',
-              icon: Icons.person_outline_rounded,
-              textTheme: textTheme,
-              children: [
-                _buildStyledTextField(
-                  colors: colors,
-                  textTheme: textTheme,
-                  controller: _firstNameController,
-                  label: 'First Name',
-                  hint: 'Enter your first name',
-                  prefixIcon: Icons.badge_outlined,
-                ),
-                SizedBox(height: 14.h),
-                _buildStyledTextField(
-                  colors: colors,
-                  textTheme: textTheme,
-                  controller: _lastNameController,
-                  label: 'Last Name',
-                  hint: 'Enter your last name',
-                  prefixIcon: Icons.badge_outlined,
-                ),
-                SizedBox(height: 14.h),
-                _buildStyledTextField(
-                  colors: colors,
-                  textTheme: textTheme,
-                  controller: _bioController,
-                  label: 'Bio',
-                  hint: 'Tell us a bit about yourself',
-                  prefixIcon: Icons.info_outline_rounded,
-                  maxLines: 2,
-                ),
-              ],
-            ),
-            SizedBox(height: 16.h),
-
-            // ── Section 2: Contact Info (Editable with Email OTP) ───────────────
-            _buildSectionCard(
-              colors: colors,
-              title: 'Contact Information',
-              icon: Icons.contact_mail_outlined,
-              textTheme: textTheme,
-              children: [
-                _buildStyledTextField(
-                  colors: colors,
-                  textTheme: textTheme,
-                  controller: _emailController,
-                  label: 'Email Address',
-                  hint: 'Email',
-                  prefixIcon: Icons.email_outlined,
-                  readOnly: false,
-                  suffixWidget: Icon(
-                    Icons.edit_outlined,
-                    size: 16,
-                    color: colors.textGrey,
-                  ),
-                ),
-                SizedBox(height: 14.h),
-                _buildStyledTextField(
-                  colors: colors,
-                  textTheme: textTheme,
-                  controller: _phoneController,
-                  label: 'Phone Number',
-                  hint: 'Phone',
-                  prefixIcon: Icons.phone_android_outlined,
-                  readOnly: false,
-                  suffixWidget: Icon(
-                    Icons.edit_outlined,
-                    size: 16,
-                    color: colors.textGrey,
+                    ],
                   ),
                 ),
                 SizedBox(height: 8.h),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.shield_outlined,
-                      size: 13.sp,
-                      color: colors.textGrey,
-                    ),
-                    SizedBox(width: 4.w),
-                    Expanded(
-                      child: Text(
-                        'Requires email OTP verification when updating email or phone',
-                        style: textTheme.bodySmall?.copyWith(
-                          fontSize: 11.sp,
-                          color: colors.textGrey,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            SizedBox(height: 16.h),
-
-            // ── Section 3: Location Details ───────────────────────
-            _buildSectionCard(
-              colors: colors,
-              title: 'Location Details',
-              icon: Icons.location_on_outlined,
-              textTheme: textTheme,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildStyledTextField(
-                        colors: colors,
-                        textTheme: textTheme,
-                        controller: _cityController,
-                        label: 'City',
-                        hint: 'e.g. Mumbai',
-                        prefixIcon: Icons.location_city_outlined,
-                      ),
-                    ),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                      child: _buildStyledTextField(
-                        colors: colors,
-                        textTheme: textTheme,
-                        controller: _stateController,
-                        label: 'State',
-                        hint: 'e.g. Maharashtra',
-                        prefixIcon: Icons.map_outlined,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            SizedBox(height: 28.h),
-
-            // ── Submit Button ─────────────────────────────────────
-            MyButtons(
-              text: _isSaving ? 'Saving Changes...' : 'Save Profile',
-              height: 50.h,
-              width: double.infinity,
-              onTap: _isSaving ? () {} : _handleSave,
-              backgroundColor: colors.primary,
-              textStyle: textTheme.bodyMedium?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 15.sp,
-              ),
-            ),
-            SizedBox(height: 16.h),
-
-            // ── Delete Account Option ──
-            Center(
-              child: TextButton.icon(
-                onPressed: () => _confirmDeleteAccount(context, colors),
-                icon: Icon(
-                  Icons.delete_forever_rounded,
-                  color: colors.error,
-                  size: 20.sp,
-                ),
-                label: Text(
-                  'Delete Account',
-                  style: TextStyle(
-                    color: colors.error,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14.sp,
+                Text(
+                  'Tap photo to update',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colors.textGrey,
+                    fontSize: 12.sp,
                   ),
                 ),
-              ),
+                SizedBox(height: 24.h),
+
+                // ── Section 1: Personal Information ───────────────────
+                _buildSectionCard(
+                  colors: colors,
+                  title: 'Personal Details',
+                  icon: Icons.person_outline_rounded,
+                  textTheme: textTheme,
+                  children: [
+                    _buildStyledTextField(
+                      colors: colors,
+                      textTheme: textTheme,
+                      controller: _firstNameController,
+                      label: 'First Name',
+                      hint: 'Enter your first name',
+                      prefixIcon: Icons.badge_outlined,
+                    ),
+                    SizedBox(height: 14.h),
+                    _buildStyledTextField(
+                      colors: colors,
+                      textTheme: textTheme,
+                      controller: _lastNameController,
+                      label: 'Last Name',
+                      hint: 'Enter your last name',
+                      prefixIcon: Icons.badge_outlined,
+                    ),
+                    SizedBox(height: 14.h),
+                    _buildStyledTextField(
+                      colors: colors,
+                      textTheme: textTheme,
+                      controller: _bioController,
+                      label: 'Bio',
+                      hint: 'Tell us a bit about yourself',
+                      prefixIcon: Icons.info_outline_rounded,
+                      maxLines: 2,
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16.h),
+
+                // ── Section 2: Contact Info (Editable with Email OTP) ───────────────
+                _buildSectionCard(
+                  colors: colors,
+                  title: 'Contact Information',
+                  icon: Icons.contact_mail_outlined,
+                  textTheme: textTheme,
+                  children: [
+                    _buildStyledTextField(
+                      colors: colors,
+                      textTheme: textTheme,
+                      controller: _emailController,
+                      label: 'Email Address',
+                      hint: 'Email',
+                      prefixIcon: Icons.email_outlined,
+                      readOnly: false,
+                      suffixWidget: Icon(
+                        Icons.edit_outlined,
+                        size: 16,
+                        color: colors.textGrey,
+                      ),
+                    ),
+                    SizedBox(height: 14.h),
+                    _buildStyledTextField(
+                      colors: colors,
+                      textTheme: textTheme,
+                      controller: _phoneController,
+                      label: 'Phone Number',
+                      hint: 'Phone',
+                      prefixIcon: Icons.phone_android_outlined,
+                      readOnly: false,
+                      suffixWidget: Icon(
+                        Icons.edit_outlined,
+                        size: 16,
+                        color: colors.textGrey,
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.shield_outlined,
+                          size: 13.sp,
+                          color: colors.textGrey,
+                        ),
+                        SizedBox(width: 4.w),
+                        Expanded(
+                          child: Text(
+                            'Requires email OTP verification when updating email or phone',
+                            style: textTheme.bodySmall?.copyWith(
+                              fontSize: 11.sp,
+                              color: colors.textGrey,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16.h),
+
+                // ── Section 3: Location Details ───────────────────────
+                _buildSectionCard(
+                  colors: colors,
+                  title: 'Location Details',
+                  icon: Icons.location_on_outlined,
+                  textTheme: textTheme,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildStyledTextField(
+                            colors: colors,
+                            textTheme: textTheme,
+                            controller: _cityController,
+                            label: 'City',
+                            hint: 'e.g. Mumbai',
+                            prefixIcon: Icons.location_city_outlined,
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: _buildStyledTextField(
+                            colors: colors,
+                            textTheme: textTheme,
+                            controller: _stateController,
+                            label: 'State',
+                            hint: 'e.g. Maharashtra',
+                            prefixIcon: Icons.map_outlined,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                SizedBox(height: 28.h),
+
+                // ── Submit Button ─────────────────────────────────────
+                MyButtons(
+                  text: _isSaving ? 'Saving Changes...' : 'Save Profile',
+                  isLoading: _isSaving,
+                  loadingText: 'Saving Changes...',
+                  height: 50.h,
+                  width: double.infinity,
+                  onTap: _isSaving ? null : _handleSave,
+                  backgroundColor: colors.primary,
+                  textStyle: textTheme.bodyMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15.sp,
+                  ),
+                ),
+                SizedBox(height: 16.h),
+
+                // ── Delete Account Option ──
+                Center(
+                  child: TextButton.icon(
+                    onPressed: () => _confirmDeleteAccount(context, colors),
+                    icon: Icon(
+                      Icons.delete_forever_rounded,
+                      color: colors.error,
+                      size: 20.sp,
+                    ),
+                    label: Text(
+                      'Delete Account',
+                      style: TextStyle(
+                        color: colors.error,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14.sp,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 24.h),
+              ],
             ),
-            SizedBox(height: 24.h),
-          ],
+          ),
         ),
       ),
-    ),
-  ),
-);
+    );
   }
 
   void _confirmDeleteAccount(BuildContext context, AppColors colors) {
@@ -776,10 +803,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () async {
               Get.back();
@@ -842,11 +866,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Widget _buildFallbackIcon(AppColors colors) {
     return Container(
       color: colors.primary.withValues(alpha: 0.1),
-      child: Icon(
-        Icons.person_rounded,
-        size: 52,
-        color: colors.primary,
-      ),
+      child: Icon(Icons.person_rounded, size: 52, color: colors.primary),
     );
   }
 
@@ -933,8 +953,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             ),
             isDense: true,
             filled: true,
-            fillColor:
-                readOnly ? const Color(0xFFF7F7F8) : Colors.transparent,
+            fillColor: readOnly ? const Color(0xFFF7F7F8) : Colors.transparent,
             prefixIcon: Icon(
               prefixIcon,
               size: 18,
@@ -946,8 +965,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     child: suffixWidget,
                   )
                 : null,
-            contentPadding:
-                EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 14.w,
+              vertical: 12.h,
+            ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(

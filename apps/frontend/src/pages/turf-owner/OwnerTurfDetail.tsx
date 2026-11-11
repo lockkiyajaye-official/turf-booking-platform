@@ -247,12 +247,12 @@ export default function OwnerTurfDetail() {
     };
 
     const handleDelete = async () => {
-        if (!confirm("Are you sure you want to delete this turf? This cannot be undone.")) return;
+        if (!confirm("Are you sure you want to permanently delete this unpublished turf? This cannot be undone.")) return;
         try {
             await api.delete(`/turfs/${id}`);
             navigate("/owner/turfs");
-        } catch {
-            alert("Failed to delete turf");
+        } catch (error: any) {
+            alert(error.response?.data?.message || "Failed to delete turf");
         }
     };
 
@@ -311,10 +311,12 @@ export default function OwnerTurfDetail() {
                             <Eye className="w-4 h-4" /> Publish
                         </button>
                     )}
-                    <button onClick={handleDelete}
-                        className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-bold text-sm transition-colors">
-                        <Trash2 className="w-4 h-4" /> Delete
-                    </button>
+                    {!turf?.isPublished && (
+                        <button onClick={handleDelete}
+                            className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-bold text-sm transition-colors">
+                            <Trash2 className="w-4 h-4" /> Delete
+                        </button>
+                    )}
                 </div>
             </div>
 

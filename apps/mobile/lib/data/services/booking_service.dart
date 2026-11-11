@@ -13,7 +13,7 @@ class BookingService {
   }
 
   Map<String, dynamic> _handleResponse(http.Response response) {
-    var data;
+    dynamic data;
     try {
       data = jsonDecode(response.body);
     } catch (_) {

@@ -188,6 +188,23 @@ class OwnerViewmodel extends GetxController {
     }
   }
 
+  Future<bool> deleteTurf(String id) async {
+    try {
+      final res = await _turfService.deleteTurf(_token, id);
+      if (res['success']) {
+        _showSuccess('Turf deleted successfully');
+        await fetchMyTurfs();
+        return true;
+      } else {
+        _showError(res['message'] ?? 'Failed to delete turf');
+        return false;
+      }
+    } catch (e) {
+      _showError(e.toString());
+      return false;
+    }
+  }
+
   // ── Bookings ─────────────────────────────────────────────
 
   /// Reset filters/pagination and reload page 1.

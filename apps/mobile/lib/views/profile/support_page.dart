@@ -80,6 +80,7 @@ class _SupportPageState extends State<SupportPage>
   }
 
   Future<void> _submitForm() async {
+    if (_supportVm.isSubmitting.value) return;
     final subject = _subjectController.text.trim();
     final message = _messageController.text.trim();
 
@@ -347,9 +348,11 @@ class _SupportPageState extends State<SupportPage>
               text: _supportVm.isSubmitting.value
                   ? 'Submitting...'
                   : 'Submit Support Ticket',
+              isLoading: _supportVm.isSubmitting.value,
+              loadingText: 'Submitting...',
               height: 48.h,
               width: double.infinity,
-              onTap: _supportVm.isSubmitting.value ? () {} : _submitForm,
+              onTap: _supportVm.isSubmitting.value ? null : _submitForm,
               backgroundColor: colors.primary,
               textStyle: textTheme.bodyMedium?.copyWith(
                 color: Colors.white,

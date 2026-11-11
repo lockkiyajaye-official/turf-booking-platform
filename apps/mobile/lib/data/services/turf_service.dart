@@ -148,6 +148,18 @@ class TurfService {
     }
   }
 
+  Future<Map<String, dynamic>> deleteTurf(String token, String id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$_base/$id'),
+        headers: _headers(token),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
   Future<Map<String, dynamic>> checkAvailability({
     required String id,
     required String date,

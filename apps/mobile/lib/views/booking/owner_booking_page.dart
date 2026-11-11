@@ -234,7 +234,10 @@ class _BookingList extends StatelessWidget {
     if (columns > 1) {
       return GridView.builder(
         controller: scrollController,
-        padding: EdgeInsets.symmetric(horizontal: horizontalPad, vertical: 16.h),
+        padding: EdgeInsets.symmetric(
+          horizontal: horizontalPad,
+          vertical: 16.h,
+        ),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: columns,
           crossAxisSpacing: 16,
@@ -246,8 +249,14 @@ class _BookingList extends StatelessWidget {
           if (i == bookings.length) {
             return Center(
               child: isFetchingMore
-                  ? CircularProgressIndicator(color: colors.primary, strokeWidth: 2)
-                  : Text('Scroll for more', style: TextStyle(color: colors.textGrey, fontSize: 12.sp)),
+                  ? CircularProgressIndicator(
+                      color: colors.primary,
+                      strokeWidth: 2,
+                    )
+                  : Text(
+                      'Scroll for more',
+                      style: TextStyle(color: colors.textGrey, fontSize: 12.sp),
+                    ),
             );
           }
           return _BookingCard(

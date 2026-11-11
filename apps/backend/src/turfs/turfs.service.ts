@@ -1,7 +1,8 @@
 import {
   Injectable,
   NotFoundException,
-  UnauthorizedException
+  UnauthorizedException,
+  BadRequestException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Booking, BookingStatus } from '../database/entities/booking.entity';
@@ -208,6 +209,20 @@ export class TurfsService {
 
     if (turf.ownerId !== owner.id && owner.role !== UserRole.ADMIN) {
       throw new UnauthorizedException('You can only delete your own turfs');
+    }
+
+    if (turf.isPublished && owner.role !== UserRole.ADMIN) {
+      throw new BadRequestException('Only unpublished turfs can be deleted. Please unpublish the turf before deleting.');
+    }
+
+    const activeBookings = await this.bookingRepository.count({
+      where: {
+        turfId: id,
+        status: In([BookingStatus.CONFIRMED, BookingStatus.PENDING]),
+      },
+    });
+    if (activeBookings > 0) {
+      throw new BadRequestException('Cannot delete turf with active or pending bookings.');
     }
 
     await this.turfRepository.remove(turf);

@@ -274,7 +274,7 @@ class _OwnerTurfCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      SizedBox(width: 10.w),
+                      SizedBox(width: 8.w),
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: () {
@@ -310,6 +310,25 @@ class _OwnerTurfCard extends StatelessWidget {
                           ),
                         ),
                       ),
+                      if (!isPublished) ...[
+                        SizedBox(width: 8.w),
+                        IconButton(
+                          onPressed: () => _confirmDelete(context, turf),
+                          icon: const Icon(
+                            Icons.delete_outline_rounded,
+                            color: Color(0xFFE43434),
+                            size: 20,
+                          ),
+                          tooltip: 'Delete unpublished turf',
+                          style: IconButton.styleFrom(
+                            backgroundColor: const Color(0xFFFEE2E2),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: EdgeInsets.all(8.w),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ],
@@ -318,6 +337,23 @@ class _OwnerTurfCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _confirmDelete(BuildContext context, TurfModel turf) {
+    Get.defaultDialog(
+      title: 'Delete Turf',
+      titleStyle: const TextStyle(fontWeight: FontWeight.bold),
+      middleText:
+          'Are you sure you want to permanently delete "${turf.name}"? This action cannot be undone.',
+      textConfirm: 'Delete',
+      textCancel: 'Cancel',
+      confirmTextColor: Colors.white,
+      buttonColor: const Color(0xFFE43434),
+      onConfirm: () async {
+        Get.back();
+        await vm.deleteTurf(turf.id);
+      },
     );
   }
 }

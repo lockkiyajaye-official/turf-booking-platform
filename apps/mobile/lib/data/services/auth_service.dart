@@ -13,7 +13,7 @@ class AuthService {
       };
 
   Map<String, dynamic> _handleResponse(http.Response response) {
-    var data;
+    dynamic data;
     try {
       data = jsonDecode(response.body);
     } catch (_) {
@@ -109,6 +109,7 @@ class AuthService {
     required String password,
     required String firstName,
     required String lastName,
+    String? phone,
     String role = 'user',
   }) async {
     try {
@@ -121,6 +122,7 @@ class AuthService {
           'firstName': firstName,
           'lastName': lastName,
           'role': role,
+          if (phone != null) 'phone': phone,
         }),
       );
       return _handleResponse(response);

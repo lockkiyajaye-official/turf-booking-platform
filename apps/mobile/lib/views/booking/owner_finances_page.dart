@@ -84,6 +84,7 @@ class _OwnerFinancesPageState extends State<OwnerFinancesPage> {
   }
 
   Future<void> _handleSavePayoutDetails() async {
+    if (_vm.isSavingPayoutDetails.value) return;
     final accNum = _accountNumberController.text.trim();
     final confirmAccNum = _confirmAccountNumberController.text.trim();
     final ifsc = _ifscController.text.trim().toUpperCase();
@@ -164,6 +165,7 @@ class _OwnerFinancesPageState extends State<OwnerFinancesPage> {
             final upiId = (details['upiId'] ?? '').toString().trim();
 
             Future<void> submitPayout() async {
+              if (isLoading) return;
               final text = amountController.text.trim();
               final amount = double.tryParse(text) ?? 0;
 
@@ -379,6 +381,8 @@ class _OwnerFinancesPageState extends State<OwnerFinancesPage> {
                       SizedBox(height: 24.h),
                       MyButtons(
                         text: isLoading ? 'Submitting...' : 'Submit Request',
+                        isLoading: isLoading,
+                        loadingText: 'Submitting...',
                         height: 50.h,
                         width: double.infinity,
                         onTap: isLoading ? null : submitPayout,
@@ -1037,6 +1041,8 @@ class _OwnerFinancesPageState extends State<OwnerFinancesPage> {
                 text: _vm.isSavingPayoutDetails.value
                     ? 'Saving Details...'
                     : 'Save Payout Details',
+                isLoading: _vm.isSavingPayoutDetails.value,
+                loadingText: 'Saving Details...',
                 height: 48.h,
                 width: double.infinity,
                 onTap: _vm.isSavingPayoutDetails.value
