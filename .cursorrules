@@ -27,3 +27,9 @@
     - an ordered list of concrete steps/commands I should execute.
   - Assume I am responsible for all local setup, installs, builds, and deployment actions.
 
+- **Always use 12-hour time format anywhere in the app**
+  - Always display times and time slots in 12-hour AM/PM format (e.g. `09:00 AM - 10:00 AM`, `02:00 PM - 03:00 PM`) across all views and platforms (Turf Details, Booking, Owner views, Slot generators, Receipts, etc.).
+  - Never display raw 24-hour time strings (such as `14:00 - 15:00` or `18:30`) in user-facing UI.
+  - When parsing or displaying slots from database/APIs that may be stored in 24-hour format, always format them to 12-hour AM/PM using the helper/formatter utilities.
+
+

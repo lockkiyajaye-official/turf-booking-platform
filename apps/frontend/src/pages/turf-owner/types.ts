@@ -28,6 +28,11 @@ export interface Booking {
     endTime: string;
     totalPrice: number;
     status: BookingStatus;
+    bookingSource?: "online" | "direct";
+    customerName?: string;
+    customerPhone?: string;
+    paymentMethod?: string;
+    notes?: string;
     cancellationReason?: string;
     cancelledAt?: string;
     refundAmount?: number;

@@ -242,16 +242,16 @@ class _LoginPageState extends State<LoginPage> {
 
                         SizedBox(height: 20.h),
 
-                        // ── SOCIAL LOGINS (Google & Apple) ──
+                        // ── SOCIAL & GUEST LOGINS (Google, Apple, Guest) ──
                         Obx(() {
                           final isSending = controller.isSendingOtp.value;
                           final isGoogle = controller.isGoogleLoading.value;
                           final isApple = controller.isAppleLoading.value;
                           final isBusy = isSending || isGoogle || isApple;
 
-                          if (Platform.isIOS) {
-                            return Column(
-                              children: [
+                          return Column(
+                            children: [
+                              if (Platform.isIOS) ...[
                                 SocialLogin(
                                   text: "Continue with Apple",
                                   icon: Icons.apple,
@@ -267,58 +267,29 @@ class _LoginPageState extends State<LoginPage> {
                                       : () => controller.loginWithApple(),
                                 ),
                                 SizedBox(height: 12.h),
-                                SocialLogin(
-                                  text: "Continue with Google",
-                                  asset: AppAssets.google,
-                                  width: double.infinity,
-                                  isLoading: isGoogle,
-                                  loadingText: "Signing in with Google...",
-                                  onTap: isBusy
-                                      ? null
-                                      : () => controller.loginWithGoogle(),
-                                ),
                               ],
-                            );
-                          }
-
-                          return SocialLogin(
-                            text: "Google",
-                            asset: AppAssets.google,
-                            isLoading: isGoogle,
-                            onTap: isBusy
-                                ? null
-                                : () => controller.loginWithGoogle(),
+                              SocialLogin(
+                                text: "Continue with Google",
+                                asset: AppAssets.google,
+                                width: double.infinity,
+                                isLoading: isGoogle,
+                                loadingText: "Signing in with Google...",
+                                onTap: isBusy
+                                    ? null
+                                    : () => controller.loginWithGoogle(),
+                              ),
+                              SizedBox(height: 12.h),
+                              SocialLogin(
+                                text: "Continue as Guest",
+                                icon: Icons.explore_outlined,
+                                width: double.infinity,
+                                onTap: isBusy
+                                    ? null
+                                    : () => controller.enterGuestMode(),
+                              ),
+                            ],
                           );
                         }),
-
-                        SizedBox(height: 14.h),
-
-                        // ── BROWSE AS GUEST BUTTON ──
-                        OutlinedButton.icon(
-                          onPressed: () => controller.enterGuestMode(),
-                          icon: Icon(
-                            Icons.explore_outlined,
-                            color: colors.primary,
-                            size: 18.sp,
-                          ),
-                          label: Text(
-                            "Continue as Guest",
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: colors.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: Size(double.infinity, 50.h),
-                            side: BorderSide(
-                              color: colors.primary.withOpacity(0.5),
-                              width: 1.2,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
 
                         const Spacer(flex: 3),
 

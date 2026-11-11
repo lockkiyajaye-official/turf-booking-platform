@@ -55,6 +55,7 @@ class MyApp extends StatelessWidget {
                 title: AppStrings.appName,
                 theme: lightTheme,
                 themeMode: appTheme.themeMode,
+                initialBinding: AuthBinding(),
                 initialRoute: Get.find<LocalStorageService>().getToken() != null
                     ? RoutePaths.home
                     : RoutePaths.login,

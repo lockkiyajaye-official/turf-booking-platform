@@ -64,6 +64,18 @@ export class Booking {
   })
   status: BookingStatus;
 
+  @Column({ default: 'online' })
+  bookingSource: string; // 'online' | 'direct'
+
+  @Column({ nullable: true })
+  customerName: string;
+
+  @Column({ nullable: true })
+  customerPhone: string;
+
+  @Column({ default: 'online' })
+  paymentMethod: string; // 'online' | 'offline' | 'cash' | 'direct_upi'
+
   @Column({ nullable: true, type: 'text' })
   notes: string;
 

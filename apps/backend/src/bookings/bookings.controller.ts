@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { BookingsService } from './bookings.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { CreateDirectBookingDto } from './dto/create-direct-booking.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -31,11 +32,19 @@ export class BookingsController {
     return this.bookingsService.create(createBookingDto, req.user);
   }
 
+  @Post('direct')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.TURF_OWNER, UserRole.ADMIN)
+  createDirect(@Body() createDirectBookingDto: CreateDirectBookingDto, @Request() req) {
+    return this.bookingsService.createDirectBooking(createDirectBookingDto, req.user);
+  }
+
   @Get()
   findAll(
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('status') status?: BookingStatus,
+    @Query('source') source?: string,
     @Query('search') search?: string,
     @Query('turfId') turfId?: string,
     @Query('startDate') startDate?: string,
@@ -46,6 +55,7 @@ export class BookingsController {
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
       status,
+      source,
       search,
       turfId,
       startDate,

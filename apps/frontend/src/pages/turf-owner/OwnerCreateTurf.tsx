@@ -207,11 +207,11 @@ export default function OwnerCreateTurf() {
                                 </Field>
                             </div>
                             <Field label="City *">
-                                <input type="text" required placeholder="e.g., Bengaluru" className={inputCls}
+                                <input type="text" required placeholder="e.g., Naharlagun" className={inputCls}
                                     value={formData.city} onChange={(e) => set("city", e.target.value)} />
                             </Field>
                             <Field label="State">
-                                <input type="text" placeholder="e.g., Karnataka" className={inputCls}
+                                <input type="text" placeholder="e.g., Arunachal Pradesh" className={inputCls}
                                     value={formData.state} onChange={(e) => set("state", e.target.value)} />
                             </Field>
                             <Field label="Pincode">

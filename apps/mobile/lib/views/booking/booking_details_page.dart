@@ -7,6 +7,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:mobile/core/responsive/screen_extensions.dart';
 import 'package:mobile/core/theme/app_colors.dart';
+import 'package:mobile/core/utils/helpers.dart';
 import 'package:mobile/data/models/amentity_item.dart';
 import 'package:mobile/data/models/turf_model.dart';
 import 'package:mobile/data/services/booking_service.dart';
@@ -764,28 +765,13 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
   }
 
   String _formatSlot(String slot) {
-    final match = RegExp(
-      r'^(\d{2}):(\d{2})-(\d{2}):(\d{2})$',
-    ).firstMatch(slot.trim());
-    if (match == null) return slot;
-
-    int startHour = int.parse(match.group(1)!);
-    int endHour = int.parse(match.group(3)!);
-
-    String formatHour(int hour) {
-      final suffix = hour >= 12 ? 'PM' : 'AM';
-      int displayHour = hour % 12;
-      if (displayHour == 0) displayHour = 12;
-      return '$displayHour $suffix';
-    }
-
-    return '${formatHour(startHour)} - ${formatHour(endHour)}';
+    return TimeHelper.formatTo12Hour(slot);
   }
 
   /// Raw "HH:mm" pair for the currently selected slot, as the backend expects it.
   (String, String) _selectedSlotRaw() {
     final slot = _slots[_selectedSlotIndex].trim();
-    final parts = slot.split('-');
+    final parts = slot.split(slot.contains('–') ? '–' : '-');
     if (parts.length == 2) {
       return (parts[0].trim(), parts[1].trim());
     }

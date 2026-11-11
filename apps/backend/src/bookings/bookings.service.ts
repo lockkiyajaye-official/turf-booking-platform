@@ -11,6 +11,7 @@ import { User, UserRole } from '../database/entities/user.entity';
 import { In, Repository } from 'typeorm';
 import { PaymentsService } from '../payments/payments.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { CreateDirectBookingDto } from './dto/create-direct-booking.dto';
 import { CancelBookingDto } from './dto/cancel-booking.dto';
 
 @Injectable()
@@ -61,6 +62,72 @@ export class BookingsService {
       turfId: turf.id,
       totalPrice,
       status: BookingStatus.PENDING,
+      bookingSource: 'online',
+      paymentMethod: 'online',
+    });
+
+    return this.bookingRepository.save(booking);
+  }
+
+  async createDirectBooking(dto: CreateDirectBookingDto, user: User) {
+    const turf = await this.turfRepository.findOne({
+      where: { id: dto.turfId },
+      relations: ['owner'],
+    });
+
+    if (!turf) {
+      throw new NotFoundException('Turf not found');
+    }
+
+    if (turf.ownerId !== user.id && user.role !== UserRole.ADMIN) {
+      throw new UnauthorizedException('You can only create direct bookings for your own turfs');
+    }
+
+    // Check availability
+    const availability = await this.checkAvailability(
+      dto.turfId,
+      dto.bookingDate,
+      dto.startTime,
+      dto.endTime,
+    );
+
+    if (!availability.available) {
+      throw new BadRequestException(
+        availability.reason || 'Slot already booked or unavailable',
+      );
+    }
+
+    // Determine price
+    let totalPrice = turf.pricePerHour;
+    if (dto.customPrice !== undefined && dto.customPrice !== null) {
+      totalPrice = Number(dto.customPrice);
+    } else {
+      const startHour = parseInt(dto.startTime.split(':')[0]);
+      const endHour = parseInt(dto.endTime.split(':')[0]);
+      const hours = endHour - startHour;
+      totalPrice = turf.pricePerHour * (isNaN(hours) || hours <= 0 ? 1 : hours);
+    }
+
+    // Save as confirmed direct booking without platform/gateway fees
+    // and WITHOUT crediting platform wallet balance (offline payment)
+    const booking = this.bookingRepository.create({
+      turfId: turf.id,
+      turf,
+      userId: user.id,
+      user,
+      bookingDate: new Date(dto.bookingDate),
+      startTime: dto.startTime,
+      endTime: dto.endTime,
+      basePrice: totalPrice,
+      platformFee: 0,
+      gatewayFee: 0,
+      totalPrice,
+      status: BookingStatus.CONFIRMED,
+      bookingSource: 'direct',
+      customerName: dto.customerName,
+      customerPhone: dto.customerPhone || '',
+      paymentMethod: dto.paymentMethod || 'offline',
+      notes: dto.notes || 'Direct / Offline Booking',
     });
 
     return this.bookingRepository.save(booking);
@@ -72,6 +139,7 @@ export class BookingsService {
       page?: number;
       limit?: number;
       status?: BookingStatus | string;
+      source?: string;
       search?: string;
       turfId?: string;
       startDate?: string;
@@ -101,10 +169,14 @@ export class BookingsService {
       query.andWhere('booking.status = :status', { status: options.status });
     }
 
+    if (options?.source && options.source !== 'all') {
+      query.andWhere('booking.bookingSource = :source', { source: options.source });
+    }
+
     if (options?.search && options.search.trim().length > 0) {
       const searchTerm = `%${options.search.trim().toLowerCase()}%`;
       query.andWhere(
-        '(LOWER(user.firstName) LIKE :search OR LOWER(user.lastName) LIKE :search OR LOWER(user.email) LIKE :search OR LOWER(user.phone) LIKE :search OR LOWER(turf.name) LIKE :search)',
+        '(LOWER(user.firstName) LIKE :search OR LOWER(user.lastName) LIKE :search OR LOWER(user.email) LIKE :search OR LOWER(user.phone) LIKE :search OR LOWER(turf.name) LIKE :search OR LOWER(booking.customerName) LIKE :search OR LOWER(booking.customerPhone) LIKE :search)',
         { search: searchTerm },
       );
     }

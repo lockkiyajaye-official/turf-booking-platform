@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobile/core/responsive/screen_extensions.dart';
 import 'package:mobile/core/theme/app_colors.dart';
+import 'package:mobile/core/utils/helpers.dart';
+import 'package:mobile/data/models/turf_model.dart';
 import 'package:mobile/viewmodels/turf/owner_viewmodel.dart';
+import 'package:mobile/views/booking/widgets/direct_booking_sheet.dart';
 
 class OwnerBookingsPage extends StatefulWidget {
   const OwnerBookingsPage({super.key});
@@ -16,8 +19,11 @@ class _OwnerBookingsPageState extends State<OwnerBookingsPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchCtrl = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
   final ScrollController _scrollCtrl = ScrollController();
   Timer? _debounce;
+  bool _isSearching = false;
+  String _lastSubmittedQuery = '';
 
   static const _tabStatuses = ['', 'pending', 'confirmed', 'cancelled'];
 
@@ -32,36 +38,70 @@ class _OwnerBookingsPageState extends State<OwnerBookingsPage>
     // Tab change → refetch with correct status
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) return;
-      final vm = Get.find<OwnerViewmodel>();
+      _debounce?.cancel();
+      final vm = Get.isRegistered<OwnerViewmodel>()
+          ? Get.find<OwnerViewmodel>()
+          : Get.put(OwnerViewmodel(), permanent: true);
       final status = _tabStatuses[_tabController.index];
       vm.fetchAllBookings(status: status, search: _searchCtrl.text.trim());
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.find<OwnerViewmodel>().fetchAllBookings();
+      final vm = Get.isRegistered<OwnerViewmodel>()
+          ? Get.find<OwnerViewmodel>()
+          : Get.put(OwnerViewmodel(), permanent: true);
+      vm.fetchAllBookings();
     });
   }
 
   void _onScroll() {
     if (_scrollCtrl.position.pixels >=
         _scrollCtrl.position.maxScrollExtent - 200) {
-      Get.find<OwnerViewmodel>().loadNextPage();
+      final vm = Get.isRegistered<OwnerViewmodel>()
+          ? Get.find<OwnerViewmodel>()
+          : Get.put(OwnerViewmodel(), permanent: true);
+      vm.loadNextPage();
     }
   }
 
   void _onSearchChanged(String val) {
+    setState(() {}); // Updates the clear button
+    final query = val.trim();
+    if (query == _lastSubmittedQuery) return;
+
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 400), () {
-      final vm = Get.find<OwnerViewmodel>();
+    // 650ms debounce so user can comfortably type without rapid reloads
+    _debounce = Timer(const Duration(milliseconds: 650), () {
+      _lastSubmittedQuery = query;
+      final vm = Get.isRegistered<OwnerViewmodel>()
+          ? Get.find<OwnerViewmodel>()
+          : Get.put(OwnerViewmodel(), permanent: true);
       final status = _tabStatuses[_tabController.index];
-      vm.fetchAllBookings(status: status, search: val.trim());
+      vm.fetchAllBookings(status: status, search: query);
     });
+  }
+
+  void _closeSearch(OwnerViewmodel vm) {
+    _debounce?.cancel();
+    final hadActiveSearch =
+        _lastSubmittedQuery.isNotEmpty || _searchCtrl.text.trim().isNotEmpty;
+    setState(() {
+      _isSearching = false;
+      _searchCtrl.clear();
+      _lastSubmittedQuery = '';
+    });
+    // Only refetch if there was an active search filter applied
+    if (hadActiveSearch) {
+      final status = _tabStatuses[_tabController.index];
+      vm.fetchAllBookings(status: status, search: '');
+    }
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     _searchCtrl.dispose();
+    _searchFocusNode.dispose();
     _scrollCtrl.dispose();
     _debounce?.cancel();
     super.dispose();
@@ -71,81 +111,129 @@ class _OwnerBookingsPageState extends State<OwnerBookingsPage>
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final textTheme = Theme.of(context).textTheme;
-    final vm = Get.find<OwnerViewmodel>();
+    final vm = Get.isRegistered<OwnerViewmodel>()
+        ? Get.find<OwnerViewmodel>()
+        : Get.put(OwnerViewmodel(), permanent: true);
 
-    return Scaffold(
-      backgroundColor: colors.background,
-      appBar: AppBar(
-        backgroundColor: colors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: Text(
-          'Bookings',
-          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-        ),
-        centerTitle: true,
-        bottom: PreferredSize(
-          preferredSize: Size.fromHeight(100.h),
-          child: Column(
-            children: [
-              // Search bar
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                child: TextField(
+    return PopScope(
+      canPop: !_isSearching,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (_isSearching) {
+          _closeSearch(vm);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: colors.background,
+        appBar: AppBar(
+          backgroundColor: colors.white,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          title: _isSearching
+              ? TextField(
                   controller: _searchCtrl,
+                  focusNode: _searchFocusNode,
+                  autofocus: true,
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colors.textTitle,
+                  ),
+                  textInputAction: TextInputAction.search,
                   onChanged: _onSearchChanged,
+                  onSubmitted: (val) {
+                    _debounce?.cancel();
+                    final query = val.trim();
+                    _lastSubmittedQuery = query;
+                    final status = _tabStatuses[_tabController.index];
+                    vm.fetchAllBookings(status: status, search: query);
+                  },
                   decoration: InputDecoration(
                     hintText: 'Search customer or turf...',
                     hintStyle: textTheme.bodySmall?.copyWith(
                       color: colors.textGrey,
                     ),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(
+                      vertical: 10.h,
+                      horizontal: 4.w,
+                    ),
                     prefixIcon: Icon(
                       Icons.search_rounded,
-                      size: 18,
-                      color: colors.textGrey,
+                      size: 20,
+                      color: colors.primary,
                     ),
-                    filled: true,
-                    fillColor: colors.background,
-                    contentPadding: EdgeInsets.symmetric(
-                      vertical: 0,
-                      horizontal: 12.w,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: colors.borderSecondary),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: colors.borderSecondary),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: colors.primary, width: 1.5),
-                    ),
+                    suffixIcon: _searchCtrl.text.isNotEmpty
+                        ? IconButton(
+                            icon: Icon(
+                              Icons.clear_rounded,
+                              size: 18,
+                              color: colors.textGrey,
+                            ),
+                            onPressed: () {
+                              _debounce?.cancel();
+                              final hadActiveSearch =
+                                  _lastSubmittedQuery.isNotEmpty;
+                              _searchCtrl.clear();
+                              _lastSubmittedQuery = '';
+                              setState(() {});
+                              if (hadActiveSearch) {
+                                final status =
+                                    _tabStatuses[_tabController.index];
+                                vm.fetchAllBookings(
+                                  status: status,
+                                  search: '',
+                                );
+                              }
+                            },
+                          )
+                        : null,
                   ),
+                )
+              : Text(
+                  'Bookings',
+                  style: textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w700),
                 ),
+          centerTitle: !_isSearching,
+          actions: [
+            IconButton(
+              icon: Icon(
+                _isSearching ? Icons.close_rounded : Icons.search_rounded,
+                color: colors.textTitle,
               ),
-              // Status tabs
-              TabBar(
-                controller: _tabController,
-                indicatorColor: colors.primary,
-                labelColor: colors.primary,
-                unselectedLabelColor: colors.textGrey,
-                labelStyle: textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12.sp,
-                ),
-                tabs: const [
-                  Tab(text: 'All'),
-                  Tab(text: 'Pending'),
-                  Tab(text: 'Confirmed'),
-                  Tab(text: 'Cancelled'),
-                ],
-              ),
+              tooltip: _isSearching ? 'Close search' : 'Search bookings',
+              onPressed: () {
+                if (_isSearching) {
+                  _closeSearch(vm);
+                } else {
+                  setState(() {
+                    _isSearching = true;
+                  });
+                  _searchFocusNode.requestFocus();
+                }
+              },
+            ),
+            SizedBox(width: 4.w),
+          ],
+          bottom: TabBar(
+            controller: _tabController,
+            indicatorColor: colors.primary,
+            labelColor: colors.primary,
+            unselectedLabelColor: colors.textGrey,
+            labelStyle: textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              fontSize: 12.sp,
+            ),
+            tabs: const [
+              Tab(text: 'All'),
+              Tab(text: 'Pending'),
+              Tab(text: 'Confirmed'),
+              Tab(text: 'Cancelled'),
             ],
           ),
         ),
-      ),
       body: Obx(() {
         if (vm.isBookingsLoading.value && vm.allBookings.isEmpty) {
           return Center(
@@ -155,36 +243,66 @@ class _OwnerBookingsPageState extends State<OwnerBookingsPage>
 
         final bookings = vm.allBookings.toList();
 
-        return RefreshIndicator(
-          color: colors.primary,
-          onRefresh: () {
-            final status = _tabStatuses[_tabController.index];
-            return vm.fetchAllBookings(
-              status: status,
-              search: _searchCtrl.text.trim(),
-            );
-          },
-          child: TabBarView(
-            controller: _tabController,
-            // Each tab shows the same list — filtering is done server-side.
-            // Only the "All" tab attaches the scroll controller; the other
-            // tabs each reload via the tab-change listener.
-            children: List.generate(4, (i) {
-              return _BookingList(
-                bookings: bookings,
-                colors: colors,
-                textTheme: textTheme,
-                vm: vm,
-                scrollController: i == _tabController.index
-                    ? _scrollCtrl
-                    : null,
-              );
-            }),
-          ),
+        return Stack(
+          children: [
+            RefreshIndicator(
+              color: colors.primary,
+              onRefresh: () {
+                final status = _tabStatuses[_tabController.index];
+                return vm.fetchAllBookings(
+                  status: status,
+                  search: _searchCtrl.text.trim(),
+                );
+              },
+              child: TabBarView(
+                controller: _tabController,
+                // Each tab shows the same list — filtering is done server-side.
+                // Only the "All" tab attaches the scroll controller; the other
+                // tabs each reload via the tab-change listener.
+                children: List.generate(4, (i) {
+                  return _BookingList(
+                    bookings: bookings,
+                    colors: colors,
+                    textTheme: textTheme,
+                    vm: vm,
+                    scrollController: i == _tabController.index
+                        ? _scrollCtrl
+                        : null,
+                  );
+                }),
+              ),
+            ),
+            if (vm.isBookingsLoading.value && vm.allBookings.isNotEmpty)
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: LinearProgressIndicator(
+                  minHeight: 2.5,
+                  backgroundColor: Colors.transparent,
+                  color: colors.primary,
+                ),
+              ),
+          ],
         );
       }),
-    );
-  }
+      floatingActionButton: _isSearching
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => showDirectBookingModal(context, vm: vm),
+              backgroundColor: colors.primary,
+              icon: const Icon(Icons.add_task_rounded, color: Colors.white),
+              label: Text(
+                'Direct Booking',
+                style: textTheme.bodyMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+    ),
+  );
+}
 }
 
 // ── Booking List ─────────────────────────────────────────────
@@ -335,6 +453,9 @@ class _BookingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final id = booking['_id'] as String? ?? booking['id'] as String? ?? '';
     final status = (booking['status'] as String? ?? 'pending').toLowerCase();
+    final isDirect =
+        (booking['bookingSource'] as String? ?? 'online').toLowerCase() ==
+            'direct';
 
     final turfObj = booking['turf'];
     final turfName =
@@ -343,11 +464,11 @@ class _BookingCard extends StatelessWidget {
         'Unknown Turf';
 
     final userObj = booking['user'];
-    final userName =
+    final userName = (isDirect ? booking['customerName'] as String? : null) ??
         (userObj is Map ? userObj['name'] as String? : null) ??
         booking['userName'] as String? ??
-        'Player';
-    final userPhone =
+        (isDirect ? 'Direct Customer' : 'Player');
+    final userPhone = (isDirect ? booking['customerPhone'] as String? : null) ??
         (userObj is Map
             ? (userObj['phone'] ?? userObj['contactPhone']) as String?
             : null) ??
@@ -399,6 +520,37 @@ class _BookingCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              if (isDirect) ...[
+                Container(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3E8FF),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFFE9D5FF)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.storefront_outlined,
+                        size: 11.sp,
+                        color: const Color(0xFF7E22CE),
+                      ),
+                      SizedBox(width: 3.w),
+                      Text(
+                        'Direct',
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF7E22CE),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 6.w),
+              ],
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                 decoration: BoxDecoration(
@@ -458,8 +610,10 @@ class _BookingCard extends StatelessWidget {
                 icon: Icons.access_time_rounded,
                 label: 'Time',
                 value: (startTime.isNotEmpty && endTime.isNotEmpty)
-                    ? '$startTime – $endTime'
-                    : '—',
+                    ? '${TimeHelper.formatSingleTime(startTime)} – ${TimeHelper.formatSingleTime(endTime)}'
+                    : (startTime.isNotEmpty
+                        ? TimeHelper.formatSingleTime(startTime)
+                        : '—'),
                 colors: colors,
                 textTheme: textTheme,
               ),
@@ -488,12 +642,31 @@ class _BookingCard extends StatelessWidget {
                       color: colors.textTitle,
                     ),
                   ),
+                  SizedBox(height: 2.h),
+                  if (isDirect)
+                    Text(
+                      'Offline (Direct)',
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF7E22CE),
+                      ),
+                    )
+                  else
+                    Text(
+                      'Platform Wallet',
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF059669),
+                      ),
+                    ),
                 ],
               ),
               const Spacer(),
               if (status != 'cancelled') ...[
                 OutlinedButton(
-                  onPressed: () => _confirmCancel(context, id),
+                  onPressed: () => _confirmCancel(context, id, isDirect),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Color(0xFFE43434)),
                     shape: RoundedRectangleBorder(
@@ -505,7 +678,7 @@ class _BookingCard extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    'Cancel & Refund',
+                    isDirect ? 'Cancel Booking' : 'Cancel & Refund',
                     style: textTheme.bodySmall?.copyWith(
                       color: const Color(0xFFE43434),
                       fontWeight: FontWeight.w600,
@@ -520,21 +693,23 @@ class _BookingCard extends StatelessWidget {
     );
   }
 
-  void _confirmCancel(BuildContext context, String id) {
+  void _confirmCancel(BuildContext context, String id, bool isDirect) {
     final reasonController = TextEditingController(
       text: 'Slot unavailable / Turf maintenance',
     );
 
     Get.dialog(
       AlertDialog(
-        title: const Text('Cancel & Refund Booking'),
+        title: Text(isDirect ? 'Cancel Direct Booking' : 'Cancel & Refund Booking'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Cancelling this booking will issue a 100% full refund back to the customer via Razorpay.',
-              style: TextStyle(fontSize: 13),
+            Text(
+              isDirect
+                  ? 'Cancelling this offline booking will release the locked slot back to available for players.'
+                  : 'Cancelling this booking will issue a 100% full refund back to the customer via Razorpay.',
+              style: const TextStyle(fontSize: 13),
             ),
             const SizedBox(height: 12),
             const Text(
@@ -564,16 +739,16 @@ class _BookingCard extends StatelessWidget {
             onPressed: () {
               final reason = reasonController.text.trim().isNotEmpty
                   ? reasonController.text.trim()
-                  : 'Cancelled by Turf Owner';
+                  : (isDirect ? 'Cancelled by Owner' : 'Cancelled by Turf Owner');
               Get.back();
               vm.cancelBooking(id, reason: reason);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFE43434),
             ),
-            child: const Text(
-              'Confirm Cancel & Refund',
-              style: TextStyle(
+            child: Text(
+              isDirect ? 'Confirm Cancel' : 'Confirm Cancel & Refund',
+              style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),

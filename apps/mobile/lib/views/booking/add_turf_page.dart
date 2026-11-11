@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile/core/responsive/screen_extensions.dart';
 import 'package:mobile/core/theme/app_colors.dart';
+import 'package:mobile/core/utils/helpers.dart';
 import 'package:mobile/viewmodels/auth/auth_viewmodel.dart';
 import 'package:mobile/viewmodels/turf/owner_viewmodel.dart';
 import 'package:mobile/data/services/turf_service.dart';
@@ -797,7 +798,7 @@ class _AddTurfPageState extends State<AddTurfPage> {
                                   height: 50.h,
                                   type: TextInputType.text,
                                   fillColor: colors.white,
-                                  hintText: 'e.g. Bengaluru',
+                                  hintText: 'e.g. Naharlagun',
                                 ),
                               ],
                             ),
@@ -818,7 +819,7 @@ class _AddTurfPageState extends State<AddTurfPage> {
                                   height: 50.h,
                                   type: TextInputType.text,
                                   fillColor: colors.white,
-                                  hintText: 'e.g. Karnataka',
+                                  hintText: 'e.g. Arunachal Pradesh',
                                 ),
                               ],
                             ),
@@ -1174,7 +1175,7 @@ class _AddTurfPageState extends State<AddTurfPage> {
                         child: Row(
                           children: [
                             ActionChip(
-                              label: const Text('Select All (24h)'),
+                              label: const Text('Select All Slots'),
                               onPressed: () => setState(() {
                                 _selectedSlots = List<String>.from(
                                   _currentGeneratedSlots,
@@ -1269,7 +1270,7 @@ class _AddTurfPageState extends State<AddTurfPage> {
                                 ),
                               ),
                               child: Text(
-                                slot,
+                                TimeHelper.formatTo12Hour(slot),
                                 style: TextStyle(
                                   color: selected
                                       ? Colors.white

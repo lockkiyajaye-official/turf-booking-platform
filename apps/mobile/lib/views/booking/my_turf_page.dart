@@ -6,100 +6,244 @@ import 'package:mobile/data/models/turf_model.dart';
 import 'package:mobile/viewmodels/turf/owner_viewmodel.dart';
 import 'package:mobile/views/booking/add_turf_page.dart';
 import 'package:mobile/views/booking/owner_detail_page.dart';
+import 'package:mobile/views/booking/owner_edit_turf_page.dart';
 
-class MyTurfsPage extends StatelessWidget {
+class MyTurfsPage extends StatefulWidget {
   const MyTurfsPage({super.key});
+
+  @override
+  State<MyTurfsPage> createState() => _MyTurfsPageState();
+}
+
+class _MyTurfsPageState extends State<MyTurfsPage> {
+  final TextEditingController _searchCtrl = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  bool _isSearching = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final vm = Get.isRegistered<OwnerViewmodel>()
+          ? Get.find<OwnerViewmodel>()
+          : Get.put(OwnerViewmodel(), permanent: true);
+      vm.fetchMyTurfs();
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _closeSearch() {
+    setState(() {
+      _isSearching = false;
+      _searchCtrl.clear();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final textTheme = Theme.of(context).textTheme;
-    final vm = Get.find<OwnerViewmodel>()..fetchMyTurfs();
+    final vm = Get.isRegistered<OwnerViewmodel>()
+        ? Get.find<OwnerViewmodel>()
+        : Get.put(OwnerViewmodel(), permanent: true);
 
-    return Scaffold(
-      backgroundColor: colors.background,
-      appBar: AppBar(
-        backgroundColor: colors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: Text(
-          'My Turfs',
-          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.add_rounded, color: colors.primary, size: 26),
-            onPressed: () async {
-              await Get.to(() => const AddTurfPage());
-              vm.fetchMyTurfs();
-            },
-          ),
-        ],
-      ),
-      body: Obx(() {
-        if (vm.isTurfsLoading.value && vm.myTurfs.isEmpty) {
-          return Center(
-            child: CircularProgressIndicator(color: colors.primary),
-          );
+    return PopScope(
+      canPop: !_isSearching,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (_isSearching) {
+          _closeSearch();
         }
-        if (vm.myTurfs.isEmpty) {
-          return _EmptyTurfs(colors: colors, textTheme: textTheme);
-        }
-        final isTablet = context.isTablet;
-        final columns = context.turfGridColumns;
-        final horizontalPad = isTablet ? 20.w : 16.w;
-
-        return RefreshIndicator(
-          color: colors.primary,
-          onRefresh: () => vm.fetchMyTurfs(),
-          child: columns > 1
-              ? GridView.builder(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: horizontalPad,
-                    vertical: 16.h,
+      },
+      child: Scaffold(
+        backgroundColor: colors.background,
+        appBar: AppBar(
+          backgroundColor: colors.white,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          title: _isSearching
+              ? TextField(
+                  controller: _searchCtrl,
+                  focusNode: _searchFocusNode,
+                  autofocus: true,
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colors.textTitle,
                   ),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: columns,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    mainAxisExtent: 295,
-                  ),
-                  itemCount: vm.myTurfs.length,
-                  itemBuilder: (context, i) => _OwnerTurfCard(
-                    turf: vm.myTurfs[i],
-                    colors: colors,
-                    textTheme: textTheme,
-                    vm: vm,
+                  textInputAction: TextInputAction.search,
+                  onChanged: (val) => setState(() {}),
+                  decoration: InputDecoration(
+                    hintText: 'Search turfs, city, sport...',
+                    hintStyle: textTheme.bodySmall?.copyWith(
+                      color: colors.textGrey,
+                    ),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(
+                      vertical: 10.h,
+                      horizontal: 4.w,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search_rounded,
+                      size: 20,
+                      color: colors.primary,
+                    ),
+                    suffixIcon: _searchCtrl.text.isNotEmpty
+                        ? IconButton(
+                            icon: Icon(
+                              Icons.clear_rounded,
+                              size: 18,
+                              color: colors.textGrey,
+                            ),
+                            onPressed: () {
+                              _searchCtrl.clear();
+                              setState(() {});
+                            },
+                          )
+                        : null,
                   ),
                 )
-              : ListView.separated(
-                  padding: EdgeInsets.all(16.w),
-                  itemCount: vm.myTurfs.length,
-                  separatorBuilder: (_, __) => SizedBox(height: 12.h),
-                  itemBuilder: (context, i) => _OwnerTurfCard(
-                    turf: vm.myTurfs[i],
-                    colors: colors,
-                    textTheme: textTheme,
-                    vm: vm,
+              : Text(
+                  'My Turfs',
+                  style: textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
+          centerTitle: !_isSearching,
+          actions: [
+            IconButton(
+              icon: Icon(
+                _isSearching ? Icons.close_rounded : Icons.search_rounded,
+                color: colors.textTitle,
+                size: 24,
+              ),
+              tooltip: _isSearching ? 'Close search' : 'Search turfs',
+              onPressed: () {
+                if (_isSearching) {
+                  _closeSearch();
+                } else {
+                  setState(() {
+                    _isSearching = true;
+                  });
+                  _searchFocusNode.requestFocus();
+                }
+              },
+            ),
+            if (!_isSearching)
+              IconButton(
+                icon: Icon(Icons.add_rounded, color: colors.primary, size: 26),
+                tooltip: 'Add Turf',
+                onPressed: () async {
+                  await Get.to(() => const AddTurfPage());
+                  vm.fetchMyTurfs();
+                },
+              ),
+            SizedBox(width: 4.w),
+          ],
+        ),
+        body: Obx(() {
+          if (vm.isTurfsLoading.value && vm.myTurfs.isEmpty) {
+            return Center(
+              child: CircularProgressIndicator(color: colors.primary),
+            );
+          }
+          if (vm.myTurfs.isEmpty) {
+            return _EmptyTurfs(colors: colors, textTheme: textTheme);
+          }
+
+          final query = _searchCtrl.text.trim().toLowerCase();
+          final filteredTurfs = query.isEmpty
+              ? vm.myTurfs.toList()
+              : vm.myTurfs.where((t) {
+                  final name = t.name.toLowerCase();
+                  final city = (t.city ?? '').toLowerCase();
+                  final state = (t.state ?? '').toLowerCase();
+                  final address = t.address.toLowerCase();
+                  final sports =
+                      t.sports.map((s) => s.toLowerCase()).join(' ');
+                  return name.contains(query) ||
+                      city.contains(query) ||
+                      state.contains(query) ||
+                      address.contains(query) ||
+                      sports.contains(query);
+                }).toList();
+
+          if (filteredTurfs.isEmpty) {
+            return _NoTurfSearchResults(
+              query: _searchCtrl.text.trim(),
+              onClear: () {
+                setState(() {
+                  _searchCtrl.clear();
+                });
+              },
+              colors: colors,
+              textTheme: textTheme,
+            );
+          }
+
+          final isTablet = context.isTablet;
+          final columns = context.turfGridColumns;
+          final horizontalPad = isTablet ? 20.w : 16.w;
+
+          return RefreshIndicator(
+            color: colors.primary,
+            onRefresh: () => vm.fetchMyTurfs(),
+            child: columns > 1
+                ? GridView.builder(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPad,
+                      vertical: 16.h,
+                    ),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: columns,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      mainAxisExtent: 295,
+                    ),
+                    itemCount: filteredTurfs.length,
+                    itemBuilder: (context, i) => _OwnerTurfCard(
+                      turf: filteredTurfs[i],
+                      colors: colors,
+                      textTheme: textTheme,
+                      vm: vm,
+                    ),
+                  )
+                : ListView.separated(
+                    padding: EdgeInsets.all(16.w),
+                    itemCount: filteredTurfs.length,
+                    separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                    itemBuilder: (context, i) => _OwnerTurfCard(
+                      turf: filteredTurfs[i],
+                      colors: colors,
+                      textTheme: textTheme,
+                      vm: vm,
+                    ),
+                  ),
+          );
+        }),
+        floatingActionButton: _isSearching
+            ? null
+            : FloatingActionButton.extended(
+                onPressed: () async {
+                  await Get.to(() => const AddTurfPage());
+                  vm.fetchMyTurfs();
+                },
+                backgroundColor: colors.primary,
+                icon: const Icon(Icons.add_rounded, color: Colors.white),
+                label: Text(
+                  'Add Turf',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-        );
-      }),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          await Get.to(() => const AddTurfPage());
-          vm.fetchMyTurfs();
-        },
-        backgroundColor: colors.primary,
-        icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: Text(
-          'Add Turf',
-          style: textTheme.bodyMedium?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+              ),
       ),
     );
   }
@@ -252,7 +396,7 @@ class _OwnerTurfCard extends StatelessWidget {
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: () =>
-                              Get.to(() => OwnerTurfDetailPage(turf: turf)),
+                              Get.to(() => OwnerEditTurfPage(turf: turf)),
                           icon: Icon(
                             Icons.edit_outlined,
                             size: 15,
@@ -389,6 +533,82 @@ class _EmptyTurfs extends StatelessWidget {
             style: textTheme.bodyMedium?.copyWith(color: colors.textGrey),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── No Search Results State ─────────────────────────────────
+class _NoTurfSearchResults extends StatelessWidget {
+  final String query;
+  final VoidCallback onClear;
+  final AppColors colors;
+  final TextTheme textTheme;
+
+  const _NoTurfSearchResults({
+    required this.query,
+    required this.onClear,
+    required this.colors,
+    required this.textTheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 28.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: colors.primary.withOpacity(0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.search_off_rounded,
+                size: 36,
+                color: colors.primary,
+              ),
+            ),
+            SizedBox(height: 16.h),
+            Text(
+              'No turfs found',
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: colors.textTitle,
+              ),
+            ),
+            SizedBox(height: 6.h),
+            Text(
+              'No turf matches "$query". Try checking the spelling or search another keyword.',
+              textAlign: TextAlign.center,
+              style: textTheme.bodySmall?.copyWith(
+                color: colors.textGrey,
+                height: 1.4,
+              ),
+            ),
+            SizedBox(height: 20.h),
+            OutlinedButton.icon(
+              onPressed: onClear,
+              icon: const Icon(Icons.clear_rounded, size: 16),
+              label: const Text('Clear Search'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: colors.primary,
+                side: BorderSide(color: colors.primary.withOpacity(0.4)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 18.w,
+                  vertical: 10.h,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

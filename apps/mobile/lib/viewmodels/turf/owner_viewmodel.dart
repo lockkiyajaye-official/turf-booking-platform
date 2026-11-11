@@ -216,7 +216,6 @@ class OwnerViewmodel extends GetxController {
     if (search != null) bookingsSearch.value = search;
     bookingsPage.value = 1;
     bookingsHasMore.value = true;
-    allBookings.clear();
     await _loadBookingsPage(1);
   }
 
@@ -305,6 +304,68 @@ class OwnerViewmodel extends GetxController {
     } catch (e) {
       _showError(e.toString());
     }
+  }
+
+  Future<bool> createDirectBooking({
+    required String turfId,
+    required String bookingDate,
+    required String startTime,
+    required String endTime,
+    required String customerName,
+    String? customerPhone,
+    double? customPrice,
+    String paymentMethod = 'offline',
+    String? notes,
+  }) async {
+    try {
+      isLoading.value = true;
+      final payload = <String, dynamic>{
+        'turfId': turfId,
+        'bookingDate': bookingDate,
+        'startTime': startTime,
+        'endTime': endTime,
+        'customerName': customerName,
+        'paymentMethod': paymentMethod,
+      };
+      if (customerPhone != null && customerPhone.isNotEmpty) {
+        payload['customerPhone'] = customerPhone;
+      }
+      if (customPrice != null) {
+        payload['customPrice'] = customPrice;
+      }
+      if (notes != null && notes.isNotEmpty) {
+        payload['notes'] = notes;
+      }
+
+      final res = await _bookingService.createDirectBooking(
+        token: _token,
+        data: payload,
+      );
+
+      if (res['success'] == true) {
+        _showSuccess('Direct booking created! Slot is locked.');
+        await fetchAllBookings();
+        return true;
+      } else {
+        _showError(res['message'] ?? 'Failed to create direct booking');
+        return false;
+      }
+    } catch (e) {
+      _showError(e.toString());
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<List<String>> fetchBookedSlots(String turfId, String date) async {
+    try {
+      final res = await _turfService.getBookedSlots(id: turfId, date: date);
+      if (res['success'] == true && res['data'] is List) {
+        return (res['data'] as List).map((s) => s.toString()).toList();
+      }
+    } catch (_) {}
+    return [];
   }
 
   // ── Finances & Payouts ────────────────────────────────────

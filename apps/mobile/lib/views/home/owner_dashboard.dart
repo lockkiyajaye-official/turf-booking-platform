@@ -18,7 +18,10 @@ class OwnerDashboardPage extends StatelessWidget {
     final colors = Theme.of(context).extension<AppColors>()!;
     final textTheme = Theme.of(context).textTheme;
     final authVm = Get.find<AuthViewmodel>();
-    final vm = Get.find<OwnerViewmodel>()..loadDashboard();
+    final vm = (Get.isRegistered<OwnerViewmodel>()
+            ? Get.find<OwnerViewmodel>()
+            : Get.put(OwnerViewmodel(), permanent: true))
+        ..loadDashboard();
 
     return Scaffold(
       backgroundColor: colors.background,

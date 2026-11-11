@@ -58,6 +58,22 @@ class BookingService {
     }
   }
 
+  Future<Map<String, dynamic>> createDirectBooking({
+    required String token,
+    required Map<String, dynamic> data,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_base/direct'),
+        headers: _headers(token),
+        body: jsonEncode(data),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
   Future<Map<String, dynamic>> findAll(
     String token, {
     int page = 1,
