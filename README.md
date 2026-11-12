@@ -101,6 +101,29 @@ npm run dev
 
 The frontend will run on `http://localhost:5173`
 
+### Mobile Setup (Flutter)
+
+1. Navigate to the mobile directory:
+
+```bash
+cd apps/mobile
+```
+
+2. When testing on a **physical Android device via USB debugging**, forward the backend port:
+
+```bash
+adb reverse tcp:3100 tcp:3100
+```
+
+3. Run the Flutter app:
+
+```bash
+flutter pub get
+flutter run
+```
+
+*(See [apps/mobile/README.md](apps/mobile/README.md) for detailed device & emulator instructions)*
+
 ## Environment Variables
 
 ### Backend
@@ -184,14 +207,15 @@ turf-booking/
 │   │   │   ├── entities/       # Database entities
 │   │   │   └── main.ts         # Application entry point
 │   │   └── package.json
-│   └── frontend/
-│       ├── src/
-│       │   ├── components/     # Reusable components
-│       │   ├── context/        # React context (Auth)
-│       │   ├── pages/          # Page components
-│       │   ├── services/       # API services
-│       │   └── App.tsx         # Main app component
-│       └── package.json
+│   ├── frontend/
+│   │   ├── src/
+│   │   │   ├── components/     # Reusable components
+│   │   │   ├── context/        # React context (Auth)
+│   │   │   ├── pages/          # Page components
+│   │   │   ├── services/       # API services
+│   │   │   └── App.tsx         # Main app component
+│   │   └── package.json
+│   └── mobile/                # Flutter mobile application
 └── README.md
 ```
 
