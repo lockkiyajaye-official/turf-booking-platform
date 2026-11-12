@@ -7,7 +7,7 @@ import 'package:mobile/viewmodels/turf/owner_viewmodel.dart';
 import 'package:mobile/views/booking/add_turf_page.dart';
 import 'package:mobile/views/booking/my_turf_page.dart';
 import 'package:mobile/views/booking/owner_booking_page.dart';
-import 'package:mobile/views/booking/owner_finances_page.dart';
+import 'package:mobile/views/booking/widgets/direct_booking_sheet.dart';
 import 'package:mobile/views/notifications/notificaiton_page.dart';
 
 class OwnerDashboardPage extends StatelessWidget {
@@ -134,48 +134,51 @@ class OwnerDashboardPage extends StatelessWidget {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20.w),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _ActionTile(
-                          icon: Icons.add_circle_outline_rounded,
-                          label: 'Add Turf',
-                          colors: colors,
-                          textTheme: textTheme,
-                          onTap: () => Get.to(() => const AddTurfPage()),
+                  child: IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: _ActionTile(
+                            icon: Icons.bookmark_add_rounded,
+                            label: 'Direct Booking',
+                            colors: colors,
+                            textTheme: textTheme,
+                            onTap: () => showDirectBookingModal(context, vm: vm),
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: _ActionTile(
-                          icon: Icons.list_alt_rounded,
-                          label: 'My Turfs',
-                          colors: colors,
-                          textTheme: textTheme,
-                          onTap: () => Get.to(() => const MyTurfsPage()),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: _ActionTile(
+                            icon: Icons.add_circle_outline_rounded,
+                            label: 'Add Turf',
+                            colors: colors,
+                            textTheme: textTheme,
+                            onTap: () => Get.to(() => const AddTurfPage()),
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: _ActionTile(
-                          icon: Icons.book_online_rounded,
-                          label: 'Bookings',
-                          colors: colors,
-                          textTheme: textTheme,
-                          onTap: () => Get.to(() => const OwnerBookingsPage()),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: _ActionTile(
+                            icon: Icons.list_alt_rounded,
+                            label: 'My Turfs',
+                            colors: colors,
+                            textTheme: textTheme,
+                            onTap: () => Get.to(() => const MyTurfsPage()),
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: _ActionTile(
-                          icon: Icons.payments_outlined,
-                          label: 'Finances',
-                          colors: colors,
-                          textTheme: textTheme,
-                          onTap: () => Get.to(() => const OwnerFinancesPage()),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: _ActionTile(
+                            icon: Icons.book_online_rounded,
+                            label: 'Bookings',
+                            colors: colors,
+                            textTheme: textTheme,
+                            onTap: () => Get.to(() => const OwnerBookingsPage()),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -384,7 +387,7 @@ class _ActionTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 16.h),
+        padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 4.w),
         decoration: BoxDecoration(
           color: colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -398,17 +401,21 @@ class _ActionTile extends StatelessWidget {
           ],
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: colors.primary, size: 26),
+            Icon(icon, color: colors.primary, size: 24),
             SizedBox(height: 6.h),
             Text(
               label,
               style: textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: colors.textTitle,
-                fontSize: 11.sp,
+                fontSize: 10.5.sp,
+                height: 1.15,
               ),
               textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

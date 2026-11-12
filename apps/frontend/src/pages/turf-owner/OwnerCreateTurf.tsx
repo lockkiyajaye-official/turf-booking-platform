@@ -14,6 +14,45 @@ const AMENITY_OPTIONS = [
     "Equipment Rental", "Spectator Seating", "Restrooms", "Security",
 ];
 
+const INDIAN_STATES = [
+    "Andaman and Nicobar Islands",
+    "Andhra Pradesh",
+    "Arunachal Pradesh",
+    "Assam",
+    "Bihar",
+    "Chandigarh",
+    "Chhattisgarh",
+    "Dadra and Nagar Haveli and Daman and Diu",
+    "Delhi",
+    "Goa",
+    "Gujarat",
+    "Haryana",
+    "Himachal Pradesh",
+    "Jammu and Kashmir",
+    "Jharkhand",
+    "Karnataka",
+    "Kerala",
+    "Ladakh",
+    "Lakshadweep",
+    "Madhya Pradesh",
+    "Maharashtra",
+    "Manipur",
+    "Meghalaya",
+    "Mizoram",
+    "Nagaland",
+    "Odisha",
+    "Puducherry",
+    "Punjab",
+    "Rajasthan",
+    "Sikkim",
+    "Tamil Nadu",
+    "Telangana",
+    "Tripura",
+    "Uttar Pradesh",
+    "Uttarakhand",
+    "West Bengal",
+];
+
 const DEFAULT_FORM = {
     name: "", description: "", address: "", city: "", state: "", pincode: "",
     pricePerHour: "", contactPhone: "", contactEmail: "", capacity: "",
@@ -123,7 +162,7 @@ export default function OwnerCreateTurf() {
                 ? [images[primaryIndex]?.cdnUrl, ...images.filter((_, i) => i !== primaryIndex).map((img) => img.cdnUrl)].filter(Boolean)
                 : [];
 
-            await api.post("/turfs", {
+            const response = await api.post("/turfs", {
                 name: formData.name,
                 description: formData.description,
                 address: formData.address,
@@ -146,7 +185,12 @@ export default function OwnerCreateTurf() {
                 googleMapUrl: formData.googleMapUrl || undefined,
                 mapUrl: formData.googleMapUrl || undefined,
             });
-            navigate("/owner/turfs");
+            const createdId = response.data?.id || response.data?.turf?.id;
+            if (createdId) {
+                navigate(`/owner/turfs/${createdId}`, { replace: true });
+            } else {
+                navigate("/owner/turfs", { replace: true });
+            }
         } catch (error: any) {
             alert(error.response?.data?.message || "Failed to create turf");
         } finally {
@@ -211,8 +255,18 @@ export default function OwnerCreateTurf() {
                                     value={formData.city} onChange={(e) => set("city", e.target.value)} />
                             </Field>
                             <Field label="State">
-                                <input type="text" placeholder="e.g., Arunachal Pradesh" className={inputCls}
-                                    value={formData.state} onChange={(e) => set("state", e.target.value)} />
+                                <select
+                                    className={inputCls}
+                                    value={formData.state}
+                                    onChange={(e) => set("state", e.target.value)}
+                                >
+                                    <option value="">Select State</option>
+                                    {INDIAN_STATES.map((st) => (
+                                        <option key={st} value={st}>
+                                            {st}
+                                        </option>
+                                    ))}
+                                </select>
                             </Field>
                             <Field label="Pincode">
                                 <input type="text" placeholder="e.g., 560001" className={inputCls}

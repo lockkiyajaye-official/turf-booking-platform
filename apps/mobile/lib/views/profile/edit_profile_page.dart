@@ -5,9 +5,11 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile/core/responsive/screen_extensions.dart';
 import 'package:mobile/core/theme/app_colors.dart';
+import 'package:mobile/data/services/uploadcare_service.dart';
 import 'package:mobile/viewmodels/auth/auth_viewmodel.dart';
 import 'package:mobile/views/widgets/my_buttons.dart';
 import 'package:mobile/views/widgets/my_text_field.dart';
+import 'package:mobile/views/widgets/state_selection_sheet.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -19,6 +21,7 @@ class EditProfilePage extends StatefulWidget {
 class _EditProfilePageState extends State<EditProfilePage> {
   final AuthViewmodel _authVm = Get.find<AuthViewmodel>();
   final ImagePicker _picker = ImagePicker();
+  final UploadcareService _uploadcareService = UploadcareService();
 
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
@@ -27,6 +30,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController _bioController;
   late TextEditingController _cityController;
   late TextEditingController _stateController;
+  String? _selectedState;
 
   File? _selectedImageFile;
   String? _currentAvatarUrl;
@@ -50,8 +54,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _phoneController = TextEditingController(text: _initialPhone);
     _bioController = TextEditingController(text: u['bio'] as String? ?? '');
     _cityController = TextEditingController(text: u['city'] as String? ?? '');
-    _stateController = TextEditingController(text: u['state'] as String? ?? '');
-    _currentAvatarUrl = u['avatarUrl'] as String?;
+    final userState = (u['state'] as String? ?? '').trim();
+    _stateController = TextEditingController(text: userState);
+    _selectedState = userState.isNotEmpty ? userState : null;
+    _currentAvatarUrl =
+        (u['profileImage'] ?? u['avatarUrl']) as String?;
   }
 
   @override
@@ -205,9 +212,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
     String? avatarData;
     if (_selectedImageFile != null) {
-      final bytes = await _selectedImageFile!.readAsBytes();
-      final base64String = base64Encode(bytes);
-      avatarData = 'data:image/jpeg;base64,$base64String';
+      try {
+        final res = await _uploadcareService.uploadFile(_selectedImageFile!);
+        avatarData = res.cdnUrl;
+      } catch (e) {
+        if (mounted) setState(() => _isSaving = false);
+        Get.snackbar(
+          'Upload Failed',
+          'Could not upload profile picture to Uploadcare: $e',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
     } else if (_currentAvatarUrl == '') {
       avatarData = '';
     }
@@ -250,8 +266,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
       'lastName': _lastNameController.text.trim(),
       'bio': _bioController.text.trim(),
       'city': _cityController.text.trim(),
-      'state': _stateController.text.trim(),
-      if (avatarData != null) 'avatarUrl': avatarData,
+      'state': _selectedState ?? _stateController.text.trim(),
+      if (avatarData != null) ...{
+        'profileImage': avatarData,
+        'avatarUrl': avatarData,
+      },
     };
 
     final success = await _authVm.updateProfile(updateData);
@@ -411,12 +430,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                   'lastName': _lastNameController.text.trim(),
                                   'bio': _bioController.text.trim(),
                                   'city': _cityController.text.trim(),
-                                  'state': _stateController.text.trim(),
+                                  'state': _selectedState ??
+                                      _stateController.text.trim(),
                                   'email': newEmail,
                                   'phone': newPhone,
                                   'otp': code,
-                                  if (avatarData != null)
+                                  if (avatarData != null) ...{
+                                    'profileImage': avatarData,
                                     'avatarUrl': avatarData,
+                                  },
                                 };
 
                                 final success = await _authVm.updateProfile(
@@ -680,7 +702,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                             textTheme: textTheme,
                             controller: _cityController,
                             label: 'City',
-                            hint: 'e.g. Mumbai',
+                            hint: 'e.g. Naharlagun',
                             prefixIcon: Icons.location_city_outlined,
                           ),
                         ),
@@ -691,8 +713,26 @@ class _EditProfilePageState extends State<EditProfilePage> {
                             textTheme: textTheme,
                             controller: _stateController,
                             label: 'State',
-                            hint: 'e.g. Maharashtra',
+                            hint: 'Select State',
                             prefixIcon: Icons.map_outlined,
+                            readOnly: true,
+                            onTap: () {
+                              showStateSelectionSheet(
+                                context,
+                                selectedState: _selectedState,
+                                onSelected: (val) {
+                                  setState(() {
+                                    _selectedState = val;
+                                    _stateController.text = val;
+                                  });
+                                },
+                              );
+                            },
+                            suffixWidget: Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              size: 20,
+                              color: colors.textGrey,
+                            ),
                           ),
                         ),
                       ],
@@ -923,6 +963,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     required String hint,
     required IconData prefixIcon,
     bool readOnly = false,
+    VoidCallback? onTap,
     int maxLines = 1,
     Widget? suffixWidget,
   }) {
@@ -933,7 +974,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           label,
           style: textTheme.bodySmall?.copyWith(
             fontWeight: FontWeight.w600,
-            color: readOnly ? colors.textGrey : colors.textTitle,
+            color: readOnly && onTap == null ? colors.textGrey : colors.textTitle,
             fontSize: 12.sp,
           ),
         ),
@@ -941,9 +982,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
         TextFormField(
           controller: controller,
           readOnly: readOnly,
+          onTap: onTap,
           maxLines: maxLines,
           style: textTheme.bodyMedium?.copyWith(
-            color: readOnly ? colors.textGrey : colors.textTitle,
+            color: readOnly && onTap == null ? colors.textGrey : colors.textTitle,
             fontWeight: FontWeight.w500,
           ),
           decoration: InputDecoration(
@@ -953,11 +995,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
             ),
             isDense: true,
             filled: true,
-            fillColor: readOnly ? const Color(0xFFF7F7F8) : Colors.transparent,
+            fillColor: readOnly && onTap == null
+                ? const Color(0xFFF7F7F8)
+                : Colors.transparent,
             prefixIcon: Icon(
               prefixIcon,
               size: 18,
-              color: readOnly ? colors.textGrey : colors.primary,
+              color: readOnly && onTap == null ? colors.textGrey : colors.primary,
             ),
             suffixIcon: suffixWidget != null
                 ? Padding(
@@ -972,7 +1016,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(
-                color: readOnly
+                color: readOnly && onTap == null
                     ? const Color(0xFFE0E0E0)
                     : const Color(0xFFDCDCDC),
               ),
@@ -980,8 +1024,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(
-                color: readOnly ? const Color(0xFFE0E0E0) : colors.primary,
-                width: readOnly ? 1 : 1.5,
+                color: readOnly && onTap == null
+                    ? const Color(0xFFE0E0E0)
+                    : colors.primary,
+                width: readOnly && onTap == null ? 1 : 1.5,
               ),
             ),
           ),

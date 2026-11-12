@@ -254,8 +254,8 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: ClipOval(
                         child: Builder(
                           builder: (_) {
-                            final avatarUrl =
-                                currentUser['avatarUrl'] as String?;
+                            final avatarUrl = (currentUser['profileImage'] ??
+                                    currentUser['avatarUrl']) as String?;
                             if (avatarUrl != null && avatarUrl.isNotEmpty) {
                               if (avatarUrl.startsWith('data:image')) {
                                 try {

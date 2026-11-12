@@ -7,10 +7,12 @@ import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/utils/helpers.dart';
 import 'package:mobile/data/models/turf_model.dart';
 import 'package:mobile/data/services/turf_service.dart';
+import 'package:mobile/data/services/uploadcare_service.dart';
 import 'package:mobile/viewmodels/auth/auth_viewmodel.dart';
 import 'package:mobile/viewmodels/turf/owner_viewmodel.dart';
 import 'package:mobile/views/widgets/my_buttons.dart';
 import 'package:mobile/views/widgets/my_text_field.dart';
+import 'package:mobile/views/widgets/state_selection_sheet.dart';
 
 class OwnerEditTurfPage extends StatefulWidget {
   final TurfModel turf;
@@ -29,6 +31,7 @@ class _OwnerEditTurfPageState extends State<OwnerEditTurfPage> {
   late TextEditingController _addressController;
   late TextEditingController _cityController;
   late TextEditingController _stateController;
+  String? _selectedState;
   late TextEditingController _pincodeController;
   late TextEditingController _capacityController;
   late TextEditingController _latitudeController;
@@ -131,7 +134,9 @@ class _OwnerEditTurfPageState extends State<OwnerEditTurfPage> {
   ];
 
   bool _isSaving = false;
+  bool _isUploadingImages = false;
   final TurfService _turfService = TurfService();
+  final UploadcareService _uploadcareService = UploadcareService();
 
   String _formatTime12H(int totalMins) {
     final h24 = (totalMins ~/ 60) % 24;
@@ -183,6 +188,8 @@ class _OwnerEditTurfPageState extends State<OwnerEditTurfPage> {
     _addressController = TextEditingController(text: t.address);
     _cityController = TextEditingController(text: t.city ?? '');
     _stateController = TextEditingController(text: t.state ?? '');
+    _selectedState =
+        (t.state != null && t.state!.trim().isNotEmpty) ? t.state!.trim() : null;
     _pincodeController = TextEditingController(text: t.pincode ?? '');
     _capacityController = TextEditingController(
       text: t.capacity?.toString() ?? '',
@@ -239,19 +246,49 @@ class _OwnerEditTurfPageState extends State<OwnerEditTurfPage> {
   // ── Image Picker Helpers ─────────────────────────────────
   Future<void> _pickImage(ImageSource source) async {
     try {
-      final XFile? file = await _picker.pickImage(
-        source: source,
-        imageQuality: 80,
-      );
-      if (file != null) {
-        setState(() {
-          _imageUrls.add(file.path);
-        });
+      if (source == ImageSource.gallery) {
+        final List<XFile> files = await _picker.pickMultiImage(
+          imageQuality: 80,
+        );
+        if (files.isEmpty) return;
+
+        setState(() => _isUploadingImages = true);
+        try {
+          for (final file in files) {
+            final res = await _uploadcareService.uploadXFile(file);
+            if (mounted) {
+              setState(() {
+                _imageUrls.add(res.cdnUrl);
+              });
+            }
+          }
+        } finally {
+          if (mounted) setState(() => _isUploadingImages = false);
+        }
+      } else {
+        final XFile? file = await _picker.pickImage(
+          source: source,
+          imageQuality: 80,
+        );
+        if (file == null) return;
+
+        setState(() => _isUploadingImages = true);
+        try {
+          final res = await _uploadcareService.uploadXFile(file);
+          if (mounted) {
+            setState(() {
+              _imageUrls.add(res.cdnUrl);
+            });
+          }
+        } finally {
+          if (mounted) setState(() => _isUploadingImages = false);
+        }
       }
     } catch (e) {
+      if (mounted) setState(() => _isUploadingImages = false);
       Get.snackbar(
-        'Error',
-        'Could not pick image: $e',
+        'Upload Error',
+        'Could not upload image to Uploadcare: $e',
         backgroundColor: Colors.red.shade100,
         snackPosition: SnackPosition.BOTTOM,
       );
@@ -414,11 +451,31 @@ class _OwnerEditTurfPageState extends State<OwnerEditTurfPage> {
       return;
     }
 
+    if (_isUploadingImages) {
+      Get.snackbar(
+        'Please wait',
+        'Photos are currently uploading to Uploadcare...',
+        backgroundColor: Colors.amber.shade100,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
     final token = Get.find<AuthViewmodel>().token.value;
     setState(() => _isSaving = true);
 
     try {
-      final List<String> orderedImages = List<String>.from(_imageUrls);
+      final List<String> uploadedImages = [];
+      for (final img in _imageUrls) {
+        if (img.startsWith('http://') || img.startsWith('https://')) {
+          uploadedImages.add(img);
+        } else {
+          final res = await _uploadcareService.uploadFile(File(img));
+          uploadedImages.add(res.cdnUrl);
+        }
+      }
+
+      final List<String> orderedImages = List<String>.from(uploadedImages);
       if (orderedImages.isNotEmpty &&
           _primaryImageIndex < orderedImages.length) {
         final primary = orderedImages.removeAt(_primaryImageIndex);
@@ -431,7 +488,7 @@ class _OwnerEditTurfPageState extends State<OwnerEditTurfPage> {
         'description': _descriptionController.text.trim(),
         'address': address,
         'city': _cityController.text.trim(),
-        'state': _stateController.text.trim(),
+        'state': _selectedState ?? _stateController.text.trim(),
         'pincode': _pincodeController.text.trim(),
         'capacity': int.tryParse(_capacityController.text.trim()),
         'surfaceType': _selectedSurfaceType,
@@ -617,12 +674,55 @@ class _OwnerEditTurfPageState extends State<OwnerEditTurfPage> {
                         height: 110.h,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
-                          itemCount: _imageUrls.length + 1,
+                          itemCount: _imageUrls.length +
+                              1 +
+                              (_isUploadingImages ? 1 : 0),
                           itemBuilder: (context, index) {
-                            if (index == _imageUrls.length) {
+                            if (_isUploadingImages &&
+                                index == _imageUrls.length) {
+                              return Container(
+                                width: 100.w,
+                                margin: EdgeInsets.only(right: 10.w),
+                                decoration: BoxDecoration(
+                                  color: colors.background,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: const Color(0xFFE0E0E0),
+                                  ),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 24.w,
+                                      height: 24.w,
+                                      child: const CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Color(0xFFE43434),
+                                      ),
+                                    ),
+                                    SizedBox(height: 6.h),
+                                    Text(
+                                      'Uploading...',
+                                      style: TextStyle(
+                                        color: colors.textGrey,
+                                        fontSize: 10.sp,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+
+                            if (index ==
+                                _imageUrls.length +
+                                    (_isUploadingImages ? 1 : 0)) {
                               return GestureDetector(
-                                onTap: () =>
-                                    _showImageSourcePicker(colors, textTheme),
+                                onTap: _isUploadingImages
+                                    ? null
+                                    : () =>
+                                        _showImageSourcePicker(colors, textTheme),
                                 child: Container(
                                   width: 100.w,
                                   margin: EdgeInsets.only(right: 10.w),
@@ -884,7 +984,24 @@ class _OwnerEditTurfPageState extends State<OwnerEditTurfPage> {
                                   height: 50.h,
                                   type: TextInputType.text,
                                   fillColor: colors.white,
-                                  hintText: 'e.g. Arunachal Pradesh',
+                                  hintText: 'Select State',
+                                  readOnly: true,
+                                  onTap: () {
+                                    showStateSelectionSheet(
+                                      context,
+                                      selectedState: _selectedState,
+                                      onSelected: (val) {
+                                        setState(() {
+                                          _selectedState = val;
+                                          _stateController.text = val;
+                                        });
+                                      },
+                                    );
+                                  },
+                                  suffixIcon: Icon(
+                                    Icons.keyboard_arrow_down_rounded,
+                                    color: colors.textGrey,
+                                  ),
                                 ),
                               ],
                             ),

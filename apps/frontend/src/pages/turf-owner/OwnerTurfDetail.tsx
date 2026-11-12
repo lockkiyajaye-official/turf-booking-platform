@@ -15,6 +15,45 @@ const AMENITY_OPTIONS = [
     "Equipment Rental", "Spectator Seating", "Restrooms", "Security",
 ];
 
+const INDIAN_STATES = [
+    "Andaman and Nicobar Islands",
+    "Andhra Pradesh",
+    "Arunachal Pradesh",
+    "Assam",
+    "Bihar",
+    "Chandigarh",
+    "Chhattisgarh",
+    "Dadra and Nagar Haveli and Daman and Diu",
+    "Delhi",
+    "Goa",
+    "Gujarat",
+    "Haryana",
+    "Himachal Pradesh",
+    "Jammu and Kashmir",
+    "Jharkhand",
+    "Karnataka",
+    "Kerala",
+    "Ladakh",
+    "Lakshadweep",
+    "Madhya Pradesh",
+    "Maharashtra",
+    "Manipur",
+    "Meghalaya",
+    "Mizoram",
+    "Nagaland",
+    "Odisha",
+    "Puducherry",
+    "Punjab",
+    "Rajasthan",
+    "Sikkim",
+    "Tamil Nadu",
+    "Telangana",
+    "Tripura",
+    "Uttar Pradesh",
+    "Uttarakhand",
+    "West Bengal",
+];
+
 const DURATION_OPTIONS = [
     { label: "30 Mins", minutes: 30 },
     { label: "45 Mins", minutes: 45 },
@@ -470,8 +509,18 @@ export default function OwnerTurfDetail() {
                                         onChange={(e) => set("city", e.target.value)} />
                                 </Field>
                                 <Field label="State">
-                                    <input type="text" className={inputCls} value={formData.state}
-                                        onChange={(e) => set("state", e.target.value)} />
+                                    <select
+                                        className={inputCls}
+                                        value={formData.state}
+                                        onChange={(e) => set("state", e.target.value)}
+                                    >
+                                        <option value="">Select State</option>
+                                        {INDIAN_STATES.map((st) => (
+                                            <option key={st} value={st}>
+                                                {st}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </Field>
                                 <Field label="Pincode">
                                     <input type="text" className={inputCls} value={formData.pincode}

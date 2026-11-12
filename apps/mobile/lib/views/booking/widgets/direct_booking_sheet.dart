@@ -43,6 +43,7 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
   List<String> _bookedSlots = [];
   bool _isLoadingSlots = false;
   bool _isSubmitting = false;
+  int _fetchRequestId = 0;
 
   final TextEditingController _nameCtrl = TextEditingController();
   final TextEditingController _phoneCtrl = TextEditingController();
@@ -69,22 +70,39 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
     }
   }
 
+  bool _isSlotBooked(String slot) {
+    if (_bookedSlots.isEmpty) return false;
+    final clean = slot.replaceAll(RegExp(r'\s+'), '').toLowerCase();
+    return _bookedSlots.any((b) {
+      final cleanB = b.replaceAll(RegExp(r'\s+'), '').toLowerCase();
+      return cleanB == clean ||
+          cleanB.contains(clean) ||
+          clean.contains(cleanB);
+    });
+  }
+
   Future<void> _fetchBookedSlots() async {
     if (_selectedTurf == null) return;
+    final currentRequestId = ++_fetchRequestId;
     setState(() {
       _isLoadingSlots = true;
       _selectedSlot = null;
     });
 
     final dateStr = _selectedDate.toIso8601String().split('T').first;
-    final slots = await widget.vm.fetchBookedSlots(_selectedTurf!.id, dateStr);
+    final results = await Future.wait([
+      widget.vm.fetchBookedSlots(_selectedTurf!.id, dateStr),
+      // Minimum duration to guarantee user sees the smooth shimmer loading animation
+      Future.delayed(const Duration(milliseconds: 350)),
+    ]);
 
-    if (mounted) {
-      setState(() {
-        _bookedSlots = slots;
-        _isLoadingSlots = false;
-      });
-    }
+    if (!mounted || currentRequestId != _fetchRequestId) return;
+
+    final slots = results[0] as List<String>;
+    setState(() {
+      _bookedSlots = slots;
+      _isLoadingSlots = false;
+    });
   }
 
   @override
@@ -166,6 +184,17 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
     final availableSlots = _selectedTurf?.availableSlots ?? [];
     final dateDisplay =
         '${_selectedDate.day.toString().padLeft(2, '0')}/${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.year}';
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth >= 600;
+    final double sheetPadding = 20.w * 2;
+    final double availableWidth = screenWidth - sheetPadding;
+    final int slotColumns = isTablet ? (screenWidth >= 1050 ? 5 : 4) : 3;
+    final double slotSpacing = 8.w;
+    final double slotRunSpacing = 8.h;
+    final double slotItemWidth =
+        (availableWidth - ((slotColumns - 1) * slotSpacing)) / slotColumns;
+    final double slotItemHeight = 38.h;
 
     return Container(
       decoration: BoxDecoration(
@@ -397,74 +426,142 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
                         ),
                       ),
                       if (_isLoadingSlots)
-                        Text(
-                          'Checking slots...',
-                          style: TextStyle(
-                            fontSize: 10.sp,
-                            color: colors.primary,
-                            fontStyle: FontStyle.italic,
-                          ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 12.w,
+                              height: 12.w,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  colors.primary,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 6.w),
+                            Text(
+                              'Checking...',
+                              style: textTheme.bodySmall?.copyWith(
+                                color: colors.primary,
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
                     ],
                   ),
                   SizedBox(height: 8.h),
 
-                  if (availableSlots.isEmpty)
-                    Container(
-                      padding: EdgeInsets.all(12.w),
-                      decoration: BoxDecoration(
-                        color: colors.background,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        'No slots configured for this turf yet.',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: colors.textGrey,
-                        ),
-                      ),
-                    )
-                  else
-                    Wrap(
-                      spacing: 8.w,
-                      runSpacing: 8.h,
-                      children: availableSlots.map((slot) {
-                        final isBooked = _bookedSlots.any((b) =>
-                            b == slot ||
-                            b.replaceAll(' ', '') == slot.replaceAll(' ', ''));
-                        final isSelected = _selectedSlot == slot;
-                        final displayTime = TimeHelper.formatTo12Hour(slot);
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: _isLoadingSlots
+                        ? Wrap(
+                            key: const ValueKey('direct_slots_loading'),
+                            spacing: slotSpacing,
+                            runSpacing: slotRunSpacing,
+                            children: (availableSlots.isNotEmpty
+                                    ? availableSlots
+                                    : const [
+                                        '09:00-10:00',
+                                        '10:00-11:00',
+                                        '11:00-12:00',
+                                        '12:00-13:00',
+                                        '13:00-14:00',
+                                        '14:00-15:00',
+                                      ])
+                                .map(
+                                  (slot) => _ShimmerSlotCard(
+                                    text: TimeHelper.formatTo12Hour(slot),
+                                    width: slotItemWidth,
+                                    height: slotItemHeight,
+                                    primaryColor: colors.primary,
+                                  ),
+                                )
+                                .toList(),
+                          )
+                        : availableSlots.isEmpty
+                            ? Container(
+                                key: const ValueKey('direct_slots_empty'),
+                                width: double.infinity,
+                                padding: EdgeInsets.all(12.w),
+                                decoration: BoxDecoration(
+                                  color: colors.background,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  'No slots configured for this turf yet.',
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: colors.textGrey,
+                                  ),
+                                ),
+                              )
+                            : Wrap(
+                                key: const ValueKey('direct_slots_loaded'),
+                                spacing: slotSpacing,
+                                runSpacing: slotRunSpacing,
+                                children: availableSlots.map((slot) {
+                                  final isBooked = _isSlotBooked(slot);
+                                  final isSelected = _selectedSlot == slot;
+                                  final displayTime =
+                                      TimeHelper.formatTo12Hour(slot);
 
-                        return ChoiceChip(
-                          label: Text(
-                            isBooked ? '$displayTime (Booked)' : displayTime,
-                            style: TextStyle(
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.w600,
-                              decoration: isBooked
-                                  ? TextDecoration.lineThrough
-                                  : null,
-                              color: isBooked
-                                  ? Colors.grey
-                                  : isSelected
-                                      ? Colors.white
-                                      : colors.textTitle,
-                            ),
-                          ),
-                          selected: isSelected,
-                          selectedColor: colors.primary,
-                          backgroundColor:
-                              isBooked ? Colors.grey.shade200 : colors.background,
-                          onSelected: isBooked
-                              ? null
-                              : (sel) {
-                                  setState(() {
-                                    _selectedSlot = sel ? slot : null;
-                                  });
-                                },
-                        );
-                      }).toList(),
-                    ),
+                                  return GestureDetector(
+                                    onTap: isBooked
+                                        ? null
+                                        : () {
+                                            setState(() {
+                                              _selectedSlot =
+                                                  isSelected ? null : slot;
+                                            });
+                                          },
+                                    child: Container(
+                                      width: slotItemWidth,
+                                      height: slotItemHeight,
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        color: isBooked
+                                            ? const Color(0xFFF0F0F0)
+                                            : (isSelected
+                                                ? colors.primary
+                                                : Colors.white),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: isBooked
+                                              ? const Color(0xFFD0D0D0)
+                                              : (isSelected
+                                                  ? colors.primary
+                                                  : colors.primary.withValues(
+                                                      alpha: 0.4,
+                                                    )),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        displayTime,
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          color: isBooked
+                                              ? Colors.grey[400]
+                                              : (isSelected
+                                                  ? Colors.white
+                                                  : Colors.grey[700]),
+                                          fontSize: 11.sp,
+                                          fontWeight: isSelected
+                                              ? FontWeight.w600
+                                              : FontWeight.w500,
+                                          decoration: isBooked
+                                              ? TextDecoration.lineThrough
+                                              : TextDecoration.none,
+                                          letterSpacing: -0.2,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                  ),
 
                   SizedBox(height: 16.h),
 
@@ -754,6 +851,85 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ShimmerSlotCard extends StatefulWidget {
+  final String text;
+  final double width;
+  final double height;
+  final Color primaryColor;
+
+  const _ShimmerSlotCard({
+    required this.text,
+    required this.width,
+    required this.height,
+    required this.primaryColor,
+  });
+
+  @override
+  State<_ShimmerSlotCard> createState() => _ShimmerSlotCardState();
+}
+
+class _ShimmerSlotCardState extends State<_ShimmerSlotCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1300),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final val = _controller.value;
+        return Container(
+          width: widget.width,
+          height: widget.height,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(
+              color: widget.primaryColor.withValues(alpha: 0.35),
+            ),
+            gradient: LinearGradient(
+              begin: Alignment(-2.2 + val * 4.4, 0),
+              end: Alignment(-0.6 + val * 4.4, 0),
+              colors: [
+                Colors.white,
+                widget.primaryColor.withValues(alpha: 0.12),
+                Colors.white,
+              ],
+              stops: const [0.0, 0.5, 1.0],
+            ),
+          ),
+          child: Text(
+            widget.text,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.grey[400],
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w500,
+              letterSpacing: -0.2,
+            ),
+          ),
+        );
+      },
     );
   }
 }

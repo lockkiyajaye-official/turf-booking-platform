@@ -5,11 +5,15 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mobile/core/responsive/screen_extensions.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/utils/helpers.dart';
+import 'package:mobile/data/models/turf_model.dart';
+import 'package:mobile/data/services/turf_service.dart';
+import 'package:mobile/data/services/uploadcare_service.dart';
 import 'package:mobile/viewmodels/auth/auth_viewmodel.dart';
 import 'package:mobile/viewmodels/turf/owner_viewmodel.dart';
-import 'package:mobile/data/services/turf_service.dart';
-import 'package:mobile/views/widgets/my_text_field.dart';
+import 'package:mobile/views/booking/owner_detail_page.dart';
 import 'package:mobile/views/widgets/my_buttons.dart';
+import 'package:mobile/views/widgets/my_text_field.dart';
+import 'package:mobile/views/widgets/state_selection_sheet.dart';
 
 class AddTurfPage extends StatefulWidget {
   const AddTurfPage({super.key});
@@ -26,6 +30,7 @@ class _AddTurfPageState extends State<AddTurfPage> {
   final _addressController = TextEditingController();
   final _cityController = TextEditingController();
   final _stateController = TextEditingController();
+  String? _selectedState;
   final _pincodeController = TextEditingController();
   final _capacityController = TextEditingController();
   final _latitudeController = TextEditingController();
@@ -170,7 +175,9 @@ class _AddTurfPageState extends State<AddTurfPage> {
   ];
 
   bool _isLoading = false;
+  bool _isUploadingImages = false;
   final TurfService _turfService = TurfService();
+  final UploadcareService _uploadcareService = UploadcareService();
 
   @override
   void dispose() {
@@ -198,19 +205,49 @@ class _AddTurfPageState extends State<AddTurfPage> {
   // ── Image Picker Helpers ─────────────────────────────────
   Future<void> _pickImage(ImageSource source) async {
     try {
-      final XFile? file = await _picker.pickImage(
-        source: source,
-        imageQuality: 80,
-      );
-      if (file != null) {
-        setState(() {
-          _imageUrls.add(file.path);
-        });
+      if (source == ImageSource.gallery) {
+        final List<XFile> files = await _picker.pickMultiImage(
+          imageQuality: 80,
+        );
+        if (files.isEmpty) return;
+
+        setState(() => _isUploadingImages = true);
+        try {
+          for (final file in files) {
+            final res = await _uploadcareService.uploadXFile(file);
+            if (mounted) {
+              setState(() {
+                _imageUrls.add(res.cdnUrl);
+              });
+            }
+          }
+        } finally {
+          if (mounted) setState(() => _isUploadingImages = false);
+        }
+      } else {
+        final XFile? file = await _picker.pickImage(
+          source: source,
+          imageQuality: 80,
+        );
+        if (file == null) return;
+
+        setState(() => _isUploadingImages = true);
+        try {
+          final res = await _uploadcareService.uploadXFile(file);
+          if (mounted) {
+            setState(() {
+              _imageUrls.add(res.cdnUrl);
+            });
+          }
+        } finally {
+          if (mounted) setState(() => _isUploadingImages = false);
+        }
       }
     } catch (e) {
+      if (mounted) setState(() => _isUploadingImages = false);
       Get.snackbar(
-        'Error',
-        'Could not pick image: $e',
+        'Upload Error',
+        'Could not upload image to Uploadcare: $e',
         backgroundColor: Colors.red.shade100,
         snackPosition: SnackPosition.BOTTOM,
       );
@@ -373,11 +410,31 @@ class _AddTurfPageState extends State<AddTurfPage> {
       return;
     }
 
+    if (_isUploadingImages) {
+      Get.snackbar(
+        'Please wait',
+        'Photos are currently uploading to Uploadcare...',
+        backgroundColor: Colors.amber.shade100,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
     final token = Get.find<AuthViewmodel>().token.value;
     setState(() => _isLoading = true);
 
     try {
-      final List<String> orderedImages = List<String>.from(_imageUrls);
+      final List<String> uploadedImages = [];
+      for (final img in _imageUrls) {
+        if (img.startsWith('http://') || img.startsWith('https://')) {
+          uploadedImages.add(img);
+        } else {
+          final res = await _uploadcareService.uploadFile(File(img));
+          uploadedImages.add(res.cdnUrl);
+        }
+      }
+
+      final List<String> orderedImages = List<String>.from(uploadedImages);
       if (orderedImages.isNotEmpty &&
           _primaryImageIndex < orderedImages.length) {
         final primary = orderedImages.removeAt(_primaryImageIndex);
@@ -390,7 +447,7 @@ class _AddTurfPageState extends State<AddTurfPage> {
         'description': _descriptionController.text.trim(),
         'address': address,
         'city': _cityController.text.trim(),
-        'state': _stateController.text.trim(),
+        'state': _selectedState ?? _stateController.text.trim(),
         'pincode': _pincodeController.text.trim(),
         'capacity': int.tryParse(_capacityController.text.trim()),
         'surfaceType': _selectedSurfaceType,
@@ -431,7 +488,21 @@ class _AddTurfPageState extends State<AddTurfPage> {
           backgroundColor: Colors.green.shade100,
           snackPosition: SnackPosition.BOTTOM,
         );
-        Get.back();
+
+        final turfData = res['data'] is Map<String, dynamic>
+            ? (res['data']['turf'] is Map<String, dynamic>
+                ? res['data']['turf'] as Map<String, dynamic>
+                : res['data'] as Map<String, dynamic>)
+            : null;
+
+        final newTurf = turfData != null ? TurfModel.fromJson(turfData) : null;
+
+        if (newTurf != null) {
+          // Replace create page with detail page to prevent re-submitting on back
+          Get.off(() => OwnerTurfDetailPage(turf: newTurf));
+        } else {
+          Get.back();
+        }
       } else {
         Get.snackbar(
           'Error',
@@ -552,12 +623,55 @@ class _AddTurfPageState extends State<AddTurfPage> {
                         height: 110.h,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
-                          itemCount: _imageUrls.length + 1,
+                          itemCount: _imageUrls.length +
+                              1 +
+                              (_isUploadingImages ? 1 : 0),
                           itemBuilder: (context, index) {
-                            if (index == _imageUrls.length) {
+                            if (_isUploadingImages &&
+                                index == _imageUrls.length) {
+                              return Container(
+                                width: 100.w,
+                                margin: EdgeInsets.only(right: 10.w),
+                                decoration: BoxDecoration(
+                                  color: colors.background,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: const Color(0xFFE0E0E0),
+                                  ),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 24.w,
+                                      height: 24.w,
+                                      child: const CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Color(0xFFE43434),
+                                      ),
+                                    ),
+                                    SizedBox(height: 6.h),
+                                    Text(
+                                      'Uploading...',
+                                      style: TextStyle(
+                                        color: colors.textGrey,
+                                        fontSize: 10.sp,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+
+                            if (index ==
+                                _imageUrls.length +
+                                    (_isUploadingImages ? 1 : 0)) {
                               return GestureDetector(
-                                onTap: () =>
-                                    _showImageSourcePicker(colors, textTheme),
+                                onTap: _isUploadingImages
+                                    ? null
+                                    : () =>
+                                        _showImageSourcePicker(colors, textTheme),
                                 child: Container(
                                   width: 100.w,
                                   margin: EdgeInsets.only(right: 10.w),
@@ -819,7 +933,24 @@ class _AddTurfPageState extends State<AddTurfPage> {
                                   height: 50.h,
                                   type: TextInputType.text,
                                   fillColor: colors.white,
-                                  hintText: 'e.g. Arunachal Pradesh',
+                                  hintText: 'Select State',
+                                  readOnly: true,
+                                  onTap: () {
+                                    showStateSelectionSheet(
+                                      context,
+                                      selectedState: _selectedState,
+                                      onSelected: (val) {
+                                        setState(() {
+                                          _selectedState = val;
+                                          _stateController.text = val;
+                                        });
+                                      },
+                                    );
+                                  },
+                                  suffixIcon: Icon(
+                                    Icons.keyboard_arrow_down_rounded,
+                                    color: colors.textGrey,
+                                  ),
                                 ),
                               ],
                             ),

@@ -16,6 +16,9 @@ class AppConstants {
 
   static String get googleServerClientId =>
       dotenv.env['GOOGLE_SERVER_CLIENT_ID'] ?? '';
+
+  static String get uploadcarePublicKey =>
+      dotenv.env['UPLOADCARE_PUBLIC_KEY'] ?? 'a9831bda75d2449665e9';
 }
 
                                 

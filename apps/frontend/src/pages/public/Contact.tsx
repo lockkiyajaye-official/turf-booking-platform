@@ -86,7 +86,7 @@ export default function Contact() {
         {
             icon: <MapPin className="w-6 h-6" />,
             title: "Visit Us",
-            info: "123 Sports Street, Mumbai, India",
+            info: "123 Sports Street, Naharlagun, India",
             desc: "Book a visit to our office"
         }
     ];
