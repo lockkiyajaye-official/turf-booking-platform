@@ -30,7 +30,7 @@ class OwnerViewmodel extends GetxController {
   var bookingsPage = 1.obs;
   var bookingsHasMore = true.obs;
   // Filters (reactive — UI binds to these)
-  var bookingsStatusFilter = ''.obs;  // '' means all
+  var bookingsStatusFilter = ''.obs; // '' means all
   var bookingsSearch = ''.obs;
 
   // Finances & Payout Details
@@ -93,16 +93,18 @@ class OwnerViewmodel extends GetxController {
   String get _token => Get.find<LocalStorageService>().getToken() ?? '';
 
   void _showError(String msg) => Get.snackbar(
-        'Error', msg,
-        backgroundColor: Colors.red.shade100,
-        snackPosition: SnackPosition.BOTTOM,
-      );
+    'Error',
+    msg,
+    backgroundColor: Colors.red.shade100,
+    snackPosition: SnackPosition.BOTTOM,
+  );
 
   void _showSuccess(String msg) => Get.snackbar(
-        'Success', msg,
-        backgroundColor: Colors.green.shade100,
-        snackPosition: SnackPosition.BOTTOM,
-      );
+    'Success',
+    msg,
+    backgroundColor: Colors.green.shade100,
+    snackPosition: SnackPosition.BOTTOM,
+  );
 
   // ── Dashboard ────────────────────────────────────────────
   Future<void> loadDashboard() async {
@@ -123,11 +125,13 @@ class OwnerViewmodel extends GetxController {
 
   void _computeStats() {
     final totalRevenue = allBookings
-        .where((b) => (b['status'] as String? ?? '').toLowerCase() == 'confirmed')
+        .where(
+          (b) => (b['status'] as String? ?? '').toLowerCase() == 'confirmed',
+        )
         .fold<num>(0, (sum, b) {
-      final rawVal = b['totalPrice'] ?? b['totalAmount'] ?? b['price'];
-      return sum + _parseNum(rawVal);
-    });
+          final rawVal = b['totalPrice'] ?? b['totalAmount'] ?? b['price'];
+          return sum + _parseNum(rawVal);
+        });
 
     stats.value = {
       'totalTurfs': myTurfs.length,
@@ -151,8 +155,9 @@ class OwnerViewmodel extends GetxController {
         } else if (data is Map && data['turfs'] is List) {
           list = data['turfs'];
         }
-        myTurfs.value =
-            list.map((e) => TurfModel.fromJson(e as Map<String, dynamic>)).toList();
+        myTurfs.value = list
+            .map((e) => TurfModel.fromJson(e as Map<String, dynamic>))
+            .toList();
       }
     } catch (_) {
     } finally {
@@ -208,10 +213,7 @@ class OwnerViewmodel extends GetxController {
   // ── Bookings ─────────────────────────────────────────────
 
   /// Reset filters/pagination and reload page 1.
-  Future<void> fetchAllBookings({
-    String? status,
-    String? search,
-  }) async {
+  Future<void> fetchAllBookings({String? status, String? search}) async {
     if (status != null) bookingsStatusFilter.value = status;
     if (search != null) bookingsSearch.value = search;
     bookingsPage.value = 1;
@@ -237,7 +239,9 @@ class OwnerViewmodel extends GetxController {
         _token,
         page: page,
         limit: 10,
-        status: bookingsStatusFilter.value.isEmpty ? null : bookingsStatusFilter.value,
+        status: bookingsStatusFilter.value.isEmpty
+            ? null
+            : bookingsStatusFilter.value,
         search: bookingsSearch.value.isEmpty ? null : bookingsSearch.value,
       );
 
@@ -259,9 +263,15 @@ class OwnerViewmodel extends GetxController {
           allBookings.value = newItems;
         } else {
           final existing = Set<String>.from(
-              allBookings.map((b) => b['_id']?.toString() ?? b['id']?.toString() ?? ''));
+            allBookings.map(
+              (b) => b['_id']?.toString() ?? b['id']?.toString() ?? '',
+            ),
+          );
           final fresh = newItems.where(
-              (b) => !existing.contains(b['_id']?.toString() ?? b['id']?.toString() ?? ''));
+            (b) => !existing.contains(
+              b['_id']?.toString() ?? b['id']?.toString() ?? '',
+            ),
+          );
           allBookings.addAll(fresh);
         }
         bookingsPage.value = page;
@@ -277,7 +287,10 @@ class OwnerViewmodel extends GetxController {
   Future<void> confirmBooking(String id) async {
     try {
       final res = await _bookingService.updateStatus(
-          token: _token, id: id, status: 'confirmed');
+        token: _token,
+        id: id,
+        status: 'confirmed',
+      );
       if (res['success']) {
         _showSuccess('Booking confirmed');
         await fetchAllBookings();
@@ -292,9 +305,15 @@ class OwnerViewmodel extends GetxController {
 
   Future<void> cancelBooking(String id, {String? reason}) async {
     try {
-      final res = await _bookingService.cancelBooking(_token, id, reason: reason);
+      final res = await _bookingService.cancelBooking(
+        _token,
+        id,
+        reason: reason,
+      );
       if (res['success'] == true) {
-        final msg = res['data']?['cancellation']?['message'] ?? 'Booking cancelled and customer refunded.';
+        final msg =
+            res['data']?['cancellation']?['message'] ??
+            'Booking cancelled and customer refunded.';
         _showSuccess(msg);
         await fetchAllBookings();
         _computeStats();
@@ -442,8 +461,9 @@ class OwnerViewmodel extends GetxController {
       if (res['success'] == true) {
         final data = res['data'];
         if (data is Map && data['payoutDetails'] is Map) {
-          payoutDetails.value =
-              Map<String, dynamic>.from(data['payoutDetails'] as Map);
+          payoutDetails.value = Map<String, dynamic>.from(
+            data['payoutDetails'] as Map,
+          );
         } else {
           payoutDetails.value = payload;
         }

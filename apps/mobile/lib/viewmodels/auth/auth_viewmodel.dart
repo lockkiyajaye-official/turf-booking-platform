@@ -25,14 +25,14 @@ class AuthViewmodel extends GetxController {
     final serverClientId = AppConstants.googleServerClientId;
     if (kDebugMode) {
       print(
-      '[Google] ensuring initialized with serverClientId: "$serverClientId" (alreadyInit=$_googleSignInInitialized)',
-    );
+        '[Google] ensuring initialized with serverClientId: "$serverClientId" (alreadyInit=$_googleSignInInitialized)',
+      );
     }
     if (_googleSignInInitialized) return;
     if (kDebugMode) {
       print(
-      '[Google] initializing GoogleSignIn with serverClientId: "$serverClientId"',
-    );
+        '[Google] initializing GoogleSignIn with serverClientId: "$serverClientId"',
+      );
     }
     await _googleSignIn.initialize(
       serverClientId: serverClientId.isNotEmpty ? serverClientId : null,
@@ -537,7 +537,9 @@ class AuthViewmodel extends GetxController {
           role: selectedRole.value,
           phone: phone,
           businessName: isOwner ? businessNameController.text.trim() : null,
-          businessAddress: isOwner ? businessAddressController.text.trim() : null,
+          businessAddress: isOwner
+              ? businessAddressController.text.trim()
+              : null,
           businessRegistrationDoc: isOwner
               ? businessDocController.text.trim()
               : null,

@@ -16,7 +16,8 @@ class LocationService {
     double dLat = _degreesToRadians(lat2 - lat1);
     double dLon = _degreesToRadians(lon2 - lon1);
 
-    double a = sin(dLat / 2) * sin(dLat / 2) +
+    double a =
+        sin(dLat / 2) * sin(dLat / 2) +
         cos(_degreesToRadians(lat1)) *
             cos(_degreesToRadians(lat2)) *
             sin(dLon / 2) *
@@ -73,9 +74,7 @@ class LocationService {
 
     // When permission granted, return position
     return await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-      ),
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
     );
   }
 
@@ -88,8 +87,8 @@ class LocationService {
         final city = place.locality?.isNotEmpty == true
             ? place.locality
             : (place.subAdministrativeArea?.isNotEmpty == true
-                ? place.subAdministrativeArea
-                : place.administrativeArea);
+                  ? place.subAdministrativeArea
+                  : place.administrativeArea);
         final state = place.administrativeArea;
 
         if (city != null && state != null && city != state) {

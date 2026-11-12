@@ -57,8 +57,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final userState = (u['state'] as String? ?? '').trim();
     _stateController = TextEditingController(text: userState);
     _selectedState = userState.isNotEmpty ? userState : null;
-    _currentAvatarUrl =
-        (u['profileImage'] ?? u['avatarUrl']) as String?;
+    _currentAvatarUrl = (u['profileImage'] ?? u['avatarUrl']) as String?;
   }
 
   @override
@@ -430,7 +429,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                   'lastName': _lastNameController.text.trim(),
                                   'bio': _bioController.text.trim(),
                                   'city': _cityController.text.trim(),
-                                  'state': _selectedState ??
+                                  'state':
+                                      _selectedState ??
                                       _stateController.text.trim(),
                                   'email': newEmail,
                                   'phone': newPhone,
@@ -798,7 +798,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: colors.error.withOpacity(0.1),
+                color: colors.error.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -834,7 +834,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(
-                    color: colors.textGrey.withOpacity(0.3),
+                    color: colors.textGrey.withValues(alpha: 0.3),
                   ),
                 ),
                 contentPadding: const EdgeInsets.all(12),
@@ -974,7 +974,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
           label,
           style: textTheme.bodySmall?.copyWith(
             fontWeight: FontWeight.w600,
-            color: readOnly && onTap == null ? colors.textGrey : colors.textTitle,
+            color: readOnly && onTap == null
+                ? colors.textGrey
+                : colors.textTitle,
             fontSize: 12.sp,
           ),
         ),
@@ -985,7 +987,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
           onTap: onTap,
           maxLines: maxLines,
           style: textTheme.bodyMedium?.copyWith(
-            color: readOnly && onTap == null ? colors.textGrey : colors.textTitle,
+            color: readOnly && onTap == null
+                ? colors.textGrey
+                : colors.textTitle,
             fontWeight: FontWeight.w500,
           ),
           decoration: InputDecoration(
@@ -1001,7 +1005,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
             prefixIcon: Icon(
               prefixIcon,
               size: 18,
-              color: readOnly && onTap == null ? colors.textGrey : colors.primary,
+              color: readOnly && onTap == null
+                  ? colors.textGrey
+                  : colors.primary,
             ),
             suffixIcon: suffixWidget != null
                 ? Padding(

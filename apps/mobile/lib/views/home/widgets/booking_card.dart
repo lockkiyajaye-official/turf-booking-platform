@@ -23,17 +23,18 @@ class VenueCard extends StatelessWidget {
     final imageUrl = turf.images.isNotEmpty
         ? turf.images.first
         : 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=400&q=80';
-    
+
     return GestureDetector(
       onTap: () => Get.to(() => TurfDetailsPage(turf: turf)),
       child: Container(
-        margin: margin ?? const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        margin:
+            margin ?? const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -86,7 +87,7 @@ class VenueCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withValues(alpha: 0.1),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),

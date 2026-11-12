@@ -83,7 +83,7 @@ class _BookingPageState extends State<BookingPage>
                     width: 72.w,
                     height: 72.w,
                     decoration: BoxDecoration(
-                      color: _green.withOpacity(0.08),
+                      color: _green.withValues(alpha: 0.08),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -282,7 +282,12 @@ class _BookingList extends StatelessWidget {
       onRefresh: onRefresh,
       child: columns > 1
           ? GridView.builder(
-              padding: EdgeInsets.fromLTRB(horizontalPad, 16.h, horizontalPad, 24.h),
+              padding: EdgeInsets.fromLTRB(
+                horizontalPad,
+                16.h,
+                horizontalPad,
+                24.h,
+              ),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: columns,
                 crossAxisSpacing: 16,
@@ -299,7 +304,7 @@ class _BookingList extends StatelessWidget {
           : ListView.separated(
               padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
               itemCount: bookings.length,
-              separatorBuilder: (_, __) => SizedBox(height: 12.h),
+              separatorBuilder: (_, _) => SizedBox(height: 12.h),
               itemBuilder: (context, index) => _BookingCard(
                 booking: bookings[index],
                 isActive: isActive,
@@ -338,7 +343,7 @@ class _BookingCard extends StatelessWidget {
           border: Border.all(color: Colors.grey.shade100),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: const Offset(0, 3),
             ),
@@ -360,7 +365,7 @@ class _BookingCard extends StatelessWidget {
                         ? Image.network(
                             data.turfImage!,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
+                            errorBuilder: (_, _, _) => Container(
                               color: const Color(0xFF1a3a1a),
                               child: const Icon(
                                 Icons.sports_cricket,

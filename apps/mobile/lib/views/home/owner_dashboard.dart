@@ -18,10 +18,11 @@ class OwnerDashboardPage extends StatelessWidget {
     final colors = Theme.of(context).extension<AppColors>()!;
     final textTheme = Theme.of(context).textTheme;
     final authVm = Get.find<AuthViewmodel>();
-    final vm = (Get.isRegistered<OwnerViewmodel>()
-            ? Get.find<OwnerViewmodel>()
-            : Get.put(OwnerViewmodel(), permanent: true))
-        ..loadDashboard();
+    final vm =
+        (Get.isRegistered<OwnerViewmodel>()
+              ? Get.find<OwnerViewmodel>()
+              : Get.put(OwnerViewmodel(), permanent: true))
+          ..loadDashboard();
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -47,7 +48,8 @@ class OwnerDashboardPage extends StatelessWidget {
                               Text(
                                 'Welcome back,',
                                 style: textTheme.bodySmall?.copyWith(
-                                    color: colors.textGrey),
+                                  color: colors.textGrey,
+                                ),
                               ),
                               Text(
                                 first.isEmpty ? 'Owner' : first,
@@ -74,8 +76,8 @@ class OwnerDashboardPage extends StatelessWidget {
                     return SizedBox(
                       height: 110.h,
                       child: Center(
-                          child:
-                              CircularProgressIndicator(color: colors.primary)),
+                        child: CircularProgressIndicator(color: colors.primary),
+                      ),
                     );
                   }
                   final stats = vm.stats;
@@ -123,8 +125,9 @@ class OwnerDashboardPage extends StatelessWidget {
                   padding: EdgeInsets.symmetric(horizontal: 20.w),
                   child: Text(
                     'Quick Actions',
-                    style: textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700),
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
@@ -144,7 +147,8 @@ class OwnerDashboardPage extends StatelessWidget {
                             label: 'Direct Booking',
                             colors: colors,
                             textTheme: textTheme,
-                            onTap: () => showDirectBookingModal(context, vm: vm),
+                            onTap: () =>
+                                showDirectBookingModal(context, vm: vm),
                           ),
                         ),
                         SizedBox(width: 10.w),
@@ -174,7 +178,8 @@ class OwnerDashboardPage extends StatelessWidget {
                             label: 'Bookings',
                             colors: colors,
                             textTheme: textTheme,
-                            onTap: () => Get.to(() => const OwnerBookingsPage()),
+                            onTap: () =>
+                                Get.to(() => const OwnerBookingsPage()),
                           ),
                         ),
                       ],
@@ -194,11 +199,13 @@ class OwnerDashboardPage extends StatelessWidget {
                     children: [
                       Text(
                         'Recent Bookings',
-                        style: textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       TextButton(
-                        onPressed: () => Get.to(() => const OwnerBookingsPage()),
+                        onPressed: () =>
+                            Get.to(() => const OwnerBookingsPage()),
                         child: Text(
                           'See all',
                           style: textTheme.bodySmall?.copyWith(
@@ -220,8 +227,7 @@ class OwnerDashboardPage extends StatelessWidget {
                     child: SizedBox(
                       height: 120.h,
                       child: Center(
-                        child:
-                            CircularProgressIndicator(color: colors.primary),
+                        child: CircularProgressIndicator(color: colors.primary),
                       ),
                     ),
                   );
@@ -233,37 +239,38 @@ class OwnerDashboardPage extends StatelessWidget {
                       child: Center(
                         child: Text(
                           'No bookings yet',
-                          style: textTheme.bodyMedium
-                              ?.copyWith(color: colors.textGrey),
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: colors.textGrey,
+                          ),
                         ),
                       ),
                     ),
                   );
                 }
                 final isTablet = context.isTablet;
-                final bookingCount = vm.recentBookings.length > 6 ? 6 : vm.recentBookings.length;
+                final bookingCount = vm.recentBookings.length > 6
+                    ? 6
+                    : vm.recentBookings.length;
 
                 if (isTablet) {
                   return SliverPadding(
                     padding: EdgeInsets.symmetric(horizontal: 20.w),
                     sliver: SliverGrid(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, i) {
-                          final booking = vm.recentBookings[i];
-                          return _BookingRow(
-                            booking: booking,
-                            colors: colors,
-                            textTheme: textTheme,
-                          );
-                        },
-                        childCount: bookingCount,
-                      ),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 12,
-                        mainAxisExtent: 84,
-                      ),
+                      delegate: SliverChildBuilderDelegate((context, i) {
+                        final booking = vm.recentBookings[i];
+                        return _BookingRow(
+                          booking: booking,
+                          colors: colors,
+                          textTheme: textTheme,
+                        );
+                      }, childCount: bookingCount),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 12,
+                            mainAxisExtent: 84,
+                          ),
                     ),
                   );
                 }
@@ -326,7 +333,7 @@ class _StatCard extends StatelessWidget {
           border: Border.all(color: const Color(0xFFE8E8E8)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -338,7 +345,7 @@ class _StatCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, color: color, size: 18),
@@ -394,7 +401,7 @@ class _ActionTile extends StatelessWidget {
           border: Border.all(color: const Color(0xFFE8E8E8)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -454,12 +461,14 @@ class _BookingRow extends StatelessWidget {
     final status = (booking['status'] as String? ?? 'pending').toLowerCase();
 
     final turfObj = booking['turf'];
-    final turfName = (turfObj is Map ? turfObj['name'] as String? : null) ??
+    final turfName =
+        (turfObj is Map ? turfObj['name'] as String? : null) ??
         booking['turfName'] as String? ??
         'Unknown Turf';
 
     final userObj = booking['user'];
-    final userName = (userObj is Map ? userObj['name'] as String? : null) ??
+    final userName =
+        (userObj is Map ? userObj['name'] as String? : null) ??
         booking['userName'] as String? ??
         'Player';
 
@@ -469,7 +478,11 @@ class _BookingRow extends StatelessWidget {
       date = rawDate.toString().split('T').first;
     }
 
-    final amount = booking['totalPrice'] ?? booking['totalAmount'] ?? booking['price'] ?? 0;
+    final amount =
+        booking['totalPrice'] ??
+        booking['totalAmount'] ??
+        booking['price'] ??
+        0;
 
     return Container(
       padding: EdgeInsets.all(14.w),
@@ -479,7 +492,7 @@ class _BookingRow extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE8E8E8)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -491,11 +504,14 @@ class _BookingRow extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: colors.primary.withOpacity(0.08),
+              color: colors.primary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(Icons.sports_soccer_rounded,
-                color: colors.primary, size: 20),
+            child: Icon(
+              Icons.sports_soccer_rounded,
+              color: colors.primary,
+              size: 20,
+            ),
           ),
           SizedBox(width: 12.w),
           Expanded(
@@ -514,8 +530,10 @@ class _BookingRow extends StatelessWidget {
                 SizedBox(height: 2.h),
                 Text(
                   '$userName • $date',
-                  style: textTheme.bodySmall
-                      ?.copyWith(color: colors.textGrey, fontSize: 12.sp),
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colors.textGrey,
+                    fontSize: 12.sp,
+                  ),
                 ),
               ],
             ),
@@ -532,10 +550,9 @@ class _BookingRow extends StatelessWidget {
               ),
               SizedBox(height: 4.h),
               Container(
-                padding:
-                    EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
                 decoration: BoxDecoration(
-                  color: _statusColor(status).withOpacity(0.1),
+                  color: _statusColor(status).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -573,14 +590,17 @@ class _NotifBadge extends StatelessWidget {
           border: Border.all(color: const Color(0xFFE8E8E8)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: Icon(Icons.notifications_outlined,
-            color: colors.primary, size: 22),
+        child: Icon(
+          Icons.notifications_outlined,
+          color: colors.primary,
+          size: 22,
+        ),
       ),
     );
   }

@@ -37,8 +37,7 @@ class _OwnerFinancesPageState extends State<OwnerFinancesPage> {
     _upiController = TextEditingController();
 
     _populateControllersFromVm();
-    _isEditingPayoutDetails =
-        widget.openPayoutDetails || !_vm.hasPayoutDetails;
+    _isEditingPayoutDetails = widget.openPayoutDetails || !_vm.hasPayoutDetails;
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _vm.fetchFinancesSummary();
@@ -56,8 +55,8 @@ class _OwnerFinancesPageState extends State<OwnerFinancesPage> {
   void _populateControllersFromVm() {
     final details = _vm.payoutDetails;
     final accNum = (details['bankAccountNumber'] ?? '').toString();
-    _holderNameController.text =
-        (details['accountHolderName'] ?? '').toString();
+    _holderNameController.text = (details['accountHolderName'] ?? '')
+        .toString();
     _bankNameController.text = (details['bankName'] ?? '').toString();
     _accountNumberController.text = accNum;
     _confirmAccountNumberController.text = accNum;
@@ -160,8 +159,9 @@ class _OwnerFinancesPageState extends State<OwnerFinancesPage> {
             final available = _vm.walletBalance.value;
             final details = _vm.payoutDetails;
             final bankName = (details['bankName'] ?? '').toString().trim();
-            final accNum =
-                (details['bankAccountNumber'] ?? '').toString().trim();
+            final accNum = (details['bankAccountNumber'] ?? '')
+                .toString()
+                .trim();
             final upiId = (details['upiId'] ?? '').toString().trim();
 
             Future<void> submitPayout() async {
@@ -315,8 +315,9 @@ class _OwnerFinancesPageState extends State<OwnerFinancesPage> {
                       SizedBox(height: 8.h),
                       TextFormField(
                         controller: amountController,
-                        keyboardType:
-                            const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                         style: textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: colors.textTitle,
@@ -335,18 +336,22 @@ class _OwnerFinancesPageState extends State<OwnerFinancesPage> {
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                const BorderSide(color: Color(0xFFDCDCDC)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFDCDCDC),
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                const BorderSide(color: Color(0xFFDCDCDC)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFDCDCDC),
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                BorderSide(color: colors.primary, width: 1.5),
+                            borderSide: BorderSide(
+                              color: colors.primary,
+                              width: 1.5,
+                            ),
                           ),
                         ),
                       ),
@@ -355,9 +360,9 @@ class _OwnerFinancesPageState extends State<OwnerFinancesPage> {
                       // Quick Amount Chips
                       Wrap(
                         spacing: 8.w,
-                        children: [500, 1000, 2000, available.toInt()]
-                            .toSet()
-                            .map((val) {
+                        children: {500, 1000, 2000, available.toInt()}.map((
+                          val,
+                        ) {
                           if (val <= 0) return const SizedBox.shrink();
                           return ChoiceChip(
                             label: Text(
@@ -459,7 +464,11 @@ class _OwnerFinancesPageState extends State<OwnerFinancesPage> {
                       children: [
                         _buildWalletCard(context, colors, wallet, textTheme),
                         SizedBox(height: 16.h),
-                        _buildPayoutDetailsSection(colors, textTheme, hasDetails),
+                        _buildPayoutDetailsSection(
+                          colors,
+                          textTheme,
+                          hasDetails,
+                        ),
                         SizedBox(height: 16.h),
                         _buildPayoutInfoCard(colors, textTheme),
                       ],
@@ -567,10 +576,7 @@ class _OwnerFinancesPageState extends State<OwnerFinancesPage> {
                 ),
               ),
               Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 10.w,
-                  vertical: 4.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
@@ -684,20 +690,18 @@ class _OwnerFinancesPageState extends State<OwnerFinancesPage> {
             child: ElevatedButton.icon(
               onPressed: wallet > 0
                   ? () => _showRequestPayoutBottomSheet(
-                        context,
-                        colors,
-                        textTheme,
-                      )
+                      context,
+                      colors,
+                      textTheme,
+                    )
                   : null,
               icon: const Icon(Icons.arrow_upward_rounded, size: 18),
               label: const Text('Request Payout'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFE43434),
                 foregroundColor: Colors.white,
-                disabledBackgroundColor:
-                    Colors.white.withValues(alpha: 0.15),
-                disabledForegroundColor:
-                    Colors.white.withValues(alpha: 0.5),
+                disabledBackgroundColor: Colors.white.withValues(alpha: 0.15),
+                disabledForegroundColor: Colors.white.withValues(alpha: 0.5),
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -1074,8 +1078,11 @@ class _OwnerFinancesPageState extends State<OwnerFinancesPage> {
         children: [
           Row(
             children: [
-              Icon(Icons.info_outline_rounded,
-                  color: const Color(0xFFE43434), size: 20.sp),
+              Icon(
+                Icons.info_outline_rounded,
+                color: const Color(0xFFE43434),
+                size: 20.sp,
+              ),
               SizedBox(width: 8.w),
               Text(
                 'Payout Information',
@@ -1181,12 +1188,16 @@ class _OwnerFinancesPageState extends State<OwnerFinancesPage> {
     );
   }
 
-  Widget _buildHistoryList(List history, AppColors colors, TextTheme textTheme) {
+  Widget _buildHistoryList(
+    List history,
+    AppColors colors,
+    TextTheme textTheme,
+  ) {
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: history.length,
-      separatorBuilder: (_, __) => SizedBox(height: 10.h),
+      separatorBuilder: (_, _) => SizedBox(height: 10.h),
       itemBuilder: (context, index) {
         final item = history[index];
         final amount = item['amount'] ?? 0;
@@ -1230,8 +1241,8 @@ class _OwnerFinancesPageState extends State<OwnerFinancesPage> {
                       status == 'approved' || status == 'completed'
                           ? Icons.check_circle_outline_rounded
                           : status == 'rejected'
-                              ? Icons.highlight_off_rounded
-                              : Icons.schedule_rounded,
+                          ? Icons.highlight_off_rounded
+                          : Icons.schedule_rounded,
                       color: statusColor,
                       size: 20.sp,
                     ),
@@ -1271,7 +1282,9 @@ class _OwnerFinancesPageState extends State<OwnerFinancesPage> {
                   SizedBox(height: 2.h),
                   Container(
                     padding: EdgeInsets.symmetric(
-                        horizontal: 8.w, vertical: 2.h),
+                      horizontal: 8.w,
+                      vertical: 2.h,
+                    ),
                     decoration: BoxDecoration(
                       color: statusColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),

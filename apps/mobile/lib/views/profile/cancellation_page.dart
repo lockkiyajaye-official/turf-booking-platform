@@ -172,20 +172,26 @@ class _CancellationPageState extends State<CancellationPage> {
                             padding: EdgeInsets.all(16.w),
                             gridDelegate:
                                 SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: context.bookingGridColumns,
-                              crossAxisSpacing: 14.w,
-                              mainAxisSpacing: 14.h,
-                              mainAxisExtent: 165,
-                            ),
+                                  crossAxisCount: context.bookingGridColumns,
+                                  crossAxisSpacing: 14.w,
+                                  mainAxisSpacing: 14.h,
+                                  mainAxisExtent: 165,
+                                ),
                             itemCount: _filteredBookings.length,
-                            itemBuilder: (context, index) =>
-                                _buildBookingItem(_filteredBookings[index], colors, textTheme),
+                            itemBuilder: (context, index) => _buildBookingItem(
+                              _filteredBookings[index],
+                              colors,
+                              textTheme,
+                            ),
                           )
                         : ListView.builder(
                             padding: EdgeInsets.all(16.w),
                             itemCount: _filteredBookings.length,
-                            itemBuilder: (context, index) =>
-                                _buildBookingItem(_filteredBookings[index], colors, textTheme),
+                            itemBuilder: (context, index) => _buildBookingItem(
+                              _filteredBookings[index],
+                              colors,
+                              textTheme,
+                            ),
                           ),
                   ),
           ),
@@ -226,7 +232,11 @@ class _CancellationPageState extends State<CancellationPage> {
     );
   }
 
-  Widget _buildBookingItem(BookingModel b, AppColors colors, TextTheme textTheme) {
+  Widget _buildBookingItem(
+    BookingModel b,
+    AppColors colors,
+    TextTheme textTheme,
+  ) {
     final isUpcoming = b.status == 'CONFIRMED' || b.status == 'PENDING';
     return Container(
       padding: EdgeInsets.all(16.w),
@@ -251,10 +261,7 @@ class _CancellationPageState extends State<CancellationPage> {
                 ),
               ),
               Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 8.w,
-                  vertical: 4.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                 decoration: BoxDecoration(
                   color: isUpcoming ? Colors.green.shade50 : Colors.red.shade50,
                   borderRadius: BorderRadius.circular(6),
@@ -264,7 +271,9 @@ class _CancellationPageState extends State<CancellationPage> {
                   style: TextStyle(
                     fontSize: 10.sp,
                     fontWeight: FontWeight.bold,
-                    color: isUpcoming ? Colors.green.shade700 : Colors.red.shade700,
+                    color: isUpcoming
+                        ? Colors.green.shade700
+                        : Colors.red.shade700,
                   ),
                 ),
               ),
@@ -273,9 +282,7 @@ class _CancellationPageState extends State<CancellationPage> {
           SizedBox(height: 8.h),
           Text(
             'Date: ${b.displayDate} • ${b.displayTime}',
-            style: textTheme.bodySmall?.copyWith(
-              color: colors.textGrey,
-            ),
+            style: textTheme.bodySmall?.copyWith(color: colors.textGrey),
           ),
           SizedBox(height: 4.h),
           Text(
@@ -300,10 +307,7 @@ class _CancellationPageState extends State<CancellationPage> {
                     ),
                     child: Text(
                       'Cancel Booking',
-                      style: TextStyle(
-                        color: colors.error,
-                        fontSize: 12.sp,
-                      ),
+                      style: TextStyle(color: colors.error, fontSize: 12.sp),
                     ),
                   ),
                 ),

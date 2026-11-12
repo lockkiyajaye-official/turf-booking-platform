@@ -35,7 +35,10 @@ class _OwnerShellState extends State<OwnerShell> {
   static const _ownerNavItems = [
     FloatingNavItem(label: 'Home', icon: Icons.dashboard_rounded),
     FloatingNavItem(label: 'My Turfs', icon: Icons.sports_soccer_rounded),
-    FloatingNavItem(label: 'Bookings', icon: Icons.confirmation_number_outlined),
+    FloatingNavItem(
+      label: 'Bookings',
+      icon: Icons.confirmation_number_outlined,
+    ),
     FloatingNavItem(label: 'Profile', icon: Icons.person_outline_rounded),
   ];
 

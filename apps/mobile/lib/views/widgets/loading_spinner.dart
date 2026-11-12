@@ -22,7 +22,8 @@ class LoadingSpinner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>();
-    final effectiveColor = color ?? colors?.primary ?? Theme.of(context).primaryColor;
+    final effectiveColor =
+        color ?? colors?.primary ?? Theme.of(context).primaryColor;
 
     final spinner = SizedBox(
       height: size,
@@ -35,9 +36,7 @@ class LoadingSpinner extends StatelessWidget {
     );
 
     if (text == null || text!.isEmpty) {
-      return Center(
-        child: spinner,
-      );
+      return Center(child: spinner);
     }
 
     return Row(
@@ -48,7 +47,8 @@ class LoadingSpinner extends StatelessWidget {
         SizedBox(width: spacing),
         Text(
           text!,
-          style: textStyle ??
+          style:
+              textStyle ??
               TextStyle(
                 color: effectiveColor,
                 fontSize: 14,

@@ -14,10 +14,11 @@ class OtpVerificationPage extends StatefulWidget {
 }
 
 class _OtpVerificationPageState extends State<OtpVerificationPage> {
-  final List<TextEditingController> _otpControllers =
-      List.generate(6, (index) => TextEditingController());
-  final List<FocusNode> _focusNodes =
-      List.generate(6, (index) => FocusNode());
+  final List<TextEditingController> _otpControllers = List.generate(
+    6,
+    (index) => TextEditingController(),
+  );
+  final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
 
   String _destination = '';
   late final bool _isLoginMode;
@@ -37,8 +38,12 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
 
   @override
   void dispose() {
-    for (var c in _otpControllers) c.dispose();
-    for (var n in _focusNodes) n.dispose();
+    for (var c in _otpControllers) {
+      c.dispose();
+    }
+    for (var n in _focusNodes) {
+      n.dispose();
+    }
     super.dispose();
   }
 
@@ -74,7 +79,9 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
   String get _fullOtp => _otpControllers.map((c) => c.text).join();
 
   void _clearFields() {
-    for (var c in _otpControllers) c.clear();
+    for (var c in _otpControllers) {
+      c.clear();
+    }
     _focusNodes[0].requestFocus();
   }
 
@@ -92,7 +99,8 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
     if (_isLoginMode) {
       controller.otpController.text = otp;
       // Use whichever identity the user entered
-      final isPhone = controller.phoneController.text.trim().isNotEmpty &&
+      final isPhone =
+          controller.phoneController.text.trim().isNotEmpty &&
           controller.emailController.text.trim().isEmpty;
       if (isPhone) {
         await controller.loginWithPhoneOtp();
@@ -130,154 +138,162 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
               children: [
                 SizedBox(height: 20.h),
 
-            Text(
-              'Verify Your OTP',
-              style: textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: colors.textTitle,
-              ),
-            ),
-
-            SizedBox(height: 12.h),
-
-            Text(
-              'We sent a 6-digit code to $_destination',
-              style:
-                  textTheme.bodyMedium?.copyWith(color: colors.textGrey),
-              textAlign: TextAlign.center,
-            ),
-
-            SizedBox(height: 40.h),
-
-            // OTP boxes
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(6, (index) {
-                return SizedBox(
-                  width: context.isTablet ? 54.0 : 44.w,
-                  height: context.isTablet ? 60.0 : 54.h,
-                  child: KeyboardListener(
-                    focusNode: FocusNode(),
-                    onKeyEvent: (event) {
-                      if (event.logicalKey.keyLabel == 'Backspace' ||
-                          event.logicalKey == LogicalKeyboardKey.backspace) {
-                        if (_otpControllers[index].text.isEmpty && index > 0) {
-                          _otpControllers[index - 1].clear();
-                          _focusNodes[index - 1].requestFocus();
-                        }
-                      }
-                    },
-                    child: TextField(
-                      controller: _otpControllers[index],
-                      focusNode: _focusNodes[index],
-                      keyboardType: TextInputType.number,
-                      textAlign: TextAlign.center,
-                      maxLength: 6,
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textTitle,
-                      ),
-                      decoration: InputDecoration(
-                        counterText: '',
-                        contentPadding: EdgeInsets.zero,
-                        filled: true,
-                        fillColor: Colors.grey.shade100,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide:
-                              BorderSide(color: Colors.grey.shade300),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide:
-                              BorderSide(color: Colors.grey.shade300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                              color: Color(0xFFE43434), width: 2),
-                        ),
-                      ),
-                      onChanged: (value) => _onOtpChanged(value, index),
-                    ),
-                  ),
-                );
-              }),
-            ),
-
-            SizedBox(height: 24.h),
-
-            Obx(() => TextButton(
-                  onPressed: controller.isLoading.value
-                      ? null
-                      : () {
-                          _clearFields();
-                          controller.resendOtp();
-                        },
-                  child: Text(
-                    'Resend OTP',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: controller.isLoading.value
-                          ? Colors.grey
-                          : const Color(0xFFE43434),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                )),
-
-            SizedBox(height: 32.h),
-
-            Obx(() => MyButtons(
-                  text: _isLoginMode
-                      ? "Sign In"
-                      : "Verify & Create Account",
-                  loadingText: "Verifying...",
-                  isLoading: controller.isLoading.value,
-                  height: 50.h,
-                  width: double.infinity,
-                  onTap: controller.isLoading.value
-                      ? null
-                      : () => _handleVerify(controller),
-                  textStyle: textTheme.bodyLarge?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  backgroundColor: const Color(0xFFE43434),
-                )),
-
-            SizedBox(height: 16.h),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
                 Text(
-                  'Wrong details? ',
-                  style: textTheme.bodyMedium
-                      ?.copyWith(color: colors.textGrey),
-                ),
-                TextButton(
-                  onPressed: () => Get.back(),
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  'Verify Your OTP',
+                  style: textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colors.textTitle,
                   ),
-                  child: Text(
-                    'Go Back',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: Colors.red,
-                      fontWeight: FontWeight.w600,
+                ),
+
+                SizedBox(height: 12.h),
+
+                Text(
+                  'We sent a 6-digit code to $_destination',
+                  style: textTheme.bodyMedium?.copyWith(color: colors.textGrey),
+                  textAlign: TextAlign.center,
+                ),
+
+                SizedBox(height: 40.h),
+
+                // OTP boxes
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(6, (index) {
+                    return SizedBox(
+                      width: context.isTablet ? 54.0 : 44.w,
+                      height: context.isTablet ? 60.0 : 54.h,
+                      child: KeyboardListener(
+                        focusNode: FocusNode(),
+                        onKeyEvent: (event) {
+                          if (event.logicalKey.keyLabel == 'Backspace' ||
+                              event.logicalKey ==
+                                  LogicalKeyboardKey.backspace) {
+                            if (_otpControllers[index].text.isEmpty &&
+                                index > 0) {
+                              _otpControllers[index - 1].clear();
+                              _focusNodes[index - 1].requestFocus();
+                            }
+                          }
+                        },
+                        child: TextField(
+                          controller: _otpControllers[index],
+                          focusNode: _focusNodes[index],
+                          keyboardType: TextInputType.number,
+                          textAlign: TextAlign.center,
+                          maxLength: 6,
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textTitle,
+                          ),
+                          decoration: InputDecoration(
+                            counterText: '',
+                            contentPadding: EdgeInsets.zero,
+                            filled: true,
+                            fillColor: Colors.grey.shade100,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE43434),
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                          onChanged: (value) => _onOtpChanged(value, index),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+
+                SizedBox(height: 24.h),
+
+                Obx(
+                  () => TextButton(
+                    onPressed: controller.isLoading.value
+                        ? null
+                        : () {
+                            _clearFields();
+                            controller.resendOtp();
+                          },
+                    child: Text(
+                      'Resend OTP',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: controller.isLoading.value
+                            ? Colors.grey
+                            : const Color(0xFFE43434),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
+                ),
+
+                SizedBox(height: 32.h),
+
+                Obx(
+                  () => MyButtons(
+                    text: _isLoginMode ? "Sign In" : "Verify & Create Account",
+                    loadingText: "Verifying...",
+                    isLoading: controller.isLoading.value,
+                    height: 50.h,
+                    width: double.infinity,
+                    onTap: controller.isLoading.value
+                        ? null
+                        : () => _handleVerify(controller),
+                    textStyle: textTheme.bodyLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    backgroundColor: const Color(0xFFE43434),
+                  ),
+                ),
+
+                SizedBox(height: 16.h),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Wrong details? ',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colors.textGrey,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => Get.back(),
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text(
+                        'Go Back',
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: Colors.red,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
-    ),
-  ),
-);
-}
+    );
+  }
 }

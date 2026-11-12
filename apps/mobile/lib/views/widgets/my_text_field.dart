@@ -53,7 +53,7 @@ class MyTextField extends StatelessWidget {
     final colors = Theme.of(context).extension<AppColors>()!;
 
     final effectiveBorderColor =
-        borderColor ?? colors.textMuted.withOpacity(0.5);
+        borderColor ?? colors.textMuted.withValues(alpha: 0.5);
 
     return SizedBox(
       height: height,

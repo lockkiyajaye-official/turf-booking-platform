@@ -1975,9 +1975,7 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
                   ),
-                  backgroundColor: const Color(
-                    0xFFE33A3A,
-                  ),
+                  backgroundColor: const Color(0xFFE33A3A),
                 ),
               ),
 

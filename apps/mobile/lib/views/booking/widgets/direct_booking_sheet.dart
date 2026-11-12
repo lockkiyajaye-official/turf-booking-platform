@@ -15,10 +15,8 @@ void showDirectBookingModal(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (context) => DirectBookingSheet(
-      vm: vm,
-      preselectedTurf: preselectedTurf,
-    ),
+    builder: (context) =>
+        DirectBookingSheet(vm: vm, preselectedTurf: preselectedTurf),
   );
 }
 
@@ -26,11 +24,7 @@ class DirectBookingSheet extends StatefulWidget {
   final OwnerViewmodel vm;
   final TurfModel? preselectedTurf;
 
-  const DirectBookingSheet({
-    super.key,
-    required this.vm,
-    this.preselectedTurf,
-  });
+  const DirectBookingSheet({super.key, required this.vm, this.preselectedTurf});
 
   @override
   State<DirectBookingSheet> createState() => _DirectBookingSheetState();
@@ -337,8 +331,8 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
                             if (val != null) {
                               setState(() {
                                 _selectedTurf = val;
-                                _priceCtrl.text =
-                                    val.pricePerHour.toStringAsFixed(0);
+                                _priceCtrl.text = val.pricePerHour
+                                    .toStringAsFixed(0);
                               });
                               _fetchBookedSlots();
                             }
@@ -377,8 +371,9 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
                                 decoration: BoxDecoration(
                                   color: colors.background,
                                   borderRadius: BorderRadius.circular(12),
-                                  border:
-                                      Border.all(color: const Color(0xFFE8E8E8)),
+                                  border: Border.all(
+                                    color: const Color(0xFFE8E8E8),
+                                  ),
                                 ),
                                 child: Row(
                                   children: [
@@ -461,106 +456,109 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
                             key: const ValueKey('direct_slots_loading'),
                             spacing: slotSpacing,
                             runSpacing: slotRunSpacing,
-                            children: (availableSlots.isNotEmpty
-                                    ? availableSlots
-                                    : const [
-                                        '09:00-10:00',
-                                        '10:00-11:00',
-                                        '11:00-12:00',
-                                        '12:00-13:00',
-                                        '13:00-14:00',
-                                        '14:00-15:00',
-                                      ])
-                                .map(
-                                  (slot) => _ShimmerSlotCard(
-                                    text: TimeHelper.formatTo12Hour(slot),
-                                    width: slotItemWidth,
-                                    height: slotItemHeight,
-                                    primaryColor: colors.primary,
-                                  ),
-                                )
-                                .toList(),
+                            children:
+                                (availableSlots.isNotEmpty
+                                        ? availableSlots
+                                        : const [
+                                            '09:00-10:00',
+                                            '10:00-11:00',
+                                            '11:00-12:00',
+                                            '12:00-13:00',
+                                            '13:00-14:00',
+                                            '14:00-15:00',
+                                          ])
+                                    .map(
+                                      (slot) => _ShimmerSlotCard(
+                                        text: TimeHelper.formatTo12Hour(slot),
+                                        width: slotItemWidth,
+                                        height: slotItemHeight,
+                                        primaryColor: colors.primary,
+                                      ),
+                                    )
+                                    .toList(),
                           )
                         : availableSlots.isEmpty
-                            ? Container(
-                                key: const ValueKey('direct_slots_empty'),
-                                width: double.infinity,
-                                padding: EdgeInsets.all(12.w),
-                                decoration: BoxDecoration(
-                                  color: colors.background,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  'No slots configured for this turf yet.',
-                                  style: TextStyle(
-                                    fontSize: 12.sp,
-                                    color: colors.textGrey,
+                        ? Container(
+                            key: const ValueKey('direct_slots_empty'),
+                            width: double.infinity,
+                            padding: EdgeInsets.all(12.w),
+                            decoration: BoxDecoration(
+                              color: colors.background,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              'No slots configured for this turf yet.',
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: colors.textGrey,
+                              ),
+                            ),
+                          )
+                        : Wrap(
+                            key: const ValueKey('direct_slots_loaded'),
+                            spacing: slotSpacing,
+                            runSpacing: slotRunSpacing,
+                            children: availableSlots.map((slot) {
+                              final isBooked = _isSlotBooked(slot);
+                              final isSelected = _selectedSlot == slot;
+                              final displayTime = TimeHelper.formatTo12Hour(
+                                slot,
+                              );
+
+                              return GestureDetector(
+                                onTap: isBooked
+                                    ? null
+                                    : () {
+                                        setState(() {
+                                          _selectedSlot = isSelected
+                                              ? null
+                                              : slot;
+                                        });
+                                      },
+                                child: Container(
+                                  width: slotItemWidth,
+                                  height: slotItemHeight,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: isBooked
+                                        ? const Color(0xFFF0F0F0)
+                                        : (isSelected
+                                              ? colors.primary
+                                              : Colors.white),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: isBooked
+                                          ? const Color(0xFFD0D0D0)
+                                          : (isSelected
+                                                ? colors.primary
+                                                : colors.primary.withValues(
+                                                    alpha: 0.4,
+                                                  )),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    displayTime,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: isBooked
+                                          ? Colors.grey[400]
+                                          : (isSelected
+                                                ? Colors.white
+                                                : Colors.grey[700]),
+                                      fontSize: 11.sp,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.w500,
+                                      decoration: isBooked
+                                          ? TextDecoration.lineThrough
+                                          : TextDecoration.none,
+                                      letterSpacing: -0.2,
+                                    ),
                                   ),
                                 ),
-                              )
-                            : Wrap(
-                                key: const ValueKey('direct_slots_loaded'),
-                                spacing: slotSpacing,
-                                runSpacing: slotRunSpacing,
-                                children: availableSlots.map((slot) {
-                                  final isBooked = _isSlotBooked(slot);
-                                  final isSelected = _selectedSlot == slot;
-                                  final displayTime =
-                                      TimeHelper.formatTo12Hour(slot);
-
-                                  return GestureDetector(
-                                    onTap: isBooked
-                                        ? null
-                                        : () {
-                                            setState(() {
-                                              _selectedSlot =
-                                                  isSelected ? null : slot;
-                                            });
-                                          },
-                                    child: Container(
-                                      width: slotItemWidth,
-                                      height: slotItemHeight,
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: isBooked
-                                            ? const Color(0xFFF0F0F0)
-                                            : (isSelected
-                                                ? colors.primary
-                                                : Colors.white),
-                                        borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(
-                                          color: isBooked
-                                              ? const Color(0xFFD0D0D0)
-                                              : (isSelected
-                                                  ? colors.primary
-                                                  : colors.primary.withValues(
-                                                      alpha: 0.4,
-                                                    )),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        displayTime,
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: isBooked
-                                              ? Colors.grey[400]
-                                              : (isSelected
-                                                  ? Colors.white
-                                                  : Colors.grey[700]),
-                                          fontSize: 11.sp,
-                                          fontWeight: isSelected
-                                              ? FontWeight.w600
-                                              : FontWeight.w500,
-                                          decoration: isBooked
-                                              ? TextDecoration.lineThrough
-                                              : TextDecoration.none,
-                                          letterSpacing: -0.2,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
+                              );
+                            }).toList(),
+                          ),
                   ),
 
                   SizedBox(height: 16.h),
@@ -693,13 +691,15 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
                                 fillColor: colors.background,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide:
-                                      const BorderSide(color: Color(0xFFE8E8E8)),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE8E8E8),
+                                  ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide:
-                                      const BorderSide(color: Color(0xFFE8E8E8)),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE8E8E8),
+                                  ),
                                 ),
                                 contentPadding: EdgeInsets.symmetric(
                                   horizontal: 14.w,
@@ -730,8 +730,9 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
                               decoration: BoxDecoration(
                                 color: colors.background,
                                 borderRadius: BorderRadius.circular(12),
-                                border:
-                                    Border.all(color: const Color(0xFFE8E8E8)),
+                                border: Border.all(
+                                  color: const Color(0xFFE8E8E8),
+                                ),
                               ),
                               child: DropdownButtonHideUnderline(
                                 child: DropdownButton<String>(
@@ -933,4 +934,3 @@ class _ShimmerSlotCardState extends State<_ShimmerSlotCard>
     );
   }
 }
-

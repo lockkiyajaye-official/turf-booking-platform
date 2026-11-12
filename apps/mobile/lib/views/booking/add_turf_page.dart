@@ -491,8 +491,8 @@ class _AddTurfPageState extends State<AddTurfPage> {
 
         final turfData = res['data'] is Map<String, dynamic>
             ? (res['data']['turf'] is Map<String, dynamic>
-                ? res['data']['turf'] as Map<String, dynamic>
-                : res['data'] as Map<String, dynamic>)
+                  ? res['data']['turf'] as Map<String, dynamic>
+                  : res['data'] as Map<String, dynamic>)
             : null;
 
         final newTurf = turfData != null ? TurfModel.fromJson(turfData) : null;
@@ -623,7 +623,8 @@ class _AddTurfPageState extends State<AddTurfPage> {
                         height: 110.h,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
-                          itemCount: _imageUrls.length +
+                          itemCount:
+                              _imageUrls.length +
                               1 +
                               (_isUploadingImages ? 1 : 0),
                           itemBuilder: (context, index) {
@@ -670,8 +671,10 @@ class _AddTurfPageState extends State<AddTurfPage> {
                               return GestureDetector(
                                 onTap: _isUploadingImages
                                     ? null
-                                    : () =>
-                                        _showImageSourcePicker(colors, textTheme),
+                                    : () => _showImageSourcePicker(
+                                        colors,
+                                        textTheme,
+                                      ),
                                 child: Container(
                                   width: 100.w,
                                   margin: EdgeInsets.only(right: 10.w),

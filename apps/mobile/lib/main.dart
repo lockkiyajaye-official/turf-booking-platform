@@ -15,21 +15,24 @@ import 'package:mobile/routes/app_router.dart';
 import 'package:mobile/core/storage/local_storage.dart';
 
 void main() {
-  runZonedGuarded(() async {
-    WidgetsFlutterBinding.ensureInitialized();
-    await dotenv.load(fileName: ".env");
+  runZonedGuarded(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
+      await dotenv.load(fileName: ".env");
 
-    await CoreController.init();
-    AuthBinding().dependencies();
+      await CoreController.init();
+      AuthBinding().dependencies();
 
-    runApp(const MyApp());
-  }, (error, stack) {
-    if (error is GoogleSignInException &&
-        error.code == GoogleSignInExceptionCode.canceled) {
-      return; // user closed Google account picker — not an error
-    }
-    debugPrint('Uncaught zone error: $error\n$stack');
-  });
+      runApp(const MyApp());
+    },
+    (error, stack) {
+      if (error is GoogleSignInException &&
+          error.code == GoogleSignInExceptionCode.canceled) {
+        return; // user closed Google account picker — not an error
+      }
+      debugPrint('Uncaught zone error: $error\n$stack');
+    },
+  );
 }
 
 class MyApp extends StatelessWidget {

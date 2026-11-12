@@ -112,8 +112,9 @@ class _MyTurfsPageState extends State<MyTurfsPage> {
                 )
               : Text(
                   'My Turfs',
-                  style: textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700),
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
           centerTitle: !_isSearching,
           actions: [
@@ -165,8 +166,7 @@ class _MyTurfsPageState extends State<MyTurfsPage> {
                   final city = (t.city ?? '').toLowerCase();
                   final state = (t.state ?? '').toLowerCase();
                   final address = t.address.toLowerCase();
-                  final sports =
-                      t.sports.map((s) => s.toLowerCase()).join(' ');
+                  final sports = t.sports.map((s) => s.toLowerCase()).join(' ');
                   return name.contains(query) ||
                       city.contains(query) ||
                       state.contains(query) ||
@@ -217,7 +217,7 @@ class _MyTurfsPageState extends State<MyTurfsPage> {
                 : ListView.separated(
                     padding: EdgeInsets.all(16.w),
                     itemCount: filteredTurfs.length,
-                    separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                    separatorBuilder: (_, _) => SizedBox(height: 12.h),
                     itemBuilder: (context, i) => _OwnerTurfCard(
                       turf: filteredTurfs[i],
                       colors: colors,
@@ -280,7 +280,7 @@ class _OwnerTurfCard extends StatelessWidget {
           border: Border.all(color: const Color(0xFFE8E8E8)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -301,7 +301,7 @@ class _OwnerTurfCard extends StatelessWidget {
                     height: 160.h,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, _, _) => Container(
                       height: 160.h,
                       color: Colors.grey[200],
                       child: const Icon(
@@ -517,7 +517,7 @@ class _EmptyTurfs extends StatelessWidget {
           Icon(
             Icons.sports_soccer_outlined,
             size: 64,
-            color: colors.textGrey.withOpacity(0.4),
+            color: colors.textGrey.withValues(alpha: 0.4),
           ),
           SizedBox(height: 16.h),
           Text(
@@ -564,7 +564,7 @@ class _NoTurfSearchResults extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: colors.primary.withOpacity(0.08),
+                color: colors.primary.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -597,14 +597,11 @@ class _NoTurfSearchResults extends StatelessWidget {
               label: const Text('Clear Search'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: colors.primary,
-                side: BorderSide(color: colors.primary.withOpacity(0.4)),
+                side: BorderSide(color: colors.primary.withValues(alpha: 0.4)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
-                padding: EdgeInsets.symmetric(
-                  horizontal: 18.w,
-                  vertical: 10.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 10.h),
               ),
             ),
           ],

@@ -8,9 +8,9 @@ class AuthService {
   Map<String, String> get _headers => {'Content-Type': 'application/json'};
 
   Map<String, String> _authHeaders(String token) => {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      };
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer $token',
+  };
 
   Map<String, dynamic> _handleResponse(http.Response response) {
     dynamic data;
@@ -19,11 +19,11 @@ class AuthService {
     } catch (_) {
       data = response.body;
     }
-    
+
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return {'success': true, 'data': data};
     }
-    
+
     String errorMessage = 'Something went wrong';
     if (data is Map && data.containsKey('message')) {
       final msg = data['message'];
@@ -36,10 +36,7 @@ class AuthService {
       errorMessage = data;
     }
 
-    return {
-      'success': false,
-      'message': errorMessage,
-    };
+    return {'success': false, 'message': errorMessage};
   }
 
   // ──────────────────────────────────────────────
@@ -79,9 +76,7 @@ class AuthService {
     String? lastName,
   }) async {
     try {
-      final payload = <String, dynamic>{
-        'identityToken': identityToken,
-      };
+      final payload = <String, dynamic>{'identityToken': identityToken};
       if (authorizationCode != null && authorizationCode.isNotEmpty) {
         payload['authorizationCode'] = authorizationCode;
       }
@@ -122,7 +117,7 @@ class AuthService {
           'firstName': firstName,
           'lastName': lastName,
           'role': role,
-          if (phone != null) 'phone': phone,
+          'phone': ?phone,
         }),
       );
       return _handleResponse(response);
@@ -220,7 +215,7 @@ class AuthService {
           'firstName': firstName,
           'lastName': lastName,
           'role': role,
-          if (email != null) 'email': email,
+          'email': ?email,
         }),
       );
       return _handleResponse(response);
@@ -253,11 +248,15 @@ class AuthService {
           'lastName': lastName,
           'role': role,
           'phone': phone,
-          if (businessName != null && businessName.isNotEmpty) 'businessName': businessName,
-          if (businessAddress != null && businessAddress.isNotEmpty) 'businessAddress': businessAddress,
-          if (businessRegistrationDoc != null && businessRegistrationDoc.isNotEmpty)
+          if (businessName != null && businessName.isNotEmpty)
+            'businessName': businessName,
+          if (businessAddress != null && businessAddress.isNotEmpty)
+            'businessAddress': businessAddress,
+          if (businessRegistrationDoc != null &&
+              businessRegistrationDoc.isNotEmpty)
             'businessRegistrationDoc': businessRegistrationDoc,
-          if (identityDoc != null && identityDoc.isNotEmpty) 'identityDoc': identityDoc,
+          if (identityDoc != null && identityDoc.isNotEmpty)
+            'identityDoc': identityDoc,
         }),
       );
       return _handleResponse(response);
@@ -360,7 +359,9 @@ class AuthService {
   }
 
   /// POST /auth/profile/request-contact-otp — requires JWT token
-  Future<Map<String, dynamic>> requestContactOtp({required String token}) async {
+  Future<Map<String, dynamic>> requestContactOtp({
+    required String token,
+  }) async {
     try {
       final response = await http.post(
         Uri.parse('$_base/profile/request-contact-otp'),

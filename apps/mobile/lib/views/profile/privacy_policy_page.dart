@@ -74,88 +74,90 @@ class PrivacyPolicyPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-            Container(
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(
-                color: colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE8E8E8)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Privacy Policy',
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colors.primary,
+                Container(
+                  padding: EdgeInsets.all(16.w),
+                  decoration: BoxDecoration(
+                    color: colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE8E8E8)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Privacy Policy',
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colors.primary,
+                        ),
+                      ),
+                      SizedBox(height: 4.h),
+                      Text(
+                        'Last Updated: August 2026',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colors.textGrey,
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+                      Text(
+                        'Your privacy is important to us. Learn how Lockkiyajaye collects, uses, and safeguards your data.',
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colors.textTitle,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 20.h),
+                ...sections.map(
+                  (section) => Container(
+                    width: double.infinity,
+                    margin: EdgeInsets.only(bottom: 12.h),
+                    padding: EdgeInsets.all(16.w),
+                    decoration: BoxDecoration(
+                      color: colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE8E8E8)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          section['title']!,
+                          style: textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: colors.textTitle,
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        Text(
+                          section['content']!,
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: colors.textGrey,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    'Last Updated: August 2026',
+                ),
+                SizedBox(height: 24.h),
+                Center(
+                  child: Text(
+                    'For privacy concerns, email privacy@lockkiyajaye.com',
+                    textAlign: TextAlign.center,
                     style: textTheme.bodySmall?.copyWith(
                       color: colors.textGrey,
                     ),
                   ),
-                  SizedBox(height: 12.h),
-                  Text(
-                    'Your privacy is important to us. Learn how Lockkiyajaye collects, uses, and safeguards your data.',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colors.textTitle,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 20.h),
-            ...sections.map(
-              (section) => Container(
-                width: double.infinity,
-                margin: EdgeInsets.only(bottom: 12.h),
-                padding: EdgeInsets.all(16.w),
-                decoration: BoxDecoration(
-                  color: colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE8E8E8)),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      section['title']!,
-                      style: textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: colors.textTitle,
-                      ),
-                    ),
-                    SizedBox(height: 8.h),
-                    Text(
-                      section['content']!,
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: colors.textGrey,
-                        height: 1.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+                SizedBox(height: 24.h),
+              ],
             ),
-            SizedBox(height: 24.h),
-            Center(
-              child: Text(
-                'For privacy concerns, email privacy@lockkiyajaye.com',
-                textAlign: TextAlign.center,
-                style: textTheme.bodySmall?.copyWith(color: colors.textGrey),
-              ),
-            ),
-            SizedBox(height: 24.h),
-          ],
+          ),
         ),
       ),
-    ),
-  ),
-);
+    );
   }
 }

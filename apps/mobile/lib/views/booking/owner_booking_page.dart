@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:mobile/core/responsive/screen_extensions.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/utils/helpers.dart';
-import 'package:mobile/data/models/turf_model.dart';
 import 'package:mobile/viewmodels/turf/owner_viewmodel.dart';
 import 'package:mobile/views/booking/widgets/direct_booking_sheet.dart';
 
@@ -181,10 +180,7 @@ class _OwnerBookingsPageState extends State<OwnerBookingsPage>
                               if (hadActiveSearch) {
                                 final status =
                                     _tabStatuses[_tabController.index];
-                                vm.fetchAllBookings(
-                                  status: status,
-                                  search: '',
-                                );
+                                vm.fetchAllBookings(status: status, search: '');
                               }
                             },
                           )
@@ -193,8 +189,9 @@ class _OwnerBookingsPageState extends State<OwnerBookingsPage>
                 )
               : Text(
                   'Bookings',
-                  style: textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700),
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
           centerTitle: !_isSearching,
           actions: [
@@ -234,75 +231,75 @@ class _OwnerBookingsPageState extends State<OwnerBookingsPage>
             ],
           ),
         ),
-      body: Obx(() {
-        if (vm.isBookingsLoading.value && vm.allBookings.isEmpty) {
-          return Center(
-            child: CircularProgressIndicator(color: colors.primary),
-          );
-        }
+        body: Obx(() {
+          if (vm.isBookingsLoading.value && vm.allBookings.isEmpty) {
+            return Center(
+              child: CircularProgressIndicator(color: colors.primary),
+            );
+          }
 
-        final bookings = vm.allBookings.toList();
+          final bookings = vm.allBookings.toList();
 
-        return Stack(
-          children: [
-            RefreshIndicator(
-              color: colors.primary,
-              onRefresh: () {
-                final status = _tabStatuses[_tabController.index];
-                return vm.fetchAllBookings(
-                  status: status,
-                  search: _searchCtrl.text.trim(),
-                );
-              },
-              child: TabBarView(
-                controller: _tabController,
-                // Each tab shows the same list — filtering is done server-side.
-                // Only the "All" tab attaches the scroll controller; the other
-                // tabs each reload via the tab-change listener.
-                children: List.generate(4, (i) {
-                  return _BookingList(
-                    bookings: bookings,
-                    colors: colors,
-                    textTheme: textTheme,
-                    vm: vm,
-                    scrollController: i == _tabController.index
-                        ? _scrollCtrl
-                        : null,
+          return Stack(
+            children: [
+              RefreshIndicator(
+                color: colors.primary,
+                onRefresh: () {
+                  final status = _tabStatuses[_tabController.index];
+                  return vm.fetchAllBookings(
+                    status: status,
+                    search: _searchCtrl.text.trim(),
                   );
-                }),
-              ),
-            ),
-            if (vm.isBookingsLoading.value && vm.allBookings.isNotEmpty)
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: LinearProgressIndicator(
-                  minHeight: 2.5,
-                  backgroundColor: Colors.transparent,
-                  color: colors.primary,
+                },
+                child: TabBarView(
+                  controller: _tabController,
+                  // Each tab shows the same list — filtering is done server-side.
+                  // Only the "All" tab attaches the scroll controller; the other
+                  // tabs each reload via the tab-change listener.
+                  children: List.generate(4, (i) {
+                    return _BookingList(
+                      bookings: bookings,
+                      colors: colors,
+                      textTheme: textTheme,
+                      vm: vm,
+                      scrollController: i == _tabController.index
+                          ? _scrollCtrl
+                          : null,
+                    );
+                  }),
                 ),
               ),
-          ],
-        );
-      }),
-      floatingActionButton: _isSearching
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: () => showDirectBookingModal(context, vm: vm),
-              backgroundColor: colors.primary,
-              icon: const Icon(Icons.add_task_rounded, color: Colors.white),
-              label: Text(
-                'Direct Booking',
-                style: textTheme.bodyMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
+              if (vm.isBookingsLoading.value && vm.allBookings.isNotEmpty)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: LinearProgressIndicator(
+                    minHeight: 2.5,
+                    backgroundColor: Colors.transparent,
+                    color: colors.primary,
+                  ),
+                ),
+            ],
+          );
+        }),
+        floatingActionButton: _isSearching
+            ? null
+            : FloatingActionButton.extended(
+                onPressed: () => showDirectBookingModal(context, vm: vm),
+                backgroundColor: colors.primary,
+                icon: const Icon(Icons.add_task_rounded, color: Colors.white),
+                label: Text(
+                  'Direct Booking',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-            ),
-    ),
-  );
-}
+      ),
+    );
+  }
 }
 
 // ── Booking List ─────────────────────────────────────────────
@@ -392,7 +389,7 @@ class _BookingList extends StatelessWidget {
       padding: EdgeInsets.all(16.w),
       // +1 for the loading footer when more data exists
       itemCount: bookings.length + (hasMore ? 1 : 0),
-      separatorBuilder: (_, _a) => SizedBox(height: 12.h),
+      separatorBuilder: (_, a) => SizedBox(height: 12.h),
       itemBuilder: (context, i) {
         if (i == bookings.length) {
           // Loading footer
@@ -455,7 +452,7 @@ class _BookingCard extends StatelessWidget {
     final status = (booking['status'] as String? ?? 'pending').toLowerCase();
     final isDirect =
         (booking['bookingSource'] as String? ?? 'online').toLowerCase() ==
-            'direct';
+        'direct';
 
     final turfObj = booking['turf'];
     final turfName =
@@ -464,11 +461,13 @@ class _BookingCard extends StatelessWidget {
         'Unknown Turf';
 
     final userObj = booking['user'];
-    final userName = (isDirect ? booking['customerName'] as String? : null) ??
+    final userName =
+        (isDirect ? booking['customerName'] as String? : null) ??
         (userObj is Map ? userObj['name'] as String? : null) ??
         booking['userName'] as String? ??
         (isDirect ? 'Direct Customer' : 'Player');
-    final userPhone = (isDirect ? booking['customerPhone'] as String? : null) ??
+    final userPhone =
+        (isDirect ? booking['customerPhone'] as String? : null) ??
         (userObj is Map
             ? (userObj['phone'] ?? userObj['contactPhone']) as String?
             : null) ??
@@ -497,7 +496,7 @@ class _BookingCard extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE8E8E8)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -522,8 +521,7 @@ class _BookingCard extends StatelessWidget {
               ),
               if (isDirect) ...[
                 Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF3E8FF),
                     borderRadius: BorderRadius.circular(6),
@@ -554,7 +552,7 @@ class _BookingCard extends StatelessWidget {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                 decoration: BoxDecoration(
-                  color: _statusColor(status).withOpacity(0.1),
+                  color: _statusColor(status).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -612,8 +610,8 @@ class _BookingCard extends StatelessWidget {
                 value: (startTime.isNotEmpty && endTime.isNotEmpty)
                     ? '${TimeHelper.formatSingleTime(startTime)} – ${TimeHelper.formatSingleTime(endTime)}'
                     : (startTime.isNotEmpty
-                        ? TimeHelper.formatSingleTime(startTime)
-                        : '—'),
+                          ? TimeHelper.formatSingleTime(startTime)
+                          : '—'),
                 colors: colors,
                 textTheme: textTheme,
               ),
@@ -700,7 +698,9 @@ class _BookingCard extends StatelessWidget {
 
     Get.dialog(
       AlertDialog(
-        title: Text(isDirect ? 'Cancel Direct Booking' : 'Cancel & Refund Booking'),
+        title: Text(
+          isDirect ? 'Cancel Direct Booking' : 'Cancel & Refund Booking',
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -739,7 +739,9 @@ class _BookingCard extends StatelessWidget {
             onPressed: () {
               final reason = reasonController.text.trim().isNotEmpty
                   ? reasonController.text.trim()
-                  : (isDirect ? 'Cancelled by Owner' : 'Cancelled by Turf Owner');
+                  : (isDirect
+                        ? 'Cancelled by Owner'
+                        : 'Cancelled by Turf Owner');
               Get.back();
               vm.cancelBooking(id, reason: reason);
             },

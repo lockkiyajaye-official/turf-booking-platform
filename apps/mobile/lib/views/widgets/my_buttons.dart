@@ -41,7 +41,7 @@ class MyButtons extends StatelessWidget {
           backgroundColor: backgroundColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           elevation: 0,
-          disabledBackgroundColor: backgroundColor.withOpacity(0.8),
+          disabledBackgroundColor: backgroundColor.withValues(alpha: 0.8),
         ),
         child: isLoading
             ? LoadingSpinner(
@@ -130,11 +130,12 @@ class MyOutlinedButton extends StatelessWidget {
                 strokeWidth: 2.2,
                 color: loaderColor ?? effectiveTextColor,
                 text: loadingText,
-                textStyle: textStyle ??
+                textStyle:
+                    textStyle ??
                     Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: effectiveTextColor,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      color: effectiveTextColor,
+                      fontWeight: FontWeight.w600,
+                    ),
               )
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,

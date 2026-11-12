@@ -84,7 +84,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ]
             : isOwner
-                ? [
+            ? [
                 _ProfileMenuItem(
                   icon: Icons.person_outline_rounded,
                   label: 'Edit Profile',
@@ -180,11 +180,8 @@ class _ProfilePageState extends State<ProfilePage> {
                         height: 84.w,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: colors.primary.withOpacity(0.08),
-                          border: Border.all(
-                            color: colors.primary,
-                            width: 2,
-                          ),
+                          color: colors.primary.withValues(alpha: 0.08),
+                          border: Border.all(color: colors.primary, width: 2),
                         ),
                         child: Icon(
                           Icons.person_outline_rounded,
@@ -234,148 +231,160 @@ class _ProfilePageState extends State<ProfilePage> {
                 Center(
                   child: Column(
                     children: [
-                    Container(
-                      width: 84.w,
-                      height: 84.w,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: const Color(0xFFE43434),
-                          width: 2.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFE43434).withValues(alpha: 0.15),
-                            blurRadius: 16,
-                            offset: const Offset(0, 4),
+                      Container(
+                        width: 84.w,
+                        height: 84.w,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFFE43434),
+                            width: 2.5,
                           ),
-                        ],
-                      ),
-                      child: ClipOval(
-                        child: Builder(
-                          builder: (_) {
-                            final avatarUrl = (currentUser['profileImage'] ??
-                                    currentUser['avatarUrl']) as String?;
-                            if (avatarUrl != null && avatarUrl.isNotEmpty) {
-                              if (avatarUrl.startsWith('data:image')) {
-                                try {
-                                  final base64Data = avatarUrl.split(',').last;
-                                  final bytes = base64Decode(base64Data);
-                                  return Image.memory(bytes, fit: BoxFit.cover);
-                                } catch (_) {}
-                              }
-                              return Image.network(
-                                avatarUrl,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    _DefaultAvatar(colors: colors),
-                              );
-                            }
-                            return _DefaultAvatar(colors: colors);
-                          },
-                        ),
-                      ),
-                    ),
-
-                    SizedBox(height: 12.h),
-
-                    // Name
-                    Builder(
-                      builder: (_) {
-                        final first = currentUser['firstName'] as String? ?? '';
-                        final last = currentUser['lastName'] as String? ?? '';
-                        final name = '${first.trim()} ${last.trim()}'.trim();
-                        return Text(
-                          name.isEmpty ? 'User' : name,
-                          style: textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colors.textTitle,
-                          ),
-                        );
-                      },
-                    ),
-
-                    SizedBox(height: 4.h),
-
-                    // Email
-                    Text(
-                      currentUser['email'] as String? ?? '',
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colors.textGrey,
-                      ),
-                    ),
-
-                    SizedBox(height: 10.h),
-
-                    // Role Badges
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 10.w,
-                            vertical: 4.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isOwner
-                                ? const Color(0xFF1E293B)
-                                : colors.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            isOwner ? 'TURF OWNER' : 'PLAYER',
-                            style: TextStyle(
-                              color: isOwner ? Colors.white : colors.primary,
-                              fontSize: 10.sp,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5,
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(
+                                0xFFE43434,
+                              ).withValues(alpha: 0.15),
+                              blurRadius: 16,
+                              offset: const Offset(0, 4),
                             ),
+                          ],
+                        ),
+                        child: ClipOval(
+                          child: Builder(
+                            builder: (_) {
+                              final avatarUrl =
+                                  (currentUser['profileImage'] ??
+                                          currentUser['avatarUrl'])
+                                      as String?;
+                              if (avatarUrl != null && avatarUrl.isNotEmpty) {
+                                if (avatarUrl.startsWith('data:image')) {
+                                  try {
+                                    final base64Data = avatarUrl
+                                        .split(',')
+                                        .last;
+                                    final bytes = base64Decode(base64Data);
+                                    return Image.memory(
+                                      bytes,
+                                      fit: BoxFit.cover,
+                                    );
+                                  } catch (_) {}
+                                }
+                                return Image.network(
+                                  avatarUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      _DefaultAvatar(colors: colors),
+                                );
+                              }
+                              return _DefaultAvatar(colors: colors);
+                            },
                           ),
                         ),
-                        if (isOwner) ...[
-                          SizedBox(width: 8.w),
+                      ),
+
+                      SizedBox(height: 12.h),
+
+                      // Name
+                      Builder(
+                        builder: (_) {
+                          final first =
+                              currentUser['firstName'] as String? ?? '';
+                          final last = currentUser['lastName'] as String? ?? '';
+                          final name = '${first.trim()} ${last.trim()}'.trim();
+                          return Text(
+                            name.isEmpty ? 'User' : name,
+                            style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colors.textTitle,
+                            ),
+                          );
+                        },
+                      ),
+
+                      SizedBox(height: 4.h),
+
+                      // Email
+                      Text(
+                        currentUser['email'] as String? ?? '',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colors.textGrey,
+                        ),
+                      ),
+
+                      SizedBox(height: 10.h),
+
+                      // Role Badges
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
                           Container(
                             padding: EdgeInsets.symmetric(
                               horizontal: 10.w,
                               vertical: 4.h,
                             ),
                             decoration: BoxDecoration(
-                              color: isApproved
-                                  ? Colors.green.withValues(alpha: 0.12)
-                                  : Colors.orange.withValues(alpha: 0.12),
+                              color: isOwner
+                                  ? const Color(0xFF1E293B)
+                                  : colors.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  isApproved
-                                      ? Icons.check_circle_rounded
-                                      : Icons.schedule_rounded,
-                                  size: 12.sp,
-                                  color: isApproved
-                                      ? Colors.green
-                                      : Colors.orange,
-                                ),
-                                SizedBox(width: 4.w),
-                                Text(
-                                  isApproved ? 'APPROVED' : 'PENDING APPROVAL',
-                                  style: TextStyle(
+                            child: Text(
+                              isOwner ? 'TURF OWNER' : 'PLAYER',
+                              style: TextStyle(
+                                color: isOwner ? Colors.white : colors.primary,
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          if (isOwner) ...[
+                            SizedBox(width: 8.w),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 10.w,
+                                vertical: 4.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isApproved
+                                    ? Colors.green.withValues(alpha: 0.12)
+                                    : Colors.orange.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    isApproved
+                                        ? Icons.check_circle_rounded
+                                        : Icons.schedule_rounded,
+                                    size: 12.sp,
                                     color: isApproved
                                         ? Colors.green
                                         : Colors.orange,
-                                    fontSize: 10.sp,
-                                    fontWeight: FontWeight.bold,
                                   ),
-                                ),
-                              ],
+                                  SizedBox(width: 4.w),
+                                  Text(
+                                    isApproved
+                                        ? 'APPROVED'
+                                        : 'PENDING APPROVAL',
+                                    style: TextStyle(
+                                      color: isApproved
+                                          ? Colors.green
+                                          : Colors.orange,
+                                      fontSize: 10.sp,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
+                          ],
                         ],
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
 
               SizedBox(height: 20.h),
 
@@ -493,12 +502,13 @@ class _ProfilePageState extends State<ProfilePage> {
                     GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 14,
-                        mainAxisExtent: 64,
-                      ),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 14,
+                            mainAxisExtent: 64,
+                          ),
                       itemCount: menuItems.length,
                       itemBuilder: (context, index) {
                         final item = menuItems[index];
@@ -519,7 +529,8 @@ class _ProfilePageState extends State<ProfilePage> {
                               label: 'Delete Account',
                               labelColor: colors.error,
                               iconColor: colors.error,
-                              onTap: () => _confirmDeleteAccount(context, vm, colors),
+                              onTap: () =>
+                                  _confirmDeleteAccount(context, vm, colors),
                             ),
                           ),
                           SizedBox(width: 16.w),
@@ -552,7 +563,8 @@ class _ProfilePageState extends State<ProfilePage> {
                           label: 'Delete Account',
                           labelColor: colors.error,
                           iconColor: colors.error,
-                          onTap: () => _confirmDeleteAccount(context, vm, colors),
+                          onTap: () =>
+                              _confirmDeleteAccount(context, vm, colors),
                         );
                       }
                       if (index == menuItems.length + 1) {
@@ -583,25 +595,23 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _confirmLogout(BuildContext context, AuthViewmodel vm, AppColors colors) {
+  void _confirmLogout(
+    BuildContext context,
+    AuthViewmodel vm,
+    AppColors colors,
+  ) {
     Get.dialog(
       AlertDialog(
         title: const Text('Logout'),
         content: const Text('Are you sure you want to logout?'),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
           TextButton(
             onPressed: () {
               Get.back();
               vm.logout();
             },
-            child: Text(
-              'Logout',
-              style: TextStyle(color: colors.error),
-            ),
+            child: Text('Logout', style: TextStyle(color: colors.error)),
           ),
         ],
       ),
@@ -623,7 +633,7 @@ class _ProfilePageState extends State<ProfilePage> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: colors.error.withOpacity(0.1),
+                color: colors.error.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -659,7 +669,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(
-                    color: colors.textGrey.withOpacity(0.3),
+                    color: colors.textGrey.withValues(alpha: 0.3),
                   ),
                 ),
                 contentPadding: const EdgeInsets.all(12),
@@ -668,10 +678,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () async {
               Get.back();

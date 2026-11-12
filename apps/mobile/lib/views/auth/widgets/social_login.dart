@@ -29,7 +29,10 @@ class SocialLogin extends StatelessWidget {
     this.iconColor,
     this.borderColor,
     this.width,
-  }) : assert(asset != null || icon != null, 'Either asset or icon must be provided');
+  }) : assert(
+         asset != null || icon != null,
+         'Either asset or icon must be provided',
+       );
 
   @override
   Widget build(BuildContext context) {
@@ -70,13 +73,19 @@ class SocialLogin extends StatelessWidget {
                   spacing: 12.w,
                 )
               : Row(
-                  mainAxisSize: width == null ? MainAxisSize.min : MainAxisSize.max,
+                  mainAxisSize: width == null
+                      ? MainAxisSize.min
+                      : MainAxisSize.max,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     if (asset != null)
                       Image.asset(asset!, height: 24.h, width: 24.w)
                     else if (icon != null)
-                      Icon(icon, size: 24.h, color: iconColor ?? colors.textTitle),
+                      Icon(
+                        icon,
+                        size: 24.h,
+                        color: iconColor ?? colors.textTitle,
+                      ),
                     SizedBox(width: 12.w),
                     Text(
                       text,

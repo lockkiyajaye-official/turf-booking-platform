@@ -71,7 +71,9 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
             padding: EdgeInsets.all(20.w),
             decoration: BoxDecoration(
               color: colors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
             ),
             child: SafeArea(
               child: FutureBuilder<Map<String, dynamic>?>(
@@ -88,7 +90,9 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
                             SizedBox(height: 12.h),
                             Text(
                               'Calculating refund eligibility...',
-                              style: textTheme.bodySmall?.copyWith(color: colors.textGrey),
+                              style: textTheme.bodySmall?.copyWith(
+                                color: colors.textGrey,
+                              ),
                             ),
                           ],
                         ),
@@ -97,7 +101,8 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
                   }
 
                   final preview = snapshot.data;
-                  final refundAmount = (preview?['refundAmount'] ?? 0.0).toDouble();
+                  final refundAmount = (preview?['refundAmount'] ?? 0.0)
+                      .toDouble();
                   final refundPercentage = preview?['refundPercentage'] ?? 0;
                   final ruleApplied = preview?['ruleApplied'] ?? '';
 
@@ -137,30 +142,60 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('Refund Eligibility:', style: textTheme.bodySmall?.copyWith(color: colors.textGrey)),
-                                  Text('$refundPercentage% Refund', style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.red)),
+                                  Text(
+                                    'Refund Eligibility:',
+                                    style: textTheme.bodySmall?.copyWith(
+                                      color: colors.textGrey,
+                                    ),
+                                  ),
+                                  Text(
+                                    '$refundPercentage% Refund',
+                                    style: textTheme.bodySmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.red,
+                                    ),
+                                  ),
                                 ],
                               ),
                               SizedBox(height: 4.h),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('Estimated Refund:', style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
-                                  Text('₹${refundAmount.toStringAsFixed(2)}', style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.green.shade700)),
+                                  Text(
+                                    'Estimated Refund:',
+                                    style: textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    '₹${refundAmount.toStringAsFixed(2)}',
+                                    style: textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.green.shade700,
+                                    ),
+                                  ),
                                 ],
                               ),
                               SizedBox(height: 6.h),
                               Text(
                                 ruleApplied,
-                                style: textTheme.bodySmall?.copyWith(color: colors.textGrey, fontStyle: FontStyle.italic),
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: colors.textGrey,
+                                  fontStyle: FontStyle.italic,
+                                ),
                               ),
                               if (refundAmount > 0) ...[
                                 SizedBox(height: 6.h),
                                 Text(
                                   '✓ Refund will be processed automatically back to your original payment method via Razorpay.',
-                                  style: textTheme.bodySmall?.copyWith(color: Colors.blue.shade800, fontSize: 10.sp),
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: Colors.blue.shade800,
+                                    fontSize: 10.sp,
+                                  ),
                                 ),
                               ],
                             ],
@@ -170,25 +205,59 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
 
                         Text(
                           'Select Reason for Cancellation *',
-                          style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold, color: colors.textTitle),
+                          style: textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colors.textTitle,
+                          ),
                         ),
                         SizedBox(height: 8.h),
 
                         DropdownButtonFormField<String>(
                           isExpanded: true,
-                          value: selectedReason,
+                          initialValue: selectedReason,
                           decoration: InputDecoration(
-                            contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12.w,
+                              vertical: 10.h,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                           items: const [
-                            DropdownMenuItem(value: 'Schedule clash / Change of plans', child: Text('Schedule clash / Change of plans', overflow: TextOverflow.ellipsis)),
-                            DropdownMenuItem(value: 'Booked wrong date or time slot', child: Text('Booked wrong date or time slot', overflow: TextOverflow.ellipsis)),
-                            DropdownMenuItem(value: 'Health or weather condition', child: Text('Health or weather condition', overflow: TextOverflow.ellipsis)),
-                            DropdownMenuItem(value: 'Other', child: Text('Other', overflow: TextOverflow.ellipsis)),
+                            DropdownMenuItem(
+                              value: 'Schedule clash / Change of plans',
+                              child: Text(
+                                'Schedule clash / Change of plans',
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Booked wrong date or time slot',
+                              child: Text(
+                                'Booked wrong date or time slot',
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Health or weather condition',
+                              child: Text(
+                                'Health or weather condition',
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Other',
+                              child: Text(
+                                'Other',
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
                           ],
                           onChanged: (val) {
-                            if (val != null) setModalState(() => selectedReason = val);
+                            if (val != null) {
+                              setModalState(() => selectedReason = val);
+                            }
                           },
                         ),
 
@@ -198,7 +267,9 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
                             controller: customReasonController,
                             decoration: InputDecoration(
                               hintText: 'Describe cancellation reason...',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
                         ],
@@ -211,7 +282,9 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
                                 onPressed: () => Get.back(),
                                 style: OutlinedButton.styleFrom(
                                   padding: EdgeInsets.symmetric(vertical: 12.h),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
                                 child: const Text('Keep Booking'),
                               ),
@@ -221,31 +294,51 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
                               child: ElevatedButton(
                                 onPressed: () async {
                                   final reason = selectedReason == 'Other'
-                                      ? (customReasonController.text.trim().isNotEmpty ? customReasonController.text.trim() : 'User cancelled booking')
+                                      ? (customReasonController.text
+                                                .trim()
+                                                .isNotEmpty
+                                            ? customReasonController.text.trim()
+                                            : 'User cancelled booking')
                                       : selectedReason;
 
                                   Get.back();
-                                  final success = await vm.cancelBooking(_booking.id, reason: reason);
+                                  final success = await vm.cancelBooking(
+                                    _booking.id,
+                                    reason: reason,
+                                  );
                                   if (success) {
-                                    final updatedBooking = vm.myBookings.firstWhere(
-                                      (b) => b.id == _booking.id,
-                                      orElse: () => _booking,
+                                    final updatedBooking = vm.myBookings
+                                        .firstWhere(
+                                          (b) => b.id == _booking.id,
+                                          orElse: () => _booking,
+                                        );
+                                    Get.off(
+                                      () => BookingCancelledPage(
+                                        bookingId: _booking.id,
+                                        turfName: _booking.turfName,
+                                        reason: reason,
+                                        refundAmount:
+                                            updatedBooking.refundAmount,
+                                        refundStatus:
+                                            updatedBooking.refundStatus,
+                                      ),
                                     );
-                                    Get.off(() => BookingCancelledPage(
-                                      bookingId: _booking.id,
-                                      turfName: _booking.turfName,
-                                      reason: reason,
-                                      refundAmount: updatedBooking.refundAmount,
-                                      refundStatus: updatedBooking.refundStatus,
-                                    ));
                                   }
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.red,
                                   padding: EdgeInsets.symmetric(vertical: 12.h),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
-                                child: const Text('Confirm Cancel', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                child: const Text(
+                                  'Confirm Cancel',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ),
                           ],
@@ -295,7 +388,11 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
         backgroundColor: colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: colors.textTitle, size: 18.sp),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: colors.textTitle,
+            size: 18.sp,
+          ),
           onPressed: () => Get.back(),
         ),
         title: Text(
@@ -326,11 +423,13 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
                                 _buildOverviewCard(colors, textTheme),
                                 SizedBox(height: 16.h),
                                 _buildBookingInfoCard(colors, textTheme),
-                                if (_booking.status.toLowerCase() != 'cancelled') ...[
+                                if (_booking.status.toLowerCase() !=
+                                    'cancelled') ...[
                                   SizedBox(height: 16.h),
                                   _buildRateCard(colors, textTheme),
                                 ],
-                                if (_booking.status.toLowerCase() == 'cancelled') ...[
+                                if (_booking.status.toLowerCase() ==
+                                    'cancelled') ...[
                                   SizedBox(height: 16.h),
                                   _buildCancellationCard(colors, textTheme),
                                 ],
@@ -389,7 +488,12 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
         _buildDetailRow('Booking ID', '#${_booking.id}', textTheme, colors),
         _buildDetailRow('Date', _booking.displayDate, textTheme, colors),
         _buildDetailRow('Time Slot', _booking.displayTime, textTheme, colors),
-        _buildDetailRow('Category / Type', _booking.turfType, textTheme, colors),
+        _buildDetailRow(
+          'Category / Type',
+          _booking.turfType,
+          textTheme,
+          colors,
+        ),
         _buildDetailRow(
           'Status',
           _booking.displayStatus,
@@ -432,7 +536,12 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
       textTheme: textTheme,
       title: 'Payment Summary',
       children: [
-        _buildDetailRow('Slot Price', '₹${_booking.totalPrice.toStringAsFixed(2)}', textTheme, colors),
+        _buildDetailRow(
+          'Slot Price',
+          '₹${_booking.totalPrice.toStringAsFixed(2)}',
+          textTheme,
+          colors,
+        ),
         _buildDetailRow('Taxes & Charges', '₹0.00', textTheme, colors),
         const Divider(),
         _buildDetailRow(
@@ -470,7 +579,11 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
                 bookingId: _booking.id,
               );
             },
-            icon: const Icon(Icons.star_rounded, color: Color(0xFFFFB800), size: 22),
+            icon: const Icon(
+              Icons.star_rounded,
+              color: Color(0xFFFFB800),
+              size: 22,
+            ),
             label: Text(
               'Rate & Review Turf',
               style: textTheme.titleSmall?.copyWith(
@@ -479,7 +592,7 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
               ),
             ),
             style: OutlinedButton.styleFrom(
-              side: BorderSide(color: colors.primary.withOpacity(0.5)),
+              side: BorderSide(color: colors.primary.withValues(alpha: 0.5)),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -496,8 +609,14 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
       textTheme: textTheme,
       title: 'Cancellation Summary',
       children: [
-        if (_booking.cancellationReason != null && _booking.cancellationReason!.isNotEmpty)
-          _buildDetailRow('Reason', _booking.cancellationReason!, textTheme, colors),
+        if (_booking.cancellationReason != null &&
+            _booking.cancellationReason!.isNotEmpty)
+          _buildDetailRow(
+            'Reason',
+            _booking.cancellationReason!,
+            textTheme,
+            colors,
+          ),
         _buildDetailRow(
           'Refund Status',
           _booking.refundAmount > 0
@@ -505,7 +624,9 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
               : 'Non-refundable',
           textTheme,
           colors,
-          valueColor: _booking.refundAmount > 0 ? Colors.green.shade700 : colors.textGrey,
+          valueColor: _booking.refundAmount > 0
+              ? Colors.green.shade700
+              : colors.textGrey,
           isBold: true,
         ),
       ],
@@ -515,7 +636,8 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
   Widget _buildActionButtons(AppColors colors, TextTheme textTheme) {
     return Column(
       children: [
-        if (!_booking.isPast && _booking.status.toLowerCase() != 'cancelled') ...[
+        if (!_booking.isPast &&
+            _booking.status.toLowerCase() != 'cancelled') ...[
           SizedBox(
             width: double.infinity,
             height: 48.h,
@@ -571,7 +693,7 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -588,7 +710,7 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
                   ? Image.network(
                       _booking.turfImage!,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildFallbackImage(),
+                      errorBuilder: (_, _, _) => _buildFallbackImage(),
                     )
                   : _buildFallbackImage(),
             ),
@@ -611,15 +733,22 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
                       SizedBox(height: 4.h),
                       Text(
                         _booking.turfType,
-                        style: textTheme.bodySmall?.copyWith(color: colors.textGrey),
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colors.textGrey,
+                        ),
                       ),
                     ],
                   ),
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 6.h,
+                  ),
                   decoration: BoxDecoration(
-                    color: _getStatusColor(_booking.status).withOpacity(0.12),
+                    color: _getStatusColor(
+                      _booking.status,
+                    ).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -661,7 +790,7 @@ class _UserBookingDetailPageState extends State<UserBookingDetailPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),

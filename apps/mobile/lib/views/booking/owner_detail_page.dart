@@ -43,11 +43,7 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage> {
     );
   }
 
-  void _confirmDelete(
-    BuildContext context,
-    OwnerViewmodel vm,
-    TurfModel turf,
-  ) {
+  void _confirmDelete(BuildContext context, OwnerViewmodel vm, TurfModel turf) {
     Get.defaultDialog(
       title: 'Delete Turf',
       titleStyle: const TextStyle(fontWeight: FontWeight.bold),
@@ -173,9 +169,7 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage> {
 
                 // 3-dots Dropdown Menu (Edit, Publish/Unpublish, Delete)
                 Theme(
-                  data: Theme.of(context).copyWith(
-                    cardColor: colors.white,
-                  ),
+                  data: Theme.of(context).copyWith(cardColor: colors.white),
                   child: PopupMenuButton<String>(
                     tooltip: 'More Options',
                     icon: Container(
@@ -311,9 +305,9 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage> {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Colors.black.withOpacity(0.4),
+                            Colors.black.withValues(alpha: 0.4),
                             Colors.transparent,
-                            Colors.black.withOpacity(0.4),
+                            Colors.black.withValues(alpha: 0.4),
                           ],
                         ),
                       ),
@@ -362,13 +356,13 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage> {
                         ),
                         decoration: BoxDecoration(
                           color: isPublished
-                              ? const Color(0xFF059669).withOpacity(0.12)
-                              : Colors.orange.withOpacity(0.12),
+                              ? const Color(0xFF059669).withValues(alpha: 0.12)
+                              : Colors.orange.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: isPublished
-                                ? const Color(0xFF059669).withOpacity(0.4)
-                                : Colors.orange.withOpacity(0.4),
+                                ? const Color(0xFF059669).withValues(alpha: 0.4)
+                                : Colors.orange.withValues(alpha: 0.4),
                           ),
                         ),
                         child: Row(
@@ -405,7 +399,7 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage> {
                             vertical: 5.h,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.amber.withOpacity(0.12),
+                            color: Colors.amber.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
@@ -452,10 +446,10 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage> {
                           vertical: 6.h,
                         ),
                         decoration: BoxDecoration(
-                          color: colors.primary.withOpacity(0.08),
+                          color: colors.primary.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: colors.primary.withOpacity(0.2),
+                            color: colors.primary.withValues(alpha: 0.2),
                           ),
                         ),
                         child: Text(
@@ -483,7 +477,9 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage> {
                       SizedBox(width: 6.w),
                       Expanded(
                         child: Text(
-                          locationParts.isNotEmpty ? locationParts : turf.address,
+                          locationParts.isNotEmpty
+                              ? locationParts
+                              : turf.address,
                           style: textTheme.bodySmall?.copyWith(
                             color: colors.textGrey,
                             height: 1.4,
@@ -496,8 +492,7 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage> {
                   if (turf.googleMapUrl != null || turf.mapUrl != null) ...[
                     SizedBox(height: 6.h),
                     GestureDetector(
-                      onTap: () =>
-                          _openMap(turf.googleMapUrl ?? turf.mapUrl),
+                      onTap: () => _openMap(turf.googleMapUrl ?? turf.mapUrl),
                       child: Padding(
                         padding: EdgeInsets.only(left: 22.w),
                         child: Row(
@@ -534,7 +529,7 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage> {
                       border: Border.all(color: const Color(0xFFF0F0F0)),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
+                          color: Colors.black.withValues(alpha: 0.03),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -870,7 +865,7 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage> {
             color: colors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.06),
+                color: Colors.black.withValues(alpha: 0.06),
                 blurRadius: 10,
                 offset: const Offset(0, -4),
               ),
@@ -885,8 +880,7 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage> {
                     text: 'Edit Turf Details',
                     height: 50.h,
                     width: double.infinity,
-                    onTap: () =>
-                        Get.to(() => OwnerEditTurfPage(turf: turf)),
+                    onTap: () => Get.to(() => OwnerEditTurfPage(turf: turf)),
                     textStyle: textTheme.bodyMedium?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
@@ -927,10 +921,7 @@ class _SpecItem extends StatelessWidget {
         SizedBox(height: 4.h),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 10.sp,
-            color: colors.textGrey,
-          ),
+          style: TextStyle(fontSize: 10.sp, color: colors.textGrey),
         ),
         SizedBox(height: 2.h),
         Text(
@@ -964,7 +955,7 @@ class _Chip extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(

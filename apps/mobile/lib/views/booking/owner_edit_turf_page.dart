@@ -188,8 +188,9 @@ class _OwnerEditTurfPageState extends State<OwnerEditTurfPage> {
     _addressController = TextEditingController(text: t.address);
     _cityController = TextEditingController(text: t.city ?? '');
     _stateController = TextEditingController(text: t.state ?? '');
-    _selectedState =
-        (t.state != null && t.state!.trim().isNotEmpty) ? t.state!.trim() : null;
+    _selectedState = (t.state != null && t.state!.trim().isNotEmpty)
+        ? t.state!.trim()
+        : null;
     _pincodeController = TextEditingController(text: t.pincode ?? '');
     _capacityController = TextEditingController(
       text: t.capacity?.toString() ?? '',
@@ -674,7 +675,8 @@ class _OwnerEditTurfPageState extends State<OwnerEditTurfPage> {
                         height: 110.h,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
-                          itemCount: _imageUrls.length +
+                          itemCount:
+                              _imageUrls.length +
                               1 +
                               (_isUploadingImages ? 1 : 0),
                           itemBuilder: (context, index) {
@@ -721,8 +723,10 @@ class _OwnerEditTurfPageState extends State<OwnerEditTurfPage> {
                               return GestureDetector(
                                 onTap: _isUploadingImages
                                     ? null
-                                    : () =>
-                                        _showImageSourcePicker(colors, textTheme),
+                                    : () => _showImageSourcePicker(
+                                        colors,
+                                        textTheme,
+                                      ),
                                 child: Container(
                                   width: 100.w,
                                   margin: EdgeInsets.only(right: 10.w),

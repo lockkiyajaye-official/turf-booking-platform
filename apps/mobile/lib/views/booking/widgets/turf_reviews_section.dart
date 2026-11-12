@@ -52,9 +52,7 @@ class TurfReviewsSectionState extends State<TurfReviewsSection> {
   Future<void> fetchReviews() async {
     setState(() => _isLoading = true);
 
-    final futures = <Future>[
-      _reviewService.getTurfReviews(widget.turfId),
-    ];
+    final futures = <Future>[_reviewService.getTurfReviews(widget.turfId)];
 
     final token = _authVm.token.value;
     if (token.isNotEmpty) {
@@ -162,8 +160,11 @@ class TurfReviewsSectionState extends State<TurfReviewsSection> {
         } else if (rating >= starValue - 0.5) {
           return Icon(Icons.star_half_rounded, color: _goldColor, size: size);
         } else {
-          return Icon(Icons.star_outline_rounded,
-              color: Colors.grey[350], size: size);
+          return Icon(
+            Icons.star_outline_rounded,
+            color: Colors.grey[350],
+            size: size,
+          );
         }
       }),
     );
@@ -204,10 +205,7 @@ class TurfReviewsSectionState extends State<TurfReviewsSection> {
             child: Text(
               '$count',
               textAlign: TextAlign.end,
-              style: TextStyle(
-                fontSize: 10.sp,
-                color: Colors.grey[500],
-              ),
+              style: TextStyle(fontSize: 10.sp, color: Colors.grey[500]),
             ),
           ),
         ],
@@ -239,8 +237,10 @@ class TurfReviewsSectionState extends State<TurfReviewsSection> {
                 if (_totalReviews > 0) ...[
                   SizedBox(width: 6.w),
                   Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 6.w,
+                      vertical: 2.h,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(10),
@@ -261,12 +261,13 @@ class TurfReviewsSectionState extends State<TurfReviewsSection> {
             GestureDetector(
               onTap: openRateSheet,
               child: Container(
-                padding:
-                    EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
                 decoration: BoxDecoration(
                   color: _primaryGreen.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: _primaryGreen.withValues(alpha: 0.35)),
+                  border: Border.all(
+                    color: _primaryGreen.withValues(alpha: 0.35),
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -343,11 +344,31 @@ class TurfReviewsSectionState extends State<TurfReviewsSection> {
               Expanded(
                 child: Column(
                   children: [
-                    _buildDistributionBar(5, _distribution[5] ?? 0, _totalReviews),
-                    _buildDistributionBar(4, _distribution[4] ?? 0, _totalReviews),
-                    _buildDistributionBar(3, _distribution[3] ?? 0, _totalReviews),
-                    _buildDistributionBar(2, _distribution[2] ?? 0, _totalReviews),
-                    _buildDistributionBar(1, _distribution[1] ?? 0, _totalReviews),
+                    _buildDistributionBar(
+                      5,
+                      _distribution[5] ?? 0,
+                      _totalReviews,
+                    ),
+                    _buildDistributionBar(
+                      4,
+                      _distribution[4] ?? 0,
+                      _totalReviews,
+                    ),
+                    _buildDistributionBar(
+                      3,
+                      _distribution[3] ?? 0,
+                      _totalReviews,
+                    ),
+                    _buildDistributionBar(
+                      2,
+                      _distribution[2] ?? 0,
+                      _totalReviews,
+                    ),
+                    _buildDistributionBar(
+                      1,
+                      _distribution[1] ?? 0,
+                      _totalReviews,
+                    ),
                   ],
                 ),
               ),
@@ -365,7 +386,9 @@ class TurfReviewsSectionState extends State<TurfReviewsSection> {
               decoration: BoxDecoration(
                 color: _primaryGreen.withValues(alpha: 0.04),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: _primaryGreen.withValues(alpha: 0.25)),
+                border: Border.all(
+                  color: _primaryGreen.withValues(alpha: 0.25),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -377,7 +400,9 @@ class TurfReviewsSectionState extends State<TurfReviewsSection> {
                         children: [
                           Container(
                             padding: EdgeInsets.symmetric(
-                                horizontal: 6.w, vertical: 2.h),
+                              horizontal: 6.w,
+                              vertical: 2.h,
+                            ),
                             decoration: BoxDecoration(
                               color: _primaryGreen,
                               borderRadius: BorderRadius.circular(4),
@@ -392,7 +417,10 @@ class TurfReviewsSectionState extends State<TurfReviewsSection> {
                             ),
                           ),
                           SizedBox(width: 8.w),
-                          _buildStarRow(_myReview!.rating.toDouble(), size: 12.sp),
+                          _buildStarRow(
+                            _myReview!.rating.toDouble(),
+                            size: 12.sp,
+                          ),
                         ],
                       ),
                       Row(
@@ -519,19 +547,20 @@ class TurfReviewsSectionState extends State<TurfReviewsSection> {
               return const SizedBox.shrink();
             }
 
-            final displayedReviews =
-                _showAll ? otherReviews : otherReviews.take(3).toList();
+            final displayedReviews = _showAll
+                ? otherReviews
+                : otherReviews.take(3).toList();
 
             return Column(
               children: [
                 ...displayedReviews.map((rev) {
                   final initials = rev.userName.isNotEmpty
                       ? rev.userName
-                          .split(' ')
-                          .map((s) => s.isNotEmpty ? s[0] : '')
-                          .take(2)
-                          .join('')
-                          .toUpperCase()
+                            .split(' ')
+                            .map((s) => s.isNotEmpty ? s[0] : '')
+                            .take(2)
+                            .join('')
+                            .toUpperCase()
                       : 'P';
 
                   return Container(
@@ -549,8 +578,9 @@ class TurfReviewsSectionState extends State<TurfReviewsSection> {
                           children: [
                             CircleAvatar(
                               radius: 14.r,
-                              backgroundColor:
-                                  _primaryGreen.withValues(alpha: 0.15),
+                              backgroundColor: _primaryGreen.withValues(
+                                alpha: 0.15,
+                              ),
                               child: Text(
                                 initials,
                                 style: TextStyle(
