@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -31,12 +32,19 @@ class UploadcareService {
   /// Ensures legacy or misconfigured CDN URLs (e.g. ucarecdn.com) point to the
   /// project's active CDN host (e.g. *.ucarecd.net).
   static String normalizeCdnUrl(String url) {
-    if (url.isEmpty) return url;
-    const legacy = 'https://ucarecdn.com';
-    if (url.startsWith(legacy)) {
-      return url.replaceFirst(legacy, AppConstants.uploadcareCdnUrl);
+    final trimmed = url.trim();
+    if (trimmed.isEmpty) return trimmed;
+    const legacyHttps = 'https://ucarecdn.com';
+    const legacyHttp = 'http://ucarecdn.com';
+    final targetCdn = AppConstants.uploadcareCdnUrl;
+
+    if (trimmed.startsWith(legacyHttps)) {
+      return trimmed.replaceFirst(legacyHttps, targetCdn);
     }
-    return url;
+    if (trimmed.startsWith(legacyHttp)) {
+      return trimmed.replaceFirst(legacyHttp, targetCdn);
+    }
+    return trimmed;
   }
 
   static MediaType _resolveMediaType(String fileName) {
@@ -52,6 +60,10 @@ class UploadcareService {
         return MediaType('image', 'gif');
       case 'svg':
         return MediaType('image', 'svg+xml');
+      case 'heic':
+        return MediaType('image', 'heic');
+      case 'heif':
+        return MediaType('image', 'heif');
       case 'jpeg':
       case 'jpg':
       default:
@@ -61,6 +73,13 @@ class UploadcareService {
 
   static String _ensureFileName(String fileName) {
     var name = fileName.trim();
+    // Strip any leading directories (important for iOS and Android temporary paths)
+    if (name.contains('/')) {
+      name = name.split('/').last;
+    }
+    if (name.contains('\\')) {
+      name = name.split('\\').last;
+    }
     if (name.isEmpty) {
       name = 'image_${DateTime.now().millisecondsSinceEpoch}.jpg';
     }
@@ -76,9 +95,16 @@ class UploadcareService {
     bool store = true,
   }) async {
     final bytes = await file.readAsBytes();
-    final name = file.name.isNotEmpty
-        ? file.name
-        : 'image_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    if (bytes.isEmpty) {
+      throw Exception('Selected image file is empty (0 bytes).');
+    }
+    String name = file.name.trim();
+    if (name.isEmpty && file.path.isNotEmpty) {
+      name = file.path.split('/').last.split('\\').last;
+    }
+    if (name.isEmpty) {
+      name = 'image_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    }
     return uploadBytes(bytes, fileName: name, store: store);
   }
 
@@ -88,11 +114,17 @@ class UploadcareService {
     String? customFileName,
     bool store = true,
   }) async {
+    if (!await file.exists()) {
+      throw Exception('Selected file does not exist on device: ${file.path}');
+    }
     final bytes = await file.readAsBytes();
+    if (bytes.isEmpty) {
+      throw Exception('Selected file is empty (0 bytes): ${file.path}');
+    }
     final fileName = customFileName ??
         (file.uri.pathSegments.isNotEmpty
             ? file.uri.pathSegments.last
-            : 'image_${DateTime.now().millisecondsSinceEpoch}.jpg');
+            : file.path.split('/').last.split('\\').last);
     return uploadBytes(bytes, fileName: fileName, store: store);
   }
 
@@ -102,6 +134,10 @@ class UploadcareService {
     required String fileName,
     bool store = true,
   }) async {
+    if (bytes.isEmpty) {
+      throw Exception('Cannot upload empty byte buffer.');
+    }
+
     final safeFileName = _ensureFileName(fileName);
     final mediaType = _resolveMediaType(safeFileName);
 
@@ -120,37 +156,70 @@ class UploadcareService {
       ),
     );
 
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
-
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      final Map<String, dynamic> body = jsonDecode(response.body);
-      final String? uuid = body['file'] as String? ??
-          body[safeFileName] as String? ??
-          body[fileName] as String? ??
-          body.values.firstWhere(
-            (v) => v is String && v.length >= 32,
-            orElse: () => null,
-          ) as String?;
-
-      if (uuid == null || uuid.isEmpty) {
-        throw Exception('Failed to parse Uploadcare file UUID from response');
-      }
-
-      final cdnUrl = '$_cdnBaseUrl/$uuid/';
-      return UploadcareUploadResult(
-        uuid: uuid,
-        cdnUrl: cdnUrl,
-        originalFilename: safeFileName,
+    final client = http.Client();
+    try {
+      final streamedResponse = await client.send(request).timeout(
+        const Duration(seconds: 60),
+        onTimeout: () => throw TimeoutException(
+          'Image upload timed out after 60 seconds. Please check your internet connection.',
+        ),
       );
-    } else {
-      dynamic errorBody;
-      try {
-        errorBody = jsonDecode(response.body);
-      } catch (_) {
-        errorBody = response.body;
+
+      final response = await http.Response.fromStream(streamedResponse).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () => throw TimeoutException(
+          'Reading upload response timed out.',
+        ),
+      );
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final Map<String, dynamic> body = jsonDecode(response.body);
+
+        if (body['error'] != null) {
+          final err = body['error'];
+          final msg = err is Map
+              ? (err['content'] ?? err['detail'] ?? err.toString())
+              : err.toString();
+          throw Exception('Uploadcare returned error: $msg');
+        }
+
+        final String? uuid = body['file'] as String? ??
+            body[safeFileName] as String? ??
+            body[fileName] as String? ??
+            body.values.firstWhere(
+              (v) => v is String && v.length >= 32,
+              orElse: () => null,
+            ) as String?;
+
+        if (uuid == null || uuid.isEmpty) {
+          throw Exception('Failed to parse Uploadcare file UUID from response: ${response.body}');
+        }
+
+        final cdnUrl = '$_cdnBaseUrl/$uuid/';
+        return UploadcareUploadResult(
+          uuid: uuid,
+          cdnUrl: cdnUrl,
+          originalFilename: safeFileName,
+        );
+      } else {
+        dynamic errorBody;
+        try {
+          final decoded = jsonDecode(response.body);
+          if (decoded is Map && decoded['error'] != null) {
+            final err = decoded['error'];
+            errorBody = err is Map
+                ? (err['content'] ?? err['detail'] ?? err.toString())
+                : err.toString();
+          } else {
+            errorBody = decoded;
+          }
+        } catch (_) {
+          errorBody = response.body;
+        }
+        throw Exception('Uploadcare upload failed (${response.statusCode}): $errorBody');
       }
-      throw Exception('Uploadcare upload failed: $errorBody');
+    } finally {
+      client.close();
     }
   }
 

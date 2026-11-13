@@ -462,7 +462,7 @@ class _OwnerEditTurfPageState extends State<OwnerEditTurfPage> {
       final List<String> uploadedImages = [];
       for (final img in _imageUrls) {
         if (img.startsWith('http://') || img.startsWith('https://')) {
-          uploadedImages.add(img);
+          uploadedImages.add(UploadcareService.normalizeCdnUrl(img));
         } else {
           final res = await _uploadcareService.uploadFile(File(img));
           uploadedImages.add(res.cdnUrl);
