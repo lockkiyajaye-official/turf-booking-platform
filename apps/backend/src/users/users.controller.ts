@@ -42,8 +42,14 @@ export class UsersController {
     }
 
     @Get('turf-owners')
-    getTurfOwners() {
-        return this.usersService.getTurfOwners();
+    getTurfOwners(
+        @Query('page') page?: string,
+        @Query('limit') limit?: string,
+    ) {
+        return this.usersService.getTurfOwners(
+            page ? parseInt(page, 10) : undefined,
+            limit ? parseInt(limit, 10) : undefined,
+        );
     }
 
     @Get(':id')

@@ -61,8 +61,9 @@ export default function AdminTurfOwners() {
     const fetchOwners = async () => {
         try {
             setLoading(true);
-            const res = await api.get("/users/turf-owners");
-            setOwners(res.data || []);
+            const res = await api.get("/users/turf-owners", { params: { limit: 100 } });
+            const items = Array.isArray(res.data) ? res.data : (res.data?.items || []);
+            setOwners(items);
         } catch (error) {
             console.error("Failed to fetch turf owners:", error);
             showFeedback("error", "Failed to load turf partners.");

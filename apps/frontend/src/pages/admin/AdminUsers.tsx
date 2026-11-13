@@ -64,8 +64,9 @@ export default function AdminUsers() {
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const res = await api.get("/users");
-            setUsers(res.data || []);
+            const res = await api.get("/users", { params: { limit: 100 } });
+            const items = Array.isArray(res.data) ? res.data : (res.data?.items || []);
+            setUsers(items);
         } catch (error) {
             console.error("Failed to fetch users:", error);
             showFeedback("error", "Failed to fetch user directory.");

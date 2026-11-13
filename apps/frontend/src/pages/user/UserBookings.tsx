@@ -2,6 +2,7 @@ import { Calendar, Clock, MapPin, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../services/api";
+import Pagination from "../../components/Pagination";
 import type { Booking, Turf } from "./types";
 
 export default function UserBookings() {
@@ -29,12 +30,11 @@ export default function UserBookings() {
             setBookings(items);
 
             // Extract some turfs for Discover section
-            const turfsData = Array.isArray(turfsRes.data)
-                ? turfsRes.data
-                : turfsRes.data.data;
-            if (Array.isArray(turfsData)) {
-                setDiscoverTurfs(turfsData.slice(0, 3));
-            }
+            const turfsRaw = turfsRes.data;
+            const turfsList = Array.isArray(turfsRaw)
+                ? turfsRaw
+                : (turfsRaw?.items || turfsRaw?.data || []);
+            setDiscoverTurfs(turfsList.slice(0, 3));
         } catch (error) {
             console.error("Failed to fetch data:", error);
             // Fallback if turfs api fails
@@ -131,6 +131,20 @@ export default function UserBookings() {
 
     const displayedBookings = getDisplayedBookings();
 
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(5);
+
+    useEffect(() => {
+        setPage(1);
+    }, [activeTab]);
+
+    const totalItems = displayedBookings.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+    const paginatedBookings = displayedBookings.slice(
+        (page - 1) * pageSize,
+        page * pageSize,
+    );
+
     const recentActivity = [...completedBookings, ...cancelledBookings]
         .sort(
             (a, b) =>
@@ -198,7 +212,7 @@ export default function UserBookings() {
                 <div className="flex flex-col xl:flex-row gap-8">
                     {/* Left Column: Booking Cards */}
                     <div className="flex-1 space-y-6">
-                        {displayedBookings.map((booking) => (
+                        {paginatedBookings.map((booking) => (
                             <div
                                 key={booking.id}
                                 className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col md:flex-row transition-shadow hover:shadow-md"
@@ -324,6 +338,25 @@ export default function UserBookings() {
                                     Browse turfs
                                 </Link>
                             </div>
+                        )}
+
+                        {totalItems > 0 && (
+                            <Pagination
+                                currentPage={page}
+                                totalPages={totalPages}
+                                totalItems={totalItems}
+                                pageSize={pageSize}
+                                pageSizeOptions={[5, 10, 20]}
+                                onPageChange={(newPage) => {
+                                    setPage(newPage);
+                                    window.scrollTo({ top: 0, behavior: "smooth" });
+                                }}
+                                onPageSizeChange={(newSize) => {
+                                    setPageSize(newSize);
+                                    setPage(1);
+                                }}
+                                accentColor="red"
+                            />
                         )}
                     </div>
 

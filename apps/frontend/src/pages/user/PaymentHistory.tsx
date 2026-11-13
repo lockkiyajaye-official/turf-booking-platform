@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Calendar, Clock, CreditCard, MapPin, Receipt } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
+import Pagination from "../../components/Pagination";
 import type { UserPayment } from "./types";
 
 export default function PaymentHistory() {
@@ -15,8 +16,9 @@ export default function PaymentHistory() {
         if (!user) return;
         const fetchPayments = async () => {
             try {
-                const { data } = await api.get("/payments/history");
-                setPayments(data);
+                const { data } = await api.get("/payments/history", { params: { limit: 100 } });
+                const items = Array.isArray(data) ? data : (data?.items || []);
+                setPayments(items);
             } catch (error) {
                 console.error("Failed to fetch payment history", error);
             } finally {
@@ -49,6 +51,20 @@ export default function PaymentHistory() {
     };
 
     const displayedPayments = getDisplayedPayments();
+
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(5);
+
+    useEffect(() => {
+        setPage(1);
+    }, [activeTab]);
+
+    const totalItems = displayedPayments.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+    const paginatedPayments = displayedPayments.slice(
+        (page - 1) * pageSize,
+        page * pageSize,
+    );
 
     const calculateDaysAgo = (dateStr: string) => {
         const diff = new Date().getTime() - new Date(dateStr).getTime();
@@ -104,7 +120,7 @@ export default function PaymentHistory() {
                 <div className="flex flex-col xl:flex-row gap-8">
                     {/* Left Column: Payment Cards */}
                     <div className="flex-1 space-y-6">
-                        {displayedPayments.map((payment) => (
+                        {paginatedPayments.map((payment) => (
                             <div
                                 key={payment.id}
                                 className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col md:flex-row transition-shadow hover:shadow-md"
@@ -204,6 +220,25 @@ export default function PaymentHistory() {
                                     Book a Turf
                                 </Link>
                             </div>
+                        )}
+
+                        {totalItems > 0 && (
+                            <Pagination
+                                currentPage={page}
+                                totalPages={totalPages}
+                                totalItems={totalItems}
+                                pageSize={pageSize}
+                                pageSizeOptions={[5, 10, 20]}
+                                onPageChange={(newPage) => {
+                                    setPage(newPage);
+                                    window.scrollTo({ top: 0, behavior: "smooth" });
+                                }}
+                                onPageSizeChange={(newSize) => {
+                                    setPageSize(newSize);
+                                    setPage(1);
+                                }}
+                                accentColor="red"
+                            />
                         )}
                     </div>
 

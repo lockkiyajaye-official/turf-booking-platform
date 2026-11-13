@@ -1,12 +1,15 @@
 import { Heart, Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import TurfCard from "../../components/TurfCard";
+import Pagination from "../../components/Pagination";
 import { getFavorites, removeFavorite, type Turf } from "../../services/favorites";
 
 export default function UserFavorites() {
     const [favorites, setFavorites] = useState<Turf[]>([]);
     const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(6);
 
     const fetchFavoritesList = async () => {
         setLoading(true);
@@ -34,23 +37,24 @@ export default function UserFavorites() {
     };
 
     return (
-        <div className="p-6 md:p-10 max-w-7xl mx-auto">
-            {/* Header */}
-            <div className="mb-8">
-                <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2.5 bg-red-50 text-[#E33E33] rounded-xl">
-                        <Heart className="w-6 h-6 fill-[#E33E33]" />
-                    </div>
-                    <div>
-                        <h1 className="text-2xl md:text-3xl font-black text-gray-900">
-                            Favorite Venues
-                        </h1>
-                        <p className="text-gray-500 text-sm">
-                            Your saved turfs for quick access and instant booking
-                        </p>
+        <div className="min-h-screen bg-gray-50/50">
+            <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-20">
+                {/* Header */}
+                <div className="mb-8">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2.5 bg-red-50 text-[#E33E33] rounded-xl">
+                            <Heart className="w-6 h-6 fill-[#E33E33]" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">
+                                Favorite Venues
+                            </h1>
+                            <p className="text-gray-500 text-sm font-medium">
+                                Your saved turfs for quick access and instant booking
+                            </p>
+                        </div>
                     </div>
                 </div>
-            </div>
 
             {/* Content */}
             {loading ? (
@@ -85,24 +89,46 @@ export default function UserFavorites() {
                     </Link>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {favorites.map((turf) => (
-                        <TurfCard
-                            key={turf.id}
-                            id={turf.id}
-                            name={turf.name}
-                            description={turf.description}
-                            address={turf.address}
-                            pricePerHour={turf.pricePerHour}
-                            images={turf.images}
-                            rating={turf.rating}
-                            totalReviews={turf.totalReviews}
-                            isFavorite={true}
-                            onToggleFavorite={() => handleRemoveFavorite(turf.id)}
-                        />
-                    ))}
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {favorites
+                            .slice((page - 1) * pageSize, page * pageSize)
+                            .map((turf) => (
+                                <TurfCard
+                                    key={turf.id}
+                                    id={turf.id}
+                                    name={turf.name}
+                                    description={turf.description}
+                                    address={turf.address}
+                                    pricePerHour={turf.pricePerHour}
+                                    images={turf.images}
+                                    rating={turf.rating}
+                                    totalReviews={turf.totalReviews}
+                                    isFavorite={true}
+                                    onToggleFavorite={() => handleRemoveFavorite(turf.id)}
+                                />
+                            ))}
+                    </div>
+
+                    <Pagination
+                        currentPage={page}
+                        totalPages={Math.max(1, Math.ceil(favorites.length / pageSize))}
+                        totalItems={favorites.length}
+                        pageSize={pageSize}
+                        pageSizeOptions={[6, 12, 24]}
+                        onPageChange={(newPage) => {
+                            setPage(newPage);
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        onPageSizeChange={(newSize) => {
+                            setPageSize(newSize);
+                            setPage(1);
+                        }}
+                        accentColor="red"
+                    />
                 </div>
             )}
+            </main>
         </div>
     );
 }

@@ -80,8 +80,14 @@ export class PaymentsController {
     @Roles(UserRole.ADMIN)
     async adminPayouts(
         @Query('status') status?: PayoutStatus,
+        @Query('page') page?: string,
+        @Query('limit') limit?: string,
     ) {
-        return this.paymentsService.getAdminPayouts(status);
+        return this.paymentsService.getAdminPayouts(
+            status,
+            page ? parseInt(page, 10) : undefined,
+            limit ? parseInt(limit, 10) : undefined,
+        );
     }
 
     @Patch('admin/payouts/:id')
@@ -123,8 +129,16 @@ export class PaymentsController {
     @Get('history')
     @UseGuards(RolesGuard)
     @Roles(UserRole.USER, UserRole.TURF_OWNER, UserRole.ADMIN)
-    async history(@Request() req) {
-        return this.paymentsService.getUserPayments(req.user);
+    async history(
+        @Query('page') page?: string,
+        @Query('limit') limit?: string,
+        @Request() req?: any,
+    ) {
+        return this.paymentsService.getUserPayments(
+            req.user,
+            page ? parseInt(page, 10) : undefined,
+            limit ? parseInt(limit, 10) : undefined,
+        );
     }
 }
 

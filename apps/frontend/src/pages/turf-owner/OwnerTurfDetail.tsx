@@ -1,9 +1,10 @@
 import {
-    ArrowLeft, Clock, Eye, EyeOff, Image, Mail, MapPin, Pencil, Phone, Save, Star, Trash2, X,
+    ArrowLeft, BookmarkPlus, Clock, Eye, EyeOff, Image, Mail, MapPin, Pencil, Phone, Save, Star, Trash2, X,
 } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import ImageUploader, { type UploadedImage } from "../../components/ImageUploader";
+import DirectBookingModal from "../../components/turf-owner/DirectBookingModal";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
 import type { Turf } from "./types";
@@ -132,14 +133,22 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
 export default function OwnerTurfDetail() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { user } = useAuth();
     const [turf, setTurf] = useState<Turf | null>(null);
     const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState(false);
+    const [showDirectModal, setShowDirectModal] = useState(false);
     const [saving, setSaving] = useState(false);
     const [slotSearch, setSlotSearch] = useState("");
     const [slotDuration, setSlotDuration] = useState(60);
     const [activeImage, setActiveImage] = useState(0);
+
+    useEffect(() => {
+        if (searchParams.get("edit") === "true") {
+            setEditing(true);
+        }
+    }, [searchParams]);
 
     const generatedSlots = useMemo(() => generate24hSlots(slotDuration), [slotDuration]);
     const filteredSlots = generatedSlots.filter((s: string) => s.includes(slotSearch));
@@ -303,8 +312,12 @@ export default function OwnerTurfDetail() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center p-12 min-h-screen">
-                <span className="text-gray-500 font-medium animate-pulse">Loading turf details...</span>
+            <div className="min-h-screen bg-gray-50/50">
+                <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-20">
+                    <div className="flex items-center justify-center p-12 min-h-[50vh]">
+                        <span className="text-gray-500 font-medium animate-pulse">Loading turf details...</span>
+                    </div>
+                </main>
             </div>
         );
     }
@@ -314,50 +327,57 @@ export default function OwnerTurfDetail() {
     const coverImages = turf.images ?? [];
 
     return (
-        <div className="p-4 sm:p-8 w-full max-w-5xl mx-auto space-y-6">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="flex items-center gap-3">
-                    <button onClick={() => navigate("/owner/turfs")}
-                        className="text-gray-400 hover:text-gray-700 transition-colors p-1 rounded-lg hover:bg-gray-100">
-                        <ArrowLeft className="w-5 h-5" />
-                    </button>
-                    <div>
-                        <h1 className="text-2xl font-black text-gray-900 tracking-tight">{turf.name}</h1>
-                        <div className="flex items-center gap-2 mt-0.5">
-                            <span className={`px-2 py-0.5 text-xs font-bold rounded-md text-white ${turf.isPublished ? "bg-green-500" : "bg-gray-400"}`}>
-                                {turf.isPublished ? "Published" : "Draft"}
-                            </span>
+        <div className="min-h-screen bg-gray-50/50">
+            <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-20 space-y-6 animate-in fade-in duration-300">
+                {/* Header */}
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div className="flex items-center gap-3">
+                            <button onClick={() => navigate("/owner/turfs")}
+                                className="text-gray-400 hover:text-gray-700 transition-colors p-1.5 rounded-lg hover:bg-gray-100">
+                                <ArrowLeft className="w-5 h-5" />
+                            </button>
+                            <div>
+                                <h1 className="text-2xl font-black text-gray-900 tracking-tight">{turf.name}</h1>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                    <span className={`px-2 py-0.5 text-xs font-bold rounded-md text-white ${turf.isPublished ? "bg-emerald-600" : "bg-gray-500"}`}>
+                                        {turf.isPublished ? "Published" : "Draft"}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            {!editing && (
+                                <button onClick={() => setShowDirectModal(true)}
+                                    className="flex items-center gap-1.5 px-4 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl font-bold text-sm transition-colors border border-purple-200 shadow-xs">
+                                    <BookmarkPlus className="w-4 h-4" /> Direct Booking
+                                </button>
+                            )}
+                            {!editing && (
+                                <button onClick={() => setEditing(true)}
+                                    className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold text-sm transition-colors shadow-xs">
+                                    <Pencil className="w-4 h-4" /> Edit Details
+                                </button>
+                            )}
+                            {turf.isPublished ? (
+                                <button onClick={handleUnpublish}
+                                    className="flex items-center gap-1.5 px-4 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-xl font-bold text-sm transition-colors shadow-xs">
+                                    <EyeOff className="w-4 h-4" /> Unpublish
+                                </button>
+                            ) : (
+                                <button onClick={handlePublish} disabled={!isApproved}
+                                    title={!isApproved ? "Awaiting admin approval" : ""}
+                                    className="flex items-center gap-1.5 px-4 py-2 bg-[#E33E33] hover:bg-red-700 text-white rounded-xl font-bold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-xs">
+                                    <Eye className="w-4 h-4" /> Publish
+                                </button>
+                            )}
+                            {!turf?.isPublished && (
+                                <button onClick={handleDelete}
+                                    className="flex items-center gap-1.5 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-bold text-sm transition-colors shadow-xs">
+                                    <Trash2 className="w-4 h-4" /> Delete
+                                </button>
+                            )}
                         </div>
                     </div>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                    {!editing && (
-                        <button onClick={() => setEditing(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold text-sm transition-colors">
-                            <Pencil className="w-4 h-4" /> Edit
-                        </button>
-                    )}
-                    {turf.isPublished ? (
-                        <button onClick={handleUnpublish}
-                            className="flex items-center gap-2 px-4 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-xl font-bold text-sm transition-colors">
-                            <EyeOff className="w-4 h-4" /> Unpublish
-                        </button>
-                    ) : (
-                        <button onClick={handlePublish} disabled={!isApproved}
-                            title={!isApproved ? "Awaiting admin approval" : ""}
-                            className="flex items-center gap-2 px-4 py-2 bg-[#E33E33] hover:bg-red-700 text-white rounded-xl font-bold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                            <Eye className="w-4 h-4" /> Publish
-                        </button>
-                    )}
-                    {!turf?.isPublished && (
-                        <button onClick={handleDelete}
-                            className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-bold text-sm transition-colors">
-                            <Trash2 className="w-4 h-4" /> Delete
-                        </button>
-                    )}
-                </div>
-            </div>
 
             {/* Detail View */}
             {!editing && (
@@ -453,6 +473,36 @@ export default function OwnerTurfDetail() {
                                 </div>
                             )}
                         </div>
+                    </div>
+
+                    {/* Cancellation & Refund Policy Card */}
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-xs p-6 space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-black text-sm uppercase tracking-widest text-[#E33E33] flex items-center gap-2">
+                                <Clock className="w-4 h-4" /> Cancellation & Refund Policy
+                            </h3>
+                            <span className={`px-2.5 py-0.5 text-xs font-bold rounded-md ${turf.cancellationPolicyEnabled !== false ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-gray-100 text-gray-500"}`}>
+                                {turf.cancellationPolicyEnabled !== false ? "Active" : "Disabled"}
+                            </span>
+                        </div>
+                        {turf.cancellationPolicyEnabled !== false ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                                <div className="p-3.5 bg-gray-50 rounded-xl border border-gray-100">
+                                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">100% Full Refund</p>
+                                    <p className="text-sm font-extrabold text-gray-900 mt-1">Up to {turf.fullRefundHours ?? 24} hrs before slot</p>
+                                </div>
+                                <div className="p-3.5 bg-gray-50 rounded-xl border border-gray-100">
+                                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Partial Refund Window</p>
+                                    <p className="text-sm font-extrabold text-gray-900 mt-1">Up to {turf.partialRefundHours ?? 6} hrs before slot</p>
+                                </div>
+                                <div className="p-3.5 bg-gray-50 rounded-xl border border-gray-100">
+                                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Partial Refund Percentage</p>
+                                    <p className="text-sm font-extrabold text-[#E33E33] mt-1">{turf.partialRefundPercentage ?? 50}% of booking price</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <p className="text-xs text-gray-500">Cancellations and refunds are disabled for this venue.</p>
+                        )}
                     </div>
                 </div>
             )}
@@ -743,6 +793,15 @@ export default function OwnerTurfDetail() {
                     </form>
                 </div>
             )}
+            </main>
+
+            {/* Direct Booking Modal */}
+            <DirectBookingModal
+                isOpen={showDirectModal}
+                onClose={() => setShowDirectModal(false)}
+                initialTurfId={turf.id}
+                onSuccess={() => fetchTurf()}
+            />
         </div>
     );
 }

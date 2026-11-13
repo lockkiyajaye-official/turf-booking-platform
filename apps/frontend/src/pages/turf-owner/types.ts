@@ -1,3 +1,15 @@
+export interface RecentBookingItem {
+    id: string;
+    turfName: string;
+    userName: string;
+    bookingDate: string;
+    startTime: string;
+    endTime: string;
+    totalPrice: number;
+    status: BookingStatus;
+    createdAt: string;
+}
+
 export interface DashboardStats {
     overview: {
         totalTurfs: number;
@@ -17,6 +29,7 @@ export interface DashboardStats {
         totalBookings: number;
         revenue: number;
     }>;
+    recentBookings?: RecentBookingItem[];
 }
 
 export type BookingStatus = "pending" | "confirmed" | "cancelled" | "completed";

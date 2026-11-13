@@ -548,14 +548,22 @@ export class PaymentsService {
     /**
      * Payment history for a normal user.
      */
-    async getUserPayments(user: User) {
-        const payments = await this.paymentRepository.find({
+    async getUserPayments(user: User, page?: number, limit?: number) {
+        const pageNum = page && page > 0 ? Number(page) : 1;
+        const limitNum = limit && limit > 0 ? Number(limit) : 10;
+        const skip = (pageNum - 1) * limitNum;
+
+        const [payments, total] = await this.paymentRepository.findAndCount({
             where: { userId: user.id },
             relations: ['booking', 'turf'],
             order: { createdAt: 'DESC' },
+            skip,
+            take: limitNum,
         });
 
-        return payments.map((p) => ({
+        const totalPages = Math.ceil(total / limitNum);
+
+        const items = payments.map((p) => ({
             id: p.id,
             amount: Number(p.amount),
             currency: p.currency,
@@ -569,20 +577,37 @@ export class PaymentsService {
             razorpayOrderId: p.razorpayOrderId,
             razorpayPaymentId: p.razorpayPaymentId,
         }));
+
+        return {
+            items,
+            total,
+            page: pageNum,
+            limit: limitNum,
+            totalPages,
+            hasMore: pageNum < totalPages,
+        };
     }
 
     /**
      * Admin view of payouts, optionally filtered by status.
      */
-    async getAdminPayouts(status?: PayoutStatus) {
+    async getAdminPayouts(status?: PayoutStatus, page?: number, limit?: number) {
+        const pageNum = page && page > 0 ? Number(page) : 1;
+        const limitNum = limit && limit > 0 ? Number(limit) : 10;
+        const skip = (pageNum - 1) * limitNum;
+
         const where = status ? { status } : {};
-        const payouts = await this.payoutRepository.find({
+        const [payouts, total] = await this.payoutRepository.findAndCount({
             where,
             order: { createdAt: 'DESC' },
             relations: ['owner'],
+            skip,
+            take: limitNum,
         });
 
-        return payouts.map((p) => ({
+        const totalPages = Math.ceil(total / limitNum);
+
+        const items = payouts.map((p) => ({
             id: p.id,
             amount: Number(p.amount),
             status: p.status,
@@ -604,6 +629,15 @@ export class PaymentsService {
                   }
                 : undefined,
         }));
+
+        return {
+            items,
+            total,
+            page: pageNum,
+            limit: limitNum,
+            totalPages,
+            hasMore: pageNum < totalPages,
+        };
     }
 
     /**

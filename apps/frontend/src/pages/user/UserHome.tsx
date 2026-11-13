@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { MapPin, Search, Bell } from "lucide-react";
 import api from "../../services/api";
 import TurfCard from "../../components/TurfCard";
+import Pagination from "../../components/Pagination";
 import { addFavorite, getFavorites, removeFavorite } from "../../services/favorites";
 
 interface Turf {
@@ -28,6 +29,8 @@ export default function UserHome() {
     const [turfs, setTurfs] = useState<Turf[]>([]);
     const [turfsLoading, setTurfsLoading] = useState(true);
     const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(6);
 
     const sports = ["All", "Football", "Cricket", "Badminton"];
 
@@ -122,7 +125,11 @@ export default function UserHome() {
                 const response = await api.get("/turfs", {
                     params: { search: query.trim() },
                 });
-                setTurfs(response.data);
+                setTurfs(
+                    Array.isArray(response.data)
+                        ? response.data
+                        : response.data?.items || [],
+                );
             } catch (error) {
                 console.error("Failed to fetch turfs:", error);
             } finally {
@@ -235,15 +242,38 @@ export default function UserHome() {
                             ))}
                         </div>
                     ) : turfs.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {turfs.map((turf) => (
-                                <TurfCard
-                                    key={turf.id}
-                                    {...turf}
-                                    isFavorite={favoriteIds.has(turf.id)}
-                                    onToggleFavorite={() => handleToggleFavorite(turf.id)}
+                        <div className="space-y-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {turfs
+                                    .slice(
+                                        (page - 1) * pageSize,
+                                        page * pageSize,
+                                    )
+                                    .map((turf) => (
+                                        <TurfCard
+                                            key={turf.id}
+                                            {...turf}
+                                            isFavorite={favoriteIds.has(turf.id)}
+                                            onToggleFavorite={() => handleToggleFavorite(turf.id)}
+                                        />
+                                    ))}
+                            </div>
+
+                            {turfs.length > pageSize && (
+                                <Pagination
+                                    currentPage={page}
+                                    totalPages={Math.ceil(turfs.length / pageSize)}
+                                    totalItems={turfs.length}
+                                    pageSize={pageSize}
+                                    pageSizeOptions={[6, 12, 24]}
+                                    onPageChange={(newPage) => setPage(newPage)}
+                                    onPageSizeChange={(newSize) => {
+                                        setPageSize(newSize);
+                                        setPage(1);
+                                    }}
+                                    accentColor="red"
                                 />
-                            ))}
+                            )}
                         </div>
                     ) : (
                         <div className="text-center py-20 bg-white rounded-xl border border-gray-100">

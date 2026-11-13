@@ -184,6 +184,10 @@ export default function OwnerCreateTurf() {
                 longitude: formData.longitude ? parseFloat(formData.longitude) : undefined,
                 googleMapUrl: formData.googleMapUrl || undefined,
                 mapUrl: formData.googleMapUrl || undefined,
+                cancellationPolicyEnabled: formData.cancellationPolicyEnabled,
+                fullRefundHours: Number(formData.fullRefundHours),
+                partialRefundHours: Number(formData.partialRefundHours),
+                partialRefundPercentage: Number(formData.partialRefundPercentage),
             });
             const createdId = response.data?.id || response.data?.turf?.id;
             if (createdId) {
@@ -201,18 +205,20 @@ export default function OwnerCreateTurf() {
     const filteredSlots = generatedSlots.filter((s: string) => s.includes(slotSearch));
 
     return (
-        <div className="p-4 sm:p-8 w-full max-w-4xl mx-auto space-y-8">
-            <div className="flex items-center gap-4">
-                <button onClick={() => navigate("/owner/turfs")} className="text-gray-400 hover:text-gray-600 transition-colors">
-                    <X className="w-6 h-6" />
-                </button>
-                <div>
-                    <h1 className="text-3xl font-black text-gray-900 tracking-tight">Create New Listing</h1>
-                    <p className="text-gray-500 mt-1 font-medium">Fill in the details to list your turf</p>
-                </div>
-            </div>
+        <div className="min-h-screen bg-gray-50/50">
+            <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-20 animate-in fade-in duration-300">
+                <div className="max-w-4xl mx-auto space-y-8">
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => navigate("/owner/turfs")} className="text-gray-400 hover:text-gray-600 transition-colors p-1.5 rounded-lg hover:bg-gray-100">
+                            <X className="w-6 h-6" />
+                        </button>
+                        <div>
+                            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Create New Listing</h1>
+                            <p className="text-gray-600 mt-1 font-medium tracking-wide">Fill in the details to list your turf facility</p>
+                        </div>
+                    </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="bg-white rounded-2xl shadow-xs border border-gray-200 overflow-hidden">
                 <div className="h-1 bg-[#E33E33]" />
                 <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-8">
                     <section>
@@ -482,7 +488,9 @@ export default function OwnerCreateTurf() {
                         </button>
                     </div>
                 </form>
-            </div>
+                    </div>
+                </div>
+            </main>
         </div>
     );
 }

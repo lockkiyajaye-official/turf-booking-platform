@@ -109,8 +109,9 @@ export default function AdminPayments() {
     const fetchPayouts = async () => {
         try {
             setLoading(true);
-            const res = await api.get("/payments/admin/payouts");
-            setPayouts(res.data || []);
+            const res = await api.get("/payments/admin/payouts", { params: { limit: 100 } });
+            const items = Array.isArray(res.data) ? res.data : (res.data?.items || []);
+            setPayouts(items);
         } catch (error) {
             console.error("Failed to fetch payouts:", error);
             showFeedback("error", "Failed to load owner payout requests.");

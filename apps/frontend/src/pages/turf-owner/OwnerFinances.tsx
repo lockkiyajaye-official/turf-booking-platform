@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import api from "../../services/api";
+import Pagination from "../../components/Pagination";
 import type { WalletSummary } from "./types";
 
 export default function OwnerFinances() {
@@ -20,6 +21,8 @@ export default function OwnerFinances() {
     const [loading, setLoading] = useState(true);
     const [payoutAmount, setPayoutAmount] = useState("");
     const [requesting, setRequesting] = useState(false);
+    const [payoutPage, setPayoutPage] = useState(1);
+    const [payoutPageSize, setPayoutPageSize] = useState(5);
 
     // Payout details state
     const [accountHolderName, setAccountHolderName] = useState("");
@@ -210,10 +213,14 @@ export default function OwnerFinances() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center p-12 min-h-screen">
-                <span className="text-gray-500 font-medium tracking-wide animate-pulse">
-                    Loading wallet data...
-                </span>
+            <div className="min-h-screen bg-gray-50/50">
+                <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-20">
+                    <div className="flex items-center justify-center p-12 min-h-[50vh]">
+                        <span className="text-gray-500 font-medium tracking-wide animate-pulse">
+                            Loading wallet data...
+                        </span>
+                    </div>
+                </main>
             </div>
         );
     }
@@ -221,15 +228,16 @@ export default function OwnerFinances() {
     if (!wallet) return null;
 
     return (
-        <div className="p-4 sm:p-8 w-full max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div>
-                <h1 className="text-3xl font-black text-gray-900 tracking-tight">
-                    Finances & Payouts
-                </h1>
-                <p className="text-gray-500 mt-1 font-medium">
-                    Manage your turf earnings, save payout account details, and request withdrawals
-                </p>
-            </div>
+        <div className="min-h-screen bg-gray-50/50">
+            <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-20 space-y-8 animate-in fade-in duration-300">
+                <div>
+                    <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+                        Finances & Payouts
+                    </h1>
+                    <p className="text-gray-600 mt-1 font-medium tracking-wide">
+                        Manage your turf earnings, save payout account details, and request withdrawals
+                    </p>
+                </div>
 
             {/* Stat Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -401,6 +409,27 @@ export default function OwnerFinances() {
                                         className="text-xs font-bold text-[#E33E33] hover:underline"
                                     >
                                         Max Amount
+                                    </button>
+                                </div>
+                                <div className="flex flex-wrap gap-2 mt-2.5">
+                                    {[500, 1000, 2000, 5000].map((preset) => (
+                                        <button
+                                            key={preset}
+                                            type="button"
+                                            disabled={wallet.walletBalance < preset}
+                                            onClick={() => setPayoutAmount(preset.toString())}
+                                            className="px-2.5 py-1 text-xs font-bold rounded-lg border border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                                        >
+                                            ₹{preset}
+                                        </button>
+                                    ))}
+                                    <button
+                                        type="button"
+                                        disabled={wallet.walletBalance <= 0}
+                                        onClick={() => setPayoutAmount(wallet.walletBalance.toString())}
+                                        className="px-2.5 py-1 text-xs font-bold rounded-lg border border-red-200 bg-red-50 text-[#E33E33] hover:bg-red-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                                    >
+                                        Max (₹{wallet.walletBalance.toFixed(0)})
                                     </button>
                                 </div>
                             </div>
@@ -738,96 +767,128 @@ export default function OwnerFinances() {
                                     </p>
                                 </div>
                             ) : (
-                                <ul className="divide-y divide-gray-100">
-                                    {wallet.payouts.map((payout) => (
-                                        <li
-                                            key={payout.id}
-                                            className="p-6 hover:bg-gray-50/50 transition-colors flex items-center justify-between"
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                <div
-                                                    className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                                                        payout.status ===
-                                                        "completed"
-                                                            ? "bg-green-100 text-green-600"
-                                                            : payout.status ===
-                                                                  "rejected"
-                                                              ? "bg-red-100 text-red-600"
-                                                              : "bg-amber-100 text-amber-600"
-                                                    }`}
+                                <div>
+                                    <ul className="divide-y divide-gray-100">
+                                        {wallet.payouts
+                                            .slice(
+                                                (payoutPage - 1) * payoutPageSize,
+                                                payoutPage * payoutPageSize,
+                                            )
+                                            .map((payout) => (
+                                                <li
+                                                    key={payout.id}
+                                                    className="p-6 hover:bg-gray-50/50 transition-colors flex items-center justify-between"
                                                 >
-                                                    {payout.status ===
-                                                    "completed" ? (
-                                                        <CheckCircle className="w-6 h-6" />
-                                                    ) : payout.status ===
-                                                      "rejected" ? (
-                                                        <XCircle className="w-6 h-6" />
-                                                    ) : (
-                                                        <Clock className="w-6 h-6" />
-                                                    )}
-                                                </div>
-                                                <div>
-                                                    <p className="font-bold text-gray-900 text-lg">
-                                                        ₹
-                                                        {payout.amount.toFixed(
-                                                            2,
-                                                        )}
-                                                    </p>
-                                                    <div className="flex items-center text-sm text-gray-500 mt-1">
-                                                        <span>
-                                                            {new Date(
-                                                                payout.createdAt,
-                                                            ).toLocaleDateString()}
-                                                        </span>
-                                                        <span className="mx-2">
-                                                            •
-                                                        </span>
-                                                        <span className="font-mono text-xs text-gray-400">
-                                                            ID:{" "}
-                                                            {payout.id.slice(
-                                                                0,
-                                                                8,
+                                                    <div className="flex items-center gap-4">
+                                                        <div
+                                                            className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                                                                payout.status ===
+                                                                "completed"
+                                                                    ? "bg-green-100 text-green-600"
+                                                                    : payout.status ===
+                                                                          "rejected"
+                                                                      ? "bg-red-100 text-red-600"
+                                                                      : "bg-amber-100 text-amber-600"
+                                                            }`}
+                                                        >
+                                                            {payout.status ===
+                                                            "completed" ? (
+                                                                <CheckCircle className="w-6 h-6" />
+                                                            ) : payout.status ===
+                                                              "rejected" ? (
+                                                                <XCircle className="w-6 h-6" />
+                                                            ) : (
+                                                                <Clock className="w-6 h-6" />
                                                             )}
-                                                        </span>
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-bold text-gray-900 text-lg">
+                                                                ₹
+                                                                {payout.amount.toFixed(
+                                                                    2,
+                                                                )}
+                                                            </p>
+                                                            <div className="flex items-center text-sm text-gray-500 mt-1">
+                                                                <span>
+                                                                    {new Date(
+                                                                        payout.createdAt,
+                                                                    ).toLocaleDateString()}
+                                                                </span>
+                                                                <span className="mx-2">
+                                                                    •
+                                                                </span>
+                                                                <span className="font-mono text-xs text-gray-400">
+                                                                    ID:{" "}
+                                                                    {payout.id.slice(
+                                                                        0,
+                                                                        8,
+                                                                    )}
+                                                                </span>
+                                                            </div>
+                                                            {payout.notes && (
+                                                                <p className="text-xs text-gray-500 mt-1 italic">
+                                                                    Note: {payout.notes}
+                                                                </p>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                    {payout.notes && (
-                                                        <p className="text-xs text-gray-500 mt-1 italic">
-                                                            Note: {payout.notes}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <span
-                                                    className={`inline-flex px-3 py-1 text-xs font-black rounded uppercase tracking-wider ${
-                                                        payout.status ===
-                                                        "completed"
-                                                            ? "bg-green-100 text-green-700 border border-green-200"
-                                                            : payout.status ===
-                                                                  "rejected"
-                                                              ? "bg-red-100 text-red-700 border border-red-200"
-                                                              : "bg-amber-100 text-amber-700 border border-amber-200"
-                                                    }`}
-                                                >
-                                                    {payout.status}
-                                                </span>
-                                                {payout.processedAt && (
-                                                    <p className="text-[10px] uppercase font-bold text-gray-400 mt-2">
-                                                        Processed:{" "}
-                                                        {new Date(
-                                                            payout.processedAt,
-                                                        ).toLocaleDateString()}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
+                                                    <div className="text-right">
+                                                        <span
+                                                            className={`inline-flex px-3 py-1 text-xs font-black rounded uppercase tracking-wider ${
+                                                                payout.status ===
+                                                                "completed"
+                                                                    ? "bg-green-100 text-green-700 border border-green-200"
+                                                                    : payout.status ===
+                                                                          "rejected"
+                                                                      ? "bg-red-100 text-red-700 border border-red-200"
+                                                                      : "bg-amber-100 text-amber-700 border border-amber-200"
+                                                            }`}
+                                                        >
+                                                            {payout.status}
+                                                        </span>
+                                                        {payout.processedAt && (
+                                                            <p className="text-[10px] uppercase font-bold text-gray-400 mt-2">
+                                                                Processed:{" "}
+                                                                {new Date(
+                                                                    payout.processedAt,
+                                                                ).toLocaleDateString()}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </li>
+                                            ))}
+                                    </ul>
+
+                                    <div className="p-4 border-t border-gray-100">
+                                        <Pagination
+                                            currentPage={payoutPage}
+                                            totalPages={Math.max(
+                                                1,
+                                                Math.ceil(
+                                                    wallet.payouts.length /
+                                                        payoutPageSize,
+                                                ),
+                                            )}
+                                            totalItems={wallet.payouts.length}
+                                            pageSize={payoutPageSize}
+                                            pageSizeOptions={[5, 10, 20]}
+                                            onPageChange={(newPage) =>
+                                                setPayoutPage(newPage)
+                                            }
+                                            onPageSizeChange={(newSize) => {
+                                                setPayoutPageSize(newSize);
+                                                setPayoutPage(1);
+                                            }}
+                                            accentColor="red"
+                                        />
+                                    </div>
+                                </div>
                             )}
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    );
+        </main>
+    </div>
+);
 }

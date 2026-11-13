@@ -8,7 +8,8 @@ import {
     Post,
     Put,
     Request,
-    UseGuards
+    UseGuards,
+    Query,
 } from '@nestjs/common';
 import { DeletionRequestsService } from './deletion-requests.service';
 import { CreateDeletionRequestDto, UpdateDeletionRequestStatusDto } from './dto/deletion-request.dto';
@@ -38,10 +39,16 @@ export class DeletionRequestsController {
     @Get('admin')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN)
-    async getAllRequests() {
+    async getAllRequests(
+        @Query('page') page?: string,
+        @Query('limit') limit?: string,
+    ) {
         return {
             success: true,
-            data: await this.deletionService.findAll(),
+            data: await this.deletionService.findAll(
+                page ? parseInt(page, 10) : undefined,
+                limit ? parseInt(limit, 10) : undefined,
+            ),
         };
     }
 
