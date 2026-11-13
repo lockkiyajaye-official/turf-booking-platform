@@ -11,6 +11,7 @@ import 'package:mobile/data/services/uploadcare_service.dart';
 import 'package:mobile/viewmodels/auth/auth_viewmodel.dart';
 import 'package:mobile/viewmodels/turf/owner_viewmodel.dart';
 import 'package:mobile/views/booking/owner_detail_page.dart';
+import 'package:mobile/views/booking/widgets/photo_preview_modal.dart';
 import 'package:mobile/views/widgets/my_buttons.dart';
 import 'package:mobile/views/widgets/my_text_field.dart';
 import 'package:mobile/views/widgets/state_selection_sheet.dart';
@@ -249,6 +250,148 @@ class _AddTurfPageState extends State<AddTurfPage> {
         if (text.isNotEmpty) {
           setState(() {
             _imageUrls.add(text);
+          });
+          Get.back();
+        }
+      },
+    );
+  }
+
+  Future<void> _replaceImage(int index) async {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final textTheme = Theme.of(context).textTheme;
+
+    Get.bottomSheet(
+      Material(
+        color: colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        clipBehavior: Clip.antiAlias,
+        child: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40.w,
+                  height: 4.h,
+                  margin: EdgeInsets.only(bottom: 16.h),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE0E0E0),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Text(
+                  'Replace Photo',
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colors.textTitle,
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                ListTile(
+                  leading: Container(
+                    padding: EdgeInsets.all(8.w),
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.camera_alt_rounded, color: colors.primary),
+                  ),
+                  title: Text('Take New Photo', style: textTheme.bodyMedium),
+                  onTap: () async {
+                    Get.back();
+                    await _replaceFromPicker(index, ImageSource.camera);
+                  },
+                ),
+                ListTile(
+                  leading: Container(
+                    padding: EdgeInsets.all(8.w),
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child:
+                        Icon(Icons.photo_library_rounded, color: colors.primary),
+                  ),
+                  title:
+                      Text('Choose from Gallery', style: textTheme.bodyMedium),
+                  onTap: () async {
+                    Get.back();
+                    await _replaceFromPicker(index, ImageSource.gallery);
+                  },
+                ),
+                ListTile(
+                  leading: Container(
+                    padding: EdgeInsets.all(8.w),
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.link_rounded, color: colors.primary),
+                  ),
+                  title: Text('Enter Photo URL', style: textTheme.bodyMedium),
+                  onTap: () {
+                    Get.back();
+                    _showReplaceUrlDialog(index);
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _replaceFromPicker(int index, ImageSource source) async {
+    try {
+      final XFile? file =
+          await _picker.pickImage(source: source, imageQuality: 80);
+      if (file == null) return;
+
+      setState(() => _isUploadingImages = true);
+      try {
+        final res = await _uploadcareService.uploadXFile(file);
+        if (mounted && index < _imageUrls.length) {
+          setState(() {
+            _imageUrls[index] = res.cdnUrl;
+          });
+        }
+      } finally {
+        if (mounted) setState(() => _isUploadingImages = false);
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isUploadingImages = false);
+      Get.snackbar('Upload Error', 'Could not replace image: $e',
+          backgroundColor: Colors.red.shade100,
+          snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+
+  void _showReplaceUrlDialog(int index) {
+    final urlController = TextEditingController(text: _imageUrls[index]);
+    Get.defaultDialog(
+      title: 'Replace Image URL',
+      content: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+        child: TextField(
+          controller: urlController,
+          decoration: const InputDecoration(
+            hintText: 'https://example.com/image.jpg',
+            border: OutlineInputBorder(),
+          ),
+        ),
+      ),
+      textConfirm: 'Replace',
+      textCancel: 'Cancel',
+      confirmTextColor: Colors.white,
+      buttonColor: const Color(0xFFE43434),
+      onConfirm: () {
+        final text = urlController.text.trim();
+        if (text.isNotEmpty && index < _imageUrls.length) {
+          setState(() {
+            _imageUrls[index] = text;
           });
           Get.back();
         }
@@ -642,8 +785,52 @@ class _AddTurfPageState extends State<AddTurfPage> {
                             final isPrimary = index == _primaryImageIndex;
 
                             return GestureDetector(
-                              onTap: () =>
-                                  setState(() => _primaryImageIndex = index),
+                              onTap: () => showPhotoPreviewModal(
+                                context: context,
+                                initialIndex: index,
+                                imageUrls: _imageUrls,
+                                primaryIndex: _primaryImageIndex,
+                                onSetPrimary: (newPrimary) {
+                                  setState(() => _primaryImageIndex = newPrimary);
+                                },
+                                onRemove: (removedIdx) {
+                                  setState(() {
+                                    _imageUrls.removeAt(removedIdx);
+                                    if (_primaryImageIndex >=
+                                        _imageUrls.length) {
+                                      _primaryImageIndex = 0;
+                                    }
+                                  });
+                                },
+                                onReorder: (oldIdx, newIdx) {
+                                  setState(() {
+                                    final item = _imageUrls.removeAt(oldIdx);
+                                    _imageUrls.insert(newIdx, item);
+                                    if (_primaryImageIndex == oldIdx) {
+                                      _primaryImageIndex = newIdx;
+                                    } else if (_primaryImageIndex == newIdx) {
+                                      _primaryImageIndex = oldIdx;
+                                    }
+                                  });
+                                },
+                                onReplace: (replaceIdx) =>
+                                    _replaceImage(replaceIdx),
+                                onCropApplied: (cropIdx, newUrl) {
+                                  PaintingBinding.instance.imageCache.clear();
+                                  PaintingBinding.instance.imageCache.clearLiveImages();
+                                  setState(() {
+                                    _imageUrls[cropIdx] = newUrl;
+                                  });
+                                  Get.snackbar(
+                                    'Photo Cropped',
+                                    'Crop applied. Tap "Create Turf" below to save.',
+                                    backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.9),
+                                    colorText: Colors.white,
+                                    duration: const Duration(seconds: 3),
+                                    snackPosition: SnackPosition.BOTTOM,
+                                  );
+                                },
+                              ),
                               child: Container(
                                 width: 100.w,
                                 margin: EdgeInsets.only(right: 10.w),
@@ -691,6 +878,42 @@ class _AddTurfPageState extends State<AddTurfPage> {
                                           ),
                                         ),
                                       ),
+                                    // Bottom View & Edit hint pill
+                                    Positioned(
+                                      bottom: 5.h,
+                                      left: 5.w,
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 6.w,
+                                          vertical: 2.h,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withValues(
+                                              alpha: 0.65),
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.visibility_rounded,
+                                              color: Colors.white,
+                                              size: 11.sp,
+                                            ),
+                                            SizedBox(width: 3.w),
+                                            Text(
+                                              'View',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 9.sp,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
                                     Positioned(
                                       top: 4.h,
                                       right: 4.w,
@@ -1540,6 +1763,7 @@ class _AddTurfPageState extends State<AddTurfPage> {
     if (normalized.startsWith('http://') || normalized.startsWith('https://')) {
       return Image.network(
         normalized,
+        key: ValueKey(normalized),
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) => Container(
           color: const Color(0xFFF1F5F9),
@@ -1549,6 +1773,7 @@ class _AddTurfPageState extends State<AddTurfPage> {
     }
     return Image.file(
       File(path),
+      key: ValueKey(path),
       fit: BoxFit.cover,
       errorBuilder: (context, error, stackTrace) => Container(
         color: const Color(0xFFF1F5F9),
