@@ -29,7 +29,8 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage> {
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) => Container(
           color: const Color(0xFFF1F5F9),
-          child: const Icon(Icons.broken_image_rounded, color: Colors.grey),
+          alignment: Alignment.center,
+          child: const Icon(Icons.sports_soccer_rounded, color: Colors.grey, size: 48),
         ),
       );
     }
@@ -38,7 +39,8 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage> {
       fit: BoxFit.cover,
       errorBuilder: (context, error, stackTrace) => Container(
         color: const Color(0xFFF1F5F9),
-        child: const Icon(Icons.broken_image_rounded, color: Colors.grey),
+        alignment: Alignment.center,
+        child: const Icon(Icons.sports_soccer_rounded, color: Colors.grey, size: 48),
       ),
     );
   }

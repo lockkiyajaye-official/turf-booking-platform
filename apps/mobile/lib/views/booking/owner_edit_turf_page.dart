@@ -10,6 +10,7 @@ import 'package:mobile/data/services/turf_service.dart';
 import 'package:mobile/data/services/uploadcare_service.dart';
 import 'package:mobile/viewmodels/auth/auth_viewmodel.dart';
 import 'package:mobile/viewmodels/turf/owner_viewmodel.dart';
+import 'package:mobile/views/booking/owner_detail_page.dart';
 import 'package:mobile/views/widgets/my_buttons.dart';
 import 'package:mobile/views/widgets/my_text_field.dart';
 import 'package:mobile/views/widgets/state_selection_sheet.dart';
@@ -104,34 +105,6 @@ class _OwnerEditTurfPageState extends State<OwnerEditTurfPage> {
   final ImagePicker _picker = ImagePicker();
   List<String> _imageUrls = [];
   int _primaryImageIndex = 0;
-
-  final List<Map<String, String>> _presetTurfPhotos = [
-    {
-      'name': 'Green Arena',
-      'url':
-          'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?auto=format&fit=crop&w=800&q=80',
-    },
-    {
-      'name': 'Night Arena',
-      'url':
-          'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=800&q=80',
-    },
-    {
-      'name': 'Badminton Court',
-      'url':
-          'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=800&q=80',
-    },
-    {
-      'name': 'Cricket Turf',
-      'url':
-          'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=800&q=80',
-    },
-    {
-      'name': 'Indoor Stadium',
-      'url':
-          'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=800&q=80',
-    },
-  ];
 
   bool _isSaving = false;
   bool _isUploadingImages = false;
@@ -417,6 +390,26 @@ class _OwnerEditTurfPageState extends State<OwnerEditTurfPage> {
     );
   }
 
+  void _confirmClearAllImages() {
+    Get.defaultDialog(
+      title: 'Clear All Photos',
+      titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      middleText:
+          'Are you sure you want to remove all photos? You can upload new ones or save to use the placeholder image.',
+      textConfirm: 'Clear All',
+      textCancel: 'Cancel',
+      confirmTextColor: Colors.white,
+      buttonColor: const Color(0xFFE43434),
+      onConfirm: () {
+        Get.back();
+        setState(() {
+          _imageUrls.clear();
+          _primaryImageIndex = 0;
+        });
+      },
+    );
+  }
+
   Future<void> _save() async {
     if (_isSaving) return;
 
@@ -527,7 +520,31 @@ class _OwnerEditTurfPageState extends State<OwnerEditTurfPage> {
         if (Get.isRegistered<OwnerViewmodel>()) {
           Get.find<OwnerViewmodel>().fetchMyTurfs();
         }
-        Get.back(result: true);
+
+        TurfModel updatedTurf = widget.turf;
+        if (res['data'] is Map<String, dynamic>) {
+          try {
+            updatedTurf =
+                TurfModel.fromJson(res['data'] as Map<String, dynamic>);
+          } catch (_) {
+            try {
+              final fullRes = await _turfService.findOne(widget.turf.id);
+              if (fullRes['success'] &&
+                  fullRes['data'] is Map<String, dynamic>) {
+                updatedTurf = TurfModel.fromJson(fullRes['data']);
+              }
+            } catch (_) {}
+          }
+        } else {
+          try {
+            final fullRes = await _turfService.findOne(widget.turf.id);
+            if (fullRes['success'] && fullRes['data'] is Map<String, dynamic>) {
+              updatedTurf = TurfModel.fromJson(fullRes['data']);
+            }
+          } catch (_) {}
+        }
+
+        Get.off(() => OwnerTurfDetailPage(turf: updatedTurf));
       } else {
         Get.snackbar(
           'Error',
@@ -551,9 +568,10 @@ class _OwnerEditTurfPageState extends State<OwnerEditTurfPage> {
   }
 
   Widget _buildImageWidget(String path) {
-    if (path.startsWith('http://') || path.startsWith('https://')) {
+    final normalized = UploadcareService.normalizeCdnUrl(path);
+    if (normalized.startsWith('http://') || normalized.startsWith('https://')) {
       return Image.network(
-        path,
+        normalized,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) => Container(
           color: const Color(0xFFF1F5F9),
@@ -615,57 +633,42 @@ class _OwnerEditTurfPageState extends State<OwnerEditTurfPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // ── Section 1: Photos ─────────────────────────────
-                      _SectionHeader(title: 'Photos', textTheme: textTheme),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _SectionHeader(title: 'Photos', textTheme: textTheme),
+                          if (_imageUrls.isNotEmpty)
+                            TextButton.icon(
+                              onPressed: _isSaving ? null : _confirmClearAllImages,
+                              icon: const Icon(
+                                Icons.delete_sweep_outlined,
+                                size: 16,
+                                color: Color(0xFFE43434),
+                              ),
+                              label: const Text(
+                                'Clear All',
+                                style: TextStyle(
+                                  color: Color(0xFFE43434),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 8.w,
+                                  vertical: 4.h,
+                                ),
+                                visualDensity: VisualDensity.compact,
+                              ),
+                            ),
+                        ],
+                      ),
                       SizedBox(height: 4.h),
                       Text(
-                        'Upload photos or choose sample templates. Tap any image to set as Primary Cover.',
+                        'Upload photos for this turf. Tap any image to set as Primary Cover.',
                         style: textTheme.bodySmall?.copyWith(
                           color: colors.textGrey,
                           fontSize: 11.sp,
-                        ),
-                      ),
-                      SizedBox(height: 12.h),
-
-                      // Sample Presets Chips
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            Text(
-                              'Quick Presets: ',
-                              style: textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 11.sp,
-                              ),
-                            ),
-                            ..._presetTurfPhotos.map((preset) {
-                              final url = preset['url']!;
-                              final isAdded = _imageUrls.contains(url);
-                              return Padding(
-                                padding: EdgeInsets.only(right: 6.w),
-                                child: FilterChip(
-                                  selected: isAdded,
-                                  label: Text(
-                                    preset['name']!,
-                                    style: TextStyle(fontSize: 10.sp),
-                                  ),
-                                  selectedColor: const Color(
-                                    0xFFE43434,
-                                  ).withValues(alpha: 0.2),
-                                  checkmarkColor: const Color(0xFFE43434),
-                                  onSelected: (val) {
-                                    setState(() {
-                                      if (val) {
-                                        if (!isAdded) _imageUrls.add(url);
-                                      } else {
-                                        _imageUrls.remove(url);
-                                      }
-                                    });
-                                  },
-                                ),
-                              );
-                            }),
-                          ],
                         ),
                       ),
                       SizedBox(height: 12.h),
@@ -849,6 +852,27 @@ class _OwnerEditTurfPageState extends State<OwnerEditTurfPage> {
                           },
                         ),
                       ),
+                      if (_imageUrls.isEmpty) ...[
+                        SizedBox(height: 8.h),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline_rounded,
+                              size: 14.sp,
+                              color: colors.textGrey,
+                            ),
+                            SizedBox(width: 6.w),
+                            Text(
+                              'No photos selected. Default placeholder will be used.',
+                              style: TextStyle(
+                                color: colors.textGrey,
+                                fontSize: 11.sp,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
 
                       SizedBox(height: 24.h),
 

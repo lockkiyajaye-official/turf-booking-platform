@@ -891,7 +891,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         } catch (_) {}
       }
       return Image.network(
-        _currentAvatarUrl!,
+        UploadcareService.normalizeCdnUrl(_currentAvatarUrl!),
         fit: BoxFit.cover,
         width: 100.w,
         height: 100.w,

@@ -146,34 +146,6 @@ class _AddTurfPageState extends State<AddTurfPage> {
   final List<String> _imageUrls = [];
   int _primaryImageIndex = 0;
 
-  final List<Map<String, String>> _presetTurfPhotos = [
-    {
-      'name': 'Green Arena',
-      'url':
-          'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?auto=format&fit=crop&w=800&q=80',
-    },
-    {
-      'name': 'Night Arena',
-      'url':
-          'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=800&q=80',
-    },
-    {
-      'name': 'Badminton Court',
-      'url':
-          'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=800&q=80',
-    },
-    {
-      'name': 'Cricket Turf',
-      'url':
-          'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=800&q=80',
-    },
-    {
-      'name': 'Indoor Stadium',
-      'url':
-          'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=800&q=80',
-    },
-  ];
-
   bool _isLoading = false;
   bool _isUploadingImages = false;
   final TurfService _turfService = TurfService();
@@ -566,54 +538,10 @@ class _AddTurfPageState extends State<AddTurfPage> {
                       _SectionHeader(title: 'Photos', textTheme: textTheme),
                       SizedBox(height: 4.h),
                       Text(
-                        'Upload photos or choose sample templates. Tap any image to set as Primary Cover.',
+                        'Upload photos for this turf. Tap any image to set as Primary Cover.',
                         style: textTheme.bodySmall?.copyWith(
                           color: colors.textGrey,
                           fontSize: 11.sp,
-                        ),
-                      ),
-                      SizedBox(height: 12.h),
-
-                      // Sample Presets Chips
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            Text(
-                              'Quick Presets: ',
-                              style: textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 11.sp,
-                              ),
-                            ),
-                            ..._presetTurfPhotos.map((preset) {
-                              final url = preset['url']!;
-                              final isAdded = _imageUrls.contains(url);
-                              return Padding(
-                                padding: EdgeInsets.only(right: 6.w),
-                                child: FilterChip(
-                                  selected: isAdded,
-                                  label: Text(
-                                    preset['name']!,
-                                    style: TextStyle(fontSize: 10.sp),
-                                  ),
-                                  selectedColor: const Color(
-                                    0xFFE43434,
-                                  ).withValues(alpha: 0.2),
-                                  checkmarkColor: const Color(0xFFE43434),
-                                  onSelected: (val) {
-                                    setState(() {
-                                      if (val) {
-                                        if (!isAdded) _imageUrls.add(url);
-                                      } else {
-                                        _imageUrls.remove(url);
-                                      }
-                                    });
-                                  },
-                                ),
-                              );
-                            }),
-                          ],
                         ),
                       ),
                       SizedBox(height: 12.h),
@@ -1608,9 +1536,10 @@ class _AddTurfPageState extends State<AddTurfPage> {
   }
 
   Widget _buildImageWidget(String path) {
-    if (path.startsWith('http://') || path.startsWith('https://')) {
+    final normalized = UploadcareService.normalizeCdnUrl(path);
+    if (normalized.startsWith('http://') || normalized.startsWith('https://')) {
       return Image.network(
-        path,
+        normalized,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) => Container(
           color: const Color(0xFFF1F5F9),

@@ -18,7 +18,11 @@ void main() {
   runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
-      await dotenv.load(fileName: ".env");
+      try {
+        await dotenv.load(fileName: ".env");
+      } catch (e) {
+        debugPrint('Warning: Could not load .env: $e');
+      }
 
       await CoreController.init();
       AuthBinding().dependencies();

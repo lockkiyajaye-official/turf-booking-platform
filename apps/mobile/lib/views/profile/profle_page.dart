@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobile/core/responsive/screen_extensions.dart';
 import 'package:mobile/core/theme/app_colors.dart';
+import 'package:mobile/data/services/uploadcare_service.dart';
 import 'package:mobile/viewmodels/auth/auth_viewmodel.dart';
 import 'package:mobile/viewmodels/turf/owner_viewmodel.dart';
 import 'package:mobile/views/booking/my_turf_page.dart';
@@ -271,7 +272,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   } catch (_) {}
                                 }
                                 return Image.network(
-                                  avatarUrl,
+                                  UploadcareService.normalizeCdnUrl(avatarUrl),
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) =>
                                       _DefaultAvatar(colors: colors),

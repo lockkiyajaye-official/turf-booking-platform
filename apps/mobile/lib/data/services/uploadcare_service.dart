@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile/core/constants/app_constants.dart';
 
@@ -21,10 +22,53 @@ class UploadcareUploadResult {
 }
 
 class UploadcareService {
-  static const String _uploadUrl = 'https://upload.uploadcare.com/base/';
-  static const String _cdnBaseUrl = 'https://ucarecdn.com';
+  static const String _uploadUrl =
+      'https://upload.uploadcare.com/base/?jsonerrors=1';
 
   String get _publicKey => AppConstants.uploadcarePublicKey;
+  String get _cdnBaseUrl => AppConstants.uploadcareCdnUrl;
+
+  /// Ensures legacy or misconfigured CDN URLs (e.g. ucarecdn.com) point to the
+  /// project's active CDN host (e.g. *.ucarecd.net).
+  static String normalizeCdnUrl(String url) {
+    if (url.isEmpty) return url;
+    const legacy = 'https://ucarecdn.com';
+    if (url.startsWith(legacy)) {
+      return url.replaceFirst(legacy, AppConstants.uploadcareCdnUrl);
+    }
+    return url;
+  }
+
+  static MediaType _resolveMediaType(String fileName) {
+    final ext = fileName.contains('.')
+        ? fileName.split('.').last.toLowerCase()
+        : 'jpg';
+    switch (ext) {
+      case 'png':
+        return MediaType('image', 'png');
+      case 'webp':
+        return MediaType('image', 'webp');
+      case 'gif':
+        return MediaType('image', 'gif');
+      case 'svg':
+        return MediaType('image', 'svg+xml');
+      case 'jpeg':
+      case 'jpg':
+      default:
+        return MediaType('image', 'jpeg');
+    }
+  }
+
+  static String _ensureFileName(String fileName) {
+    var name = fileName.trim();
+    if (name.isEmpty) {
+      name = 'image_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    }
+    if (!name.contains('.')) {
+      name = '$name.jpg';
+    }
+    return name;
+  }
 
   /// Upload an [XFile] (from ImagePicker) to Uploadcare and return the result with CDN URL.
   Future<UploadcareUploadResult> uploadXFile(
@@ -58,17 +102,21 @@ class UploadcareService {
     required String fileName,
     bool store = true,
   }) async {
+    final safeFileName = _ensureFileName(fileName);
+    final mediaType = _resolveMediaType(safeFileName);
+
     final uri = Uri.parse(_uploadUrl);
     final request = http.MultipartRequest('POST', uri);
 
     request.fields['UPLOADCARE_PUB_KEY'] = _publicKey;
-    request.fields['UPLOADCARE_STORE'] = store ? '1' : 'auto';
+    request.fields['UPLOADCARE_STORE'] = store ? '1' : '0';
 
     request.files.add(
       http.MultipartFile.fromBytes(
         'file',
         bytes,
-        filename: fileName,
+        filename: safeFileName,
+        contentType: mediaType,
       ),
     );
 
@@ -78,6 +126,7 @@ class UploadcareService {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       final Map<String, dynamic> body = jsonDecode(response.body);
       final String? uuid = body['file'] as String? ??
+          body[safeFileName] as String? ??
           body[fileName] as String? ??
           body.values.firstWhere(
             (v) => v is String && v.length >= 32,
@@ -92,7 +141,7 @@ class UploadcareService {
       return UploadcareUploadResult(
         uuid: uuid,
         cdnUrl: cdnUrl,
-        originalFilename: fileName,
+        originalFilename: safeFileName,
       );
     } else {
       dynamic errorBody;

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobile/core/responsive/screen_extensions.dart';
@@ -263,12 +264,115 @@ class _OwnerTurfCard extends StatelessWidget {
     required this.vm,
   });
 
+  Widget _buildPlaceholder(AppColors colors) {
+    return Container(
+      height: 160.h,
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: Color(0xFFF1F5F9),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFF8FAFC), Color(0xFFE2E8F0)],
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.sports_soccer_rounded,
+                color: colors.primary.withValues(alpha: 0.7),
+                size: 28,
+              ),
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              'No photo available',
+              style: TextStyle(
+                color: colors.textGrey,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImage(AppColors colors) {
+    final validImages = turf.images
+        .where((img) => img.trim().isNotEmpty)
+        .toList();
+
+    if (validImages.isEmpty) {
+      return _buildPlaceholder(colors);
+    }
+
+    final rawPath = validImages.first.trim();
+
+    if (rawPath.startsWith('http://') || rawPath.startsWith('https://')) {
+      return Image.network(
+        rawPath,
+        height: 160.h,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            height: 160.h,
+            width: double.infinity,
+            color: const Color(0xFFF1F5F9),
+            alignment: Alignment.center,
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                          loadingProgress.expectedTotalBytes!
+                    : null,
+                color: colors.primary,
+              ),
+            ),
+          );
+        },
+        errorBuilder: (_, _, _) => _buildPlaceholder(colors),
+      );
+    }
+
+    final file = File(rawPath);
+    if (file.existsSync()) {
+      return Image.file(
+        file,
+        height: 160.h,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => _buildPlaceholder(colors),
+      );
+    }
+
+    return _buildPlaceholder(colors);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final imageUrl = turf.images.isNotEmpty
-        ? turf.images.first
-        : 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=400&q=80';
-
     final isPublished = turf.isPublished;
 
     return GestureDetector(
@@ -290,53 +394,51 @@ class _OwnerTurfCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Image + Status badge
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(14),
+            SizedBox(
+              height: 160.h,
+              width: double.infinity,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(14),
+                    ),
+                    child: _buildImage(colors),
                   ),
-                  child: Image.network(
-                    imageUrl,
-                    height: 160.h,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => Container(
-                      height: 160.h,
-                      color: Colors.grey[200],
-                      child: const Icon(
-                        Icons.sports_soccer,
-                        color: Colors.grey,
-                        size: 40,
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 5.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isPublished
+                            ? const Color(0xFF059669)
+                            : Colors.grey[600],
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.15),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        isPublished ? 'Published' : 'Draft',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 10.w,
-                      vertical: 5.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isPublished
-                          ? const Color(0xFF059669)
-                          : Colors.grey[600],
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      isPublished ? 'Published' : 'Draft',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
 
             // Info
