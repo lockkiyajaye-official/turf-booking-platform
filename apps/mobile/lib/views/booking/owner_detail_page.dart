@@ -6,6 +6,7 @@ import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/utils/helpers.dart';
 import 'package:mobile/data/models/turf_model.dart';
 import 'package:mobile/viewmodels/turf/owner_viewmodel.dart';
+import 'package:mobile/views/booking/owner_booking_page.dart';
 import 'package:mobile/views/booking/owner_edit_turf_page.dart';
 import 'package:mobile/views/booking/widgets/direct_booking_sheet.dart';
 import 'package:mobile/views/widgets/my_buttons.dart';
@@ -190,7 +191,14 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     onSelected: (val) async {
-                      if (val == 'direct_booking') {
+                      if (val == 'view_bookings') {
+                        Get.to(
+                          () => OwnerBookingsPage(
+                            preselectedTurfId: turf.id,
+                            preselectedTurfName: turf.name,
+                          ),
+                        );
+                      } else if (val == 'direct_booking') {
                         showDirectBookingModal(
                           context,
                           vm: vm,
@@ -209,6 +217,25 @@ class _OwnerTurfDetailPageState extends State<OwnerTurfDetailPage> {
                       }
                     },
                     itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: 'view_bookings',
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.calendar_month_rounded,
+                              size: 18,
+                              color: Color(0xFF2563EB),
+                            ),
+                            SizedBox(width: 12.w),
+                            Text(
+                              'View Turf Bookings',
+                              style: textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                       PopupMenuItem(
                         value: 'direct_booking',
                         child: Row(

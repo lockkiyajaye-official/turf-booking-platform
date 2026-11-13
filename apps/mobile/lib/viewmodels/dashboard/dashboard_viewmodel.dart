@@ -44,7 +44,10 @@ class DashboardViewmodel extends GetxController {
         token: token,
       );
       if (bookingsResponse['success']) {
-        final List data = bookingsResponse['data'] ?? [];
+        final raw = bookingsResponse['data'];
+        final List data = raw is List
+            ? raw
+            : (raw is Map && raw['items'] is List ? raw['items'] : []);
         recentBookings.value = data
             .map((json) => BookingModel.fromJson(json))
             .toList();

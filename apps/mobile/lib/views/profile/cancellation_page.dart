@@ -33,8 +33,12 @@ class _CancellationPageState extends State<CancellationPage> {
     if (mounted) {
       setState(() {
         _isLoading = false;
-        if (result['success'] == true && result['data'] is List) {
-          _bookings = (result['data'] as List)
+        if (result['success'] == true) {
+          final raw = result['data'];
+          final List list = raw is List
+              ? raw
+              : (raw is Map && raw['items'] is List ? raw['items'] : []);
+          _bookings = list
               .map((json) => BookingModel.fromJson(json))
               .toList();
         }

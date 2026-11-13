@@ -80,14 +80,24 @@ class BookingService {
     int limit = 10,
     String? status,
     String? search,
+    String? source,
+    String? turfId,
   }) async {
     try {
       final queryParams = <String, String>{
         'page': page.toString(),
         'limit': limit.toString(),
       };
-      if (status != null && status.isNotEmpty) queryParams['status'] = status;
+      if (status != null && status.isNotEmpty && status != 'all') {
+        queryParams['status'] = status;
+      }
       if (search != null && search.isNotEmpty) queryParams['search'] = search;
+      if (source != null && source.isNotEmpty && source != 'all') {
+        queryParams['source'] = source;
+      }
+      if (turfId != null && turfId.isNotEmpty && turfId != 'all') {
+        queryParams['turfId'] = turfId;
+      }
 
       final uri = Uri.parse(_base).replace(queryParameters: queryParams);
       final response = await http.get(uri, headers: _headers(token));

@@ -6,6 +6,7 @@ import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/data/models/turf_model.dart';
 import 'package:mobile/viewmodels/turf/owner_viewmodel.dart';
 import 'package:mobile/views/booking/add_turf_page.dart';
+import 'package:mobile/views/booking/owner_booking_page.dart';
 import 'package:mobile/views/booking/owner_detail_page.dart';
 import 'package:mobile/views/booking/owner_edit_turf_page.dart';
 
@@ -19,11 +20,13 @@ class MyTurfsPage extends StatefulWidget {
 class _MyTurfsPageState extends State<MyTurfsPage> {
   final TextEditingController _searchCtrl = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  final ScrollController _scrollCtrl = ScrollController();
   bool _isSearching = false;
 
   @override
   void initState() {
     super.initState();
+    _scrollCtrl.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final vm = Get.isRegistered<OwnerViewmodel>()
           ? Get.find<OwnerViewmodel>()
@@ -32,8 +35,21 @@ class _MyTurfsPageState extends State<MyTurfsPage> {
     });
   }
 
+  void _onScroll() {
+    if (_scrollCtrl.hasClients &&
+        _scrollCtrl.position.pixels >=
+            _scrollCtrl.position.maxScrollExtent - 200) {
+      final vm = Get.isRegistered<OwnerViewmodel>()
+          ? Get.find<OwnerViewmodel>()
+          : Get.put(OwnerViewmodel(), permanent: true);
+      vm.loadNextTurfsPage();
+    }
+  }
+
   @override
   void dispose() {
+    _scrollCtrl.removeListener(_onScroll);
+    _scrollCtrl.dispose();
     _searchCtrl.dispose();
     _searchFocusNode.dispose();
     super.dispose();
@@ -192,11 +208,15 @@ class _MyTurfsPageState extends State<MyTurfsPage> {
           final columns = context.turfGridColumns;
           final horizontalPad = isTablet ? 20.w : 16.w;
 
+          final hasMore = vm.myTurfsHasMore.value;
+          final isFetchingMore = vm.isFetchingMoreTurfs.value;
+
           return RefreshIndicator(
             color: colors.primary,
             onRefresh: () => vm.fetchMyTurfs(),
             child: columns > 1
                 ? GridView.builder(
+                    controller: _scrollCtrl,
                     padding: EdgeInsets.symmetric(
                       horizontal: horizontalPad,
                       vertical: 16.h,
@@ -207,24 +227,52 @@ class _MyTurfsPageState extends State<MyTurfsPage> {
                       mainAxisSpacing: 16,
                       mainAxisExtent: 295,
                     ),
-                    itemCount: filteredTurfs.length,
-                    itemBuilder: (context, i) => _OwnerTurfCard(
-                      turf: filteredTurfs[i],
-                      colors: colors,
-                      textTheme: textTheme,
-                      vm: vm,
-                    ),
+                    itemCount: filteredTurfs.length + (hasMore ? 1 : 0),
+                    itemBuilder: (context, i) {
+                      if (i == filteredTurfs.length) {
+                        return Center(
+                          child: isFetchingMore
+                              ? CircularProgressIndicator(
+                                  color: colors.primary,
+                                  strokeWidth: 2,
+                                )
+                              : const SizedBox.shrink(),
+                        );
+                      }
+                      return _OwnerTurfCard(
+                        turf: filteredTurfs[i],
+                        colors: colors,
+                        textTheme: textTheme,
+                        vm: vm,
+                      );
+                    },
                   )
                 : ListView.separated(
+                    controller: _scrollCtrl,
                     padding: EdgeInsets.all(16.w),
-                    itemCount: filteredTurfs.length,
+                    itemCount: filteredTurfs.length + (hasMore ? 1 : 0),
                     separatorBuilder: (_, _) => SizedBox(height: 12.h),
-                    itemBuilder: (context, i) => _OwnerTurfCard(
-                      turf: filteredTurfs[i],
-                      colors: colors,
-                      textTheme: textTheme,
-                      vm: vm,
-                    ),
+                    itemBuilder: (context, i) {
+                      if (i == filteredTurfs.length) {
+                        return Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16.h),
+                          child: Center(
+                            child: isFetchingMore
+                                ? CircularProgressIndicator(
+                                    color: colors.primary,
+                                    strokeWidth: 2,
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+                        );
+                      }
+                      return _OwnerTurfCard(
+                        turf: filteredTurfs[i],
+                        colors: colors,
+                        textTheme: textTheme,
+                        vm: vm,
+                      );
+                    },
                   ),
           );
         }),
@@ -495,6 +543,29 @@ class _OwnerTurfCard extends StatelessWidget {
                   // Action buttons
                   Row(
                     children: [
+                      IconButton(
+                        onPressed: () => Get.to(
+                          () => OwnerBookingsPage(
+                            preselectedTurfId: turf.id,
+                            preselectedTurfName: turf.name,
+                          ),
+                        ),
+                        icon: const Icon(
+                          Icons.confirmation_number_outlined,
+                          size: 18,
+                        ),
+                        tooltip: 'View Bookings',
+                        style: IconButton.styleFrom(
+                          backgroundColor: const Color(0xFFEFF6FF),
+                          foregroundColor: const Color(0xFF2563EB),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: const BorderSide(color: Color(0xFFBFDBFE)),
+                          ),
+                          padding: EdgeInsets.all(8.w),
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: () =>

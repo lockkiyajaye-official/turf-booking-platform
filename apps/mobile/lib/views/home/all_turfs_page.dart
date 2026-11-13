@@ -15,6 +15,7 @@ class AllTurfsPage extends StatefulWidget {
 
 class _AllTurfsPageState extends State<AllTurfsPage> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   final TurfViewmodel _turfVm = Get.find<TurfViewmodel>();
 
   final List<String> _filters = [
@@ -30,13 +31,24 @@ class _AllTurfsPageState extends State<AllTurfsPage> {
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _turfVm.fetchAllTurfs();
     });
   }
 
+  void _onScroll() {
+    if (_scrollController.hasClients &&
+        _scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200) {
+      _turfVm.loadNextTurfsPage();
+    }
+  }
+
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -244,11 +256,15 @@ class _AllTurfsPageState extends State<AllTurfsPage> {
               final columns = context.turfGridColumns;
               final horizontalPad = isTablet ? 20.w : 16.w;
 
+              final hasMore = _turfVm.turfsHasMore.value;
+              final isFetchingMore = _turfVm.isFetchingMoreTurfs.value;
+
               return RefreshIndicator(
                 color: colors.primary,
                 onRefresh: () => _turfVm.fetchAllTurfs(),
                 child: columns > 1
                     ? GridView.builder(
+                        controller: _scrollController,
                         padding: EdgeInsets.fromLTRB(
                           horizontalPad,
                           4.h,
@@ -261,8 +277,18 @@ class _AllTurfsPageState extends State<AllTurfsPage> {
                           mainAxisSpacing: 16,
                           mainAxisExtent: 168,
                         ),
-                        itemCount: filteredTurfs.length,
+                        itemCount: filteredTurfs.length + (hasMore ? 1 : 0),
                         itemBuilder: (context, index) {
+                          if (index == filteredTurfs.length) {
+                            return Center(
+                              child: isFetchingMore
+                                  ? CircularProgressIndicator(
+                                      color: colors.primary,
+                                      strokeWidth: 2,
+                                    )
+                                  : const SizedBox.shrink(),
+                            );
+                          }
                           final turf = filteredTurfs[index];
                           return VenueCard(
                             turf: turf,
@@ -273,9 +299,23 @@ class _AllTurfsPageState extends State<AllTurfsPage> {
                         },
                       )
                     : ListView.builder(
+                        controller: _scrollController,
                         padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 24.h),
-                        itemCount: filteredTurfs.length,
+                        itemCount: filteredTurfs.length + (hasMore ? 1 : 0),
                         itemBuilder: (context, index) {
+                          if (index == filteredTurfs.length) {
+                            return Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16.h),
+                              child: Center(
+                                child: isFetchingMore
+                                    ? CircularProgressIndicator(
+                                        color: colors.primary,
+                                        strokeWidth: 2,
+                                      )
+                                    : const SizedBox.shrink(),
+                              ),
+                            );
+                          }
                           final turf = filteredTurfs[index];
                           return Padding(
                             padding: EdgeInsets.only(bottom: 12.h),

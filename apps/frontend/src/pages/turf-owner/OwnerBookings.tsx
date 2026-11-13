@@ -2,11 +2,15 @@ import {
     Calendar as CalendarIcon,
     Clock,
     MapPin,
+    MessageCircle,
+    Phone,
     PlusCircle,
     Search,
     Store,
+    X,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import DirectBookingModal from "../../components/turf-owner/DirectBookingModal";
 import Pagination from "../../components/Pagination";
 import api from "../../services/api";
@@ -36,19 +40,90 @@ function formatSlot12H(start: string, end?: string): string {
     return `${format12Hour(start)} - ${format12Hour(end)}`;
 }
 
+function sendWhatsAppConfirmation(booking: Booking) {
+    const isDirect = (booking.bookingSource || "online").toLowerCase() === "direct";
+    const customerName = isDirect
+        ? booking.customerName || "Customer"
+        : `${booking.user?.firstName || ""} ${booking.user?.lastName || ""}`.trim() || (booking as any).userName || "Customer";
+    const rawPhone = isDirect
+        ? booking.customerPhone
+        : booking.user?.phone || (booking as any).userPhone;
+
+    if (!rawPhone) {
+        alert("No phone number available for this customer.");
+        return;
+    }
+
+    let phone = rawPhone.replace(/\D/g, "");
+    if (phone.startsWith("0")) phone = phone.slice(1);
+    if (phone.length === 10) phone = `91${phone}`;
+
+    const cleanId = (booking.id || "").slice(0, 8).toUpperCase();
+    const turfName = booking.turf?.name || "Turf Facility";
+    const turfAddress = booking.turf?.address;
+    const date = new Date(booking.bookingDate).toLocaleDateString(undefined, {
+        weekday: "short",
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+    });
+    const timing = formatSlot12H(booking.startTime, booking.endTime);
+    const amount = booking.totalPrice;
+    const status = (booking.status || "confirmed").toUpperCase();
+
+    const lines = [
+        "🏟️ *BOOKING CONFIRMATION*",
+        "────────────────────────",
+        `Hello *${customerName}*, your turf booking is confirmed! ✅\n`,
+        `📋 *Booking ID:* #${cleanId}`,
+        `🏟️ *Turf:* ${turfName}`,
+    ];
+    if (turfAddress && turfAddress !== "Address N/A") {
+        lines.push(`📍 *Location:* ${turfAddress}`);
+    }
+    lines.push(
+        `📅 *Date:* ${date}`,
+        `⏰ *Time:* ${timing}`,
+        `💰 *Amount:* ₹${amount}`,
+        `⚡ *Status:* ${status}`,
+        "────────────────────────",
+        "Please arrive 10 minutes before your slot time.",
+        "Have a great game! ⚽🏏"
+    );
+
+    const message = lines.join("\n");
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank");
+}
+
 export default function OwnerBookings() {
+    const [searchParams] = useSearchParams();
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [totalItems, setTotalItems] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
-    const [search, setSearch] = useState("");
-    const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [search, setSearch] = useState(searchParams.get("search") || "");
+    const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get("search") || "");
     const [statusFilter, setStatusFilter] = useState<BookingStatus | "all">("all");
     const [sourceFilter, setSourceFilter] = useState<"all" | "online" | "direct">("all");
+    const [turfFilter, setTurfFilter] = useState<string>(searchParams.get("turfId") || "all");
+    const [turfs, setTurfs] = useState<{ id: string; name: string }[]>([]);
     const [updatingBookingId, setUpdatingBookingId] = useState<string | null>(null);
     const [showDirectModal, setShowDirectModal] = useState(false);
+    const [selectedBookingForDetails, setSelectedBookingForDetails] = useState<Booking | null>(null);
+
+    // Fetch owner's turfs for filter dropdown
+    useEffect(() => {
+        api.get("/turfs/my-turfs?limit=100")
+            .then((res) => {
+                const data = res.data;
+                const items = Array.isArray(data) ? data : data?.items || [];
+                setTurfs(items.map((t: any) => ({ id: t.id, name: t.name })));
+            })
+            .catch(() => {});
+    }, []);
 
     // Debounce search input
     useEffect(() => {
@@ -74,6 +149,10 @@ export default function OwnerBookings() {
 
                 if (sourceFilter !== "all") {
                     params.source = sourceFilter;
+                }
+
+                if (turfFilter !== "all") {
+                    params.turfId = turfFilter;
                 }
 
                 if (debouncedSearch.trim()) {
@@ -102,14 +181,14 @@ export default function OwnerBookings() {
                 setLoading(false);
             }
         },
-        [statusFilter, sourceFilter, debouncedSearch, page, pageSize],
+        [statusFilter, sourceFilter, turfFilter, debouncedSearch, page, pageSize],
     );
 
     // Reset and fetch page 1 on filter/search change
     useEffect(() => {
         setPage(1);
         fetchBookings(1, pageSize);
-    }, [statusFilter, sourceFilter, debouncedSearch, pageSize]);
+    }, [statusFilter, sourceFilter, turfFilter, debouncedSearch, pageSize]);
 
     const handleUpdateStatus = async (
         bookingId: string,
@@ -178,6 +257,19 @@ export default function OwnerBookings() {
                             <PlusCircle className="w-4 h-4" />
                             <span>Mark Direct Booking</span>
                         </button>
+
+                        <select
+                            value={turfFilter}
+                            onChange={(e) => setTurfFilter(e.target.value)}
+                            className="px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-100 font-bold text-sm shadow-xs"
+                        >
+                            <option value="all">All My Venues</option>
+                            {turfs.map((t) => (
+                                <option key={t.id} value={t.id}>
+                                    {t.name}
+                                </option>
+                            ))}
+                        </select>
 
                         <select
                             value={sourceFilter}
@@ -338,25 +430,33 @@ export default function OwnerBookings() {
                                                 <p className="font-bold text-gray-400 uppercase text-[10px]">
                                                     Action
                                                 </p>
-                                                {b.status !== "cancelled" ? (
-                                                    <select
-                                                        disabled={updatingBookingId === b.id}
-                                                        value={b.status}
-                                                        onChange={(e) =>
-                                                            handleUpdateStatus(
-                                                                b.id,
-                                                                e.target.value as BookingStatus,
-                                                            )
-                                                        }
-                                                        className="mt-0.5 text-xs font-bold rounded-lg px-2 py-1 focus:outline-none border border-gray-200 bg-gray-50"
+                                                <div className="flex items-center gap-1.5 mt-0.5">
+                                                    <button
+                                                        onClick={() => setSelectedBookingForDetails(b)}
+                                                        className="text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-lg transition-colors"
                                                     >
-                                                        <option value="confirmed">Confirmed</option>
-                                                        <option value="completed">Completed</option>
-                                                        <option value="cancelled">Cancel</option>
-                                                    </select>
-                                                ) : (
-                                                    <span className="text-gray-400 font-medium">None</span>
-                                                )}
+                                                        Details
+                                                    </button>
+                                                    {b.status !== "cancelled" ? (
+                                                        <select
+                                                            disabled={updatingBookingId === b.id}
+                                                            value={b.status}
+                                                            onChange={(e) =>
+                                                                handleUpdateStatus(
+                                                                    b.id,
+                                                                    e.target.value as BookingStatus,
+                                                                )
+                                                            }
+                                                            className="text-xs font-bold rounded-lg px-2 py-1 focus:outline-none border border-gray-200 bg-gray-50"
+                                                        >
+                                                            <option value="confirmed">Confirmed</option>
+                                                            <option value="completed">Completed</option>
+                                                            <option value="cancelled">Cancel</option>
+                                                        </select>
+                                                    ) : (
+                                                        <span className="text-gray-400 font-medium text-xs">Cancelled</span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -393,6 +493,7 @@ export default function OwnerBookings() {
                                             const customerContact = isDirect
                                                 ? b.customerPhone || "Direct Walk-in"
                                                 : b.user?.phone || b.user?.email || "—";
+                                            const customerPhone = isDirect ? b.customerPhone : b.user?.phone;
 
                                             return (
                                                 <tr
@@ -419,6 +520,20 @@ export default function OwnerBookings() {
                                                         <div className="text-xs text-gray-500 line-clamp-1 mt-0.5">
                                                             {customerContact}
                                                         </div>
+                                                        {customerPhone && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    sendWhatsAppConfirmation(b);
+                                                                }}
+                                                                className="inline-flex items-center gap-1 mt-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md transition-colors"
+                                                                title="Send booking confirmation via WhatsApp"
+                                                            >
+                                                                <MessageCircle className="w-3 h-3 text-emerald-600" />
+                                                                WhatsApp Details
+                                                            </button>
+                                                        )}
                                                         <div className="text-[10px] font-mono text-gray-400 mt-1">
                                                             ID: #{b.id.slice(0, 8)}
                                                         </div>
@@ -485,29 +600,37 @@ export default function OwnerBookings() {
                                                                 {b.status}
                                                             </span>
 
-                                                            {b.status !== "cancelled" && (
-                                                                <select
-                                                                    disabled={updatingBookingId === b.id}
-                                                                    value={b.status}
-                                                                    onChange={(e) =>
-                                                                        handleUpdateStatus(
-                                                                            b.id,
-                                                                            e.target.value as BookingStatus,
-                                                                        )
-                                                                    }
-                                                                    className="text-xs font-bold rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-red-100 disabled:opacity-50 border border-gray-200 bg-white shadow-xs cursor-pointer hover:bg-gray-50 transition-colors"
+                                                            <div className="flex items-center gap-2">
+                                                                <button
+                                                                    onClick={() => setSelectedBookingForDetails(b)}
+                                                                    className="px-2.5 py-1.5 rounded-lg text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors shadow-xs"
                                                                 >
-                                                                    <option value="confirmed">
-                                                                        Confirmed
-                                                                    </option>
-                                                                    <option value="completed">
-                                                                        Completed
-                                                                    </option>
-                                                                    <option value="cancelled">
-                                                                        Cancel Booking
-                                                                    </option>
-                                                                </select>
-                                                            )}
+                                                                    Details
+                                                                </button>
+                                                                {b.status !== "cancelled" && (
+                                                                    <select
+                                                                        disabled={updatingBookingId === b.id}
+                                                                        value={b.status}
+                                                                        onChange={(e) =>
+                                                                            handleUpdateStatus(
+                                                                                b.id,
+                                                                                e.target.value as BookingStatus,
+                                                                            )
+                                                                        }
+                                                                        className="text-xs font-bold rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-red-100 disabled:opacity-50 border border-gray-200 bg-white shadow-xs cursor-pointer hover:bg-gray-50 transition-colors"
+                                                                    >
+                                                                        <option value="confirmed">
+                                                                            Confirmed
+                                                                        </option>
+                                                                        <option value="completed">
+                                                                            Completed
+                                                                        </option>
+                                                                        <option value="cancelled">
+                                                                            Cancel Booking
+                                                                        </option>
+                                                                    </select>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -539,6 +662,194 @@ export default function OwnerBookings() {
                     </>
                 )}
             </main>
+
+            {/* Booking Details Modal */}
+            {selectedBookingForDetails && (
+                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-start justify-between border-b border-gray-100 pb-4">
+                            <div>
+                                <span className={`px-2.5 py-1 text-xs font-black rounded-lg capitalize border ${getStatusBadgeStyle(
+                                    selectedBookingForDetails.status,
+                                )}`}>
+                                    {selectedBookingForDetails.status}
+                                </span>
+                                <h3 className="text-xl font-bold text-gray-900 mt-2">
+                                    Booking #{selectedBookingForDetails.id.slice(0, 8)}
+                                </h3>
+                                <p className="text-xs text-gray-500 font-mono">
+                                    Full ID: {selectedBookingForDetails.id}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setSelectedBookingForDetails(null)}
+                                className="text-gray-400 hover:text-gray-700 p-1 rounded-lg hover:bg-gray-100 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Customer Information */}
+                        <div className="bg-gray-50 p-4 rounded-xl space-y-2 border border-gray-100 text-sm">
+                            <h4 className="font-bold text-gray-400 uppercase text-xs">Customer Details</h4>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-600">Name</span>
+                                <span className="font-bold text-gray-900">
+                                    {selectedBookingForDetails.bookingSource === "direct"
+                                        ? selectedBookingForDetails.customerName || "Direct Walk-in"
+                                        : `${selectedBookingForDetails.user?.firstName || ""} ${selectedBookingForDetails.user?.lastName || ""}`.trim() || "Player"}
+                                </span>
+                            </div>
+                            {(selectedBookingForDetails.customerPhone || selectedBookingForDetails.user?.phone) && (
+                                <div className="flex justify-between items-center">
+                                    <span className="text-gray-600">Phone</span>
+                                    <a
+                                        href={`tel:${selectedBookingForDetails.customerPhone || selectedBookingForDetails.user?.phone}`}
+                                        className="font-bold text-[#E33E33] hover:underline flex items-center gap-1"
+                                    >
+                                        <Phone className="w-3.5 h-3.5" />
+                                        {selectedBookingForDetails.customerPhone || selectedBookingForDetails.user?.phone}
+                                    </a>
+                                </div>
+                            )}
+                            {selectedBookingForDetails.user?.email && (
+                                <div className="flex justify-between items-center">
+                                    <span className="text-gray-600">Email</span>
+                                    <span className="font-medium text-gray-700">{selectedBookingForDetails.user?.email}</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-600">Source</span>
+                                <span className="font-bold capitalize">{selectedBookingForDetails.bookingSource || "online"}</span>
+                            </div>
+                        </div>
+
+                        {/* Turf & Slot Information */}
+                        <div className="bg-gray-50 p-4 rounded-xl space-y-2 border border-gray-100 text-sm">
+                            <h4 className="font-bold text-gray-400 uppercase text-xs">Slot & Venue</h4>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-600">Turf</span>
+                                <span className="font-bold text-gray-900">{selectedBookingForDetails.turf?.name || "Turf"}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-600">Date</span>
+                                <span className="font-bold text-gray-900">
+                                    {new Date(selectedBookingForDetails.bookingDate).toLocaleDateString(undefined, {
+                                        weekday: "short",
+                                        year: "numeric",
+                                        month: "short",
+                                        day: "numeric",
+                                    })}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-600">Timing</span>
+                                <span className="font-bold text-gray-900">
+                                    {formatSlot12H(selectedBookingForDetails.startTime, selectedBookingForDetails.endTime)}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Financial Information */}
+                        <div className="bg-gray-50 p-4 rounded-xl space-y-2 border border-gray-100 text-sm">
+                            <h4 className="font-bold text-gray-400 uppercase text-xs">Payment Information</h4>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-600">Total Price</span>
+                                <span className="font-black text-lg text-[#E33E33]">₹{selectedBookingForDetails.totalPrice}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-600">Payment Status</span>
+                                <span className="font-bold capitalize text-emerald-700">
+                                    {(selectedBookingForDetails as any).paymentStatus || "Paid"}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Cancellation Reason if cancelled */}
+                        {selectedBookingForDetails.status === "cancelled" && (
+                            <div className="bg-red-50 p-4 rounded-xl border border-red-200 text-sm text-red-700 space-y-1">
+                                <h4 className="font-bold text-xs uppercase tracking-wider text-red-800">Cancellation Info</h4>
+                                <p className="text-xs">
+                                    {selectedBookingForDetails.cancellationReason || "Cancelled by owner or user"}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* WhatsApp confirmation button */}
+                        {((selectedBookingForDetails.bookingSource === "direct" &&
+                            selectedBookingForDetails.customerPhone) ||
+                            selectedBookingForDetails.user?.phone ||
+                            (selectedBookingForDetails as any).userPhone) && (
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    sendWhatsAppConfirmation(
+                                        selectedBookingForDetails,
+                                    )
+                                }
+                                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20ba59] text-white font-bold text-sm transition-colors shadow-xs"
+                            >
+                                <MessageCircle className="w-4 h-4" />
+                                Send Confirmation via WhatsApp
+                            </button>
+                        )}
+
+                        {/* Action buttons inside details modal */}
+                        <div className="pt-2 flex gap-3">
+                            {selectedBookingForDetails.status === "pending" && (
+                                <>
+                                    <button
+                                        onClick={async () => {
+                                            await handleUpdateStatus(selectedBookingForDetails.id, "confirmed");
+                                            setSelectedBookingForDetails(null);
+                                        }}
+                                        className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition-colors shadow-xs"
+                                    >
+                                        Confirm Booking
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            await handleUpdateStatus(selectedBookingForDetails.id, "cancelled");
+                                            setSelectedBookingForDetails(null);
+                                        }}
+                                        className="py-2.5 px-4 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-bold text-sm transition-colors border border-red-200"
+                                    >
+                                        Cancel
+                                    </button>
+                                </>
+                            )}
+                            {selectedBookingForDetails.status === "confirmed" && (
+                                <>
+                                    <button
+                                        onClick={async () => {
+                                            await handleUpdateStatus(selectedBookingForDetails.id, "completed");
+                                            setSelectedBookingForDetails(null);
+                                        }}
+                                        className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition-colors shadow-xs"
+                                    >
+                                        Mark as Completed
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            await handleUpdateStatus(selectedBookingForDetails.id, "cancelled");
+                                            setSelectedBookingForDetails(null);
+                                        }}
+                                        className="py-2.5 px-4 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-bold text-sm transition-colors border border-red-200"
+                                    >
+                                        Cancel & Refund
+                                    </button>
+                                </>
+                            )}
+                            <button
+                                onClick={() => setSelectedBookingForDetails(null)}
+                                className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm transition-colors"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Direct Booking Modal */}
             <DirectBookingModal

@@ -37,10 +37,18 @@ class PaymentService {
   }
 
   /// Fetch user payment history
-  Future<Map<String, dynamic>> history(String token) async {
+  Future<Map<String, dynamic>> history(
+    String token, {
+    int page = 1,
+    int limit = 10,
+  }) async {
     try {
+      final uri = Uri.parse('$_base/history').replace(queryParameters: {
+        'page': page.toString(),
+        'limit': limit.toString(),
+      });
       final res = await http.get(
-        Uri.parse('$_base/history'),
+        uri,
         headers: _headers(token),
       );
       return _handleResponse(res);

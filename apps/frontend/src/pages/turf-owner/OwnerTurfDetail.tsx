@@ -1,5 +1,5 @@
 import {
-    ArrowLeft, BookmarkPlus, Clock, Eye, EyeOff, Image, Mail, MapPin, Pencil, Phone, Save, Star, Trash2, X,
+    ArrowLeft, BookmarkPlus, Calendar, Clock, Eye, EyeOff, Image, Mail, MapPin, Pencil, Phone, Save, Star, Trash2, X,
 } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -346,6 +346,14 @@ export default function OwnerTurfDetail() {
                             </div>
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
+                            {!editing && (
+                                <button
+                                    onClick={() => navigate(`/owner/bookings?turfId=${turf.id}`)}
+                                    className="flex items-center gap-1.5 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl font-bold text-sm transition-colors border border-blue-200 shadow-xs"
+                                >
+                                    <Calendar className="w-4 h-4" /> View Bookings
+                                </button>
+                            )}
                             {!editing && (
                                 <button onClick={() => setShowDirectModal(true)}
                                     className="flex items-center gap-1.5 px-4 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl font-bold text-sm transition-colors border border-purple-200 shadow-xs">

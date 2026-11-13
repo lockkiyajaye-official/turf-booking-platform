@@ -6,12 +6,12 @@ import 'package:mobile/core/utils/helpers.dart';
 import 'package:mobile/data/models/turf_model.dart';
 import 'package:mobile/viewmodels/turf/owner_viewmodel.dart';
 
-void showDirectBookingModal(
+Future<void> showDirectBookingModal(
   BuildContext context, {
   required OwnerViewmodel vm,
   TurfModel? preselectedTurf,
 }) {
-  showModalBottomSheet(
+  return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,

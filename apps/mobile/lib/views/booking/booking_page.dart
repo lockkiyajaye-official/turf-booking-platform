@@ -21,6 +21,8 @@ class BookingPage extends StatefulWidget {
 class _BookingPageState extends State<BookingPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final ScrollController _activeScrollCtrl = ScrollController();
+  final ScrollController _pastScrollCtrl = ScrollController();
 
   final BookingViewmodel _vm = Get.isRegistered<BookingViewmodel>()
       ? Get.find<BookingViewmodel>()
@@ -30,11 +32,33 @@ class _BookingPageState extends State<BookingPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _activeScrollCtrl.addListener(_onActiveScroll);
+    _pastScrollCtrl.addListener(_onPastScroll);
     _vm.fetchMyBookings();
+  }
+
+  void _onActiveScroll() {
+    if (_activeScrollCtrl.hasClients &&
+        _activeScrollCtrl.position.pixels >=
+            _activeScrollCtrl.position.maxScrollExtent - 200) {
+      _vm.loadNextPage();
+    }
+  }
+
+  void _onPastScroll() {
+    if (_pastScrollCtrl.hasClients &&
+        _pastScrollCtrl.position.pixels >=
+            _pastScrollCtrl.position.maxScrollExtent - 200) {
+      _vm.loadNextPage();
+    }
   }
 
   @override
   void dispose() {
+    _activeScrollCtrl.removeListener(_onActiveScroll);
+    _pastScrollCtrl.removeListener(_onPastScroll);
+    _activeScrollCtrl.dispose();
+    _pastScrollCtrl.dispose();
     _tabController.dispose();
     super.dispose();
   }
@@ -146,12 +170,14 @@ class _BookingPageState extends State<BookingPage>
               isActive: true,
               onRefresh: _vm.fetchMyBookings,
               vm: _vm,
+              scrollController: _activeScrollCtrl,
             ),
             _BookingList(
               bookings: past,
               isActive: false,
               onRefresh: _vm.fetchMyBookings,
               vm: _vm,
+              scrollController: _pastScrollCtrl,
             ),
           ],
         );
@@ -247,12 +273,14 @@ class _BookingList extends StatelessWidget {
   final bool isActive;
   final Future<void> Function() onRefresh;
   final BookingViewmodel vm;
+  final ScrollController? scrollController;
 
   const _BookingList({
     required this.bookings,
     required this.isActive,
     required this.onRefresh,
     required this.vm,
+    this.scrollController,
   });
 
   @override
@@ -261,6 +289,7 @@ class _BookingList extends StatelessWidget {
       return RefreshIndicator(
         onRefresh: onRefresh,
         child: ListView(
+          controller: scrollController,
           children: [
             SizedBox(height: 120.h),
             Center(
@@ -277,11 +306,14 @@ class _BookingList extends StatelessWidget {
     final isTablet = context.isTablet;
     final columns = context.bookingGridColumns;
     final horizontalPad = isTablet ? 20.w : 16.w;
+    final hasMore = vm.bookingsHasMore.value;
+    final isFetchingMore = vm.isFetchingMoreBookings.value;
 
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: columns > 1
           ? GridView.builder(
+              controller: scrollController,
               padding: EdgeInsets.fromLTRB(
                 horizontalPad,
                 16.h,
@@ -294,22 +326,50 @@ class _BookingList extends StatelessWidget {
                 mainAxisSpacing: 14,
                 mainAxisExtent: 156,
               ),
-              itemCount: bookings.length,
-              itemBuilder: (context, index) => _BookingCard(
-                booking: bookings[index],
-                isActive: isActive,
-                vm: vm,
-              ),
+              itemCount: bookings.length + (hasMore ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index == bookings.length) {
+                  return Center(
+                    child: isFetchingMore
+                        ? const CircularProgressIndicator(
+                            color: _green,
+                            strokeWidth: 2,
+                          )
+                        : const SizedBox.shrink(),
+                  );
+                }
+                return _BookingCard(
+                  booking: bookings[index],
+                  isActive: isActive,
+                  vm: vm,
+                );
+              },
             )
           : ListView.separated(
+              controller: scrollController,
               padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
-              itemCount: bookings.length,
+              itemCount: bookings.length + (hasMore ? 1 : 0),
               separatorBuilder: (_, _) => SizedBox(height: 12.h),
-              itemBuilder: (context, index) => _BookingCard(
-                booking: bookings[index],
-                isActive: isActive,
-                vm: vm,
-              ),
+              itemBuilder: (context, index) {
+                if (index == bookings.length) {
+                  return Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16.h),
+                    child: Center(
+                      child: isFetchingMore
+                          ? const CircularProgressIndicator(
+                              color: _green,
+                              strokeWidth: 2,
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                  );
+                }
+                return _BookingCard(
+                  booking: bookings[index],
+                  isActive: isActive,
+                  vm: vm,
+                );
+              },
             ),
     );
   }

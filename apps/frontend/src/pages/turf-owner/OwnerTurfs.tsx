@@ -1,5 +1,6 @@
 import {
     BookmarkPlus,
+    Calendar,
     Edit3,
     Eye,
     EyeOff,
@@ -233,6 +234,9 @@ export default function OwnerTurfs() {
                                     onDirectBooking={() =>
                                         setDirectBookingTurfId(turf.id)
                                     }
+                                    onViewBookings={() =>
+                                        navigate(`/owner/bookings?turfId=${turf.id}`)
+                                    }
                                     onPublish={handlePublish}
                                     onUnpublish={handleUnpublish}
                                     onDelete={handleDelete}
@@ -278,6 +282,7 @@ interface TurfOwnerCardProps {
     isApproved: boolean;
     onView: () => void;
     onEdit: () => void;
+    onViewBookings: () => void;
     onDirectBooking: () => void;
     onPublish: (id: string) => void;
     onUnpublish: (id: string) => void;
@@ -289,6 +294,7 @@ function TurfOwnerCard({
     isApproved,
     onView,
     onEdit,
+    onViewBookings,
     onDirectBooking,
     onPublish,
     onUnpublish,
@@ -394,6 +400,13 @@ function TurfOwnerCard({
                             title="Edit Turf Details"
                         >
                             <Edit3 className="w-3.5 h-3.5" /> Edit
+                        </button>
+                        <button
+                            onClick={onViewBookings}
+                            title="View Bookings"
+                            className="p-2 text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors shrink-0 border border-blue-200/60"
+                        >
+                            <Calendar className="w-4 h-4" />
                         </button>
                         <button
                             onClick={onDirectBooking}

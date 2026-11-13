@@ -29,9 +29,14 @@ class OwnerViewmodel extends GetxController {
   // Pagination
   var bookingsPage = 1.obs;
   var bookingsHasMore = true.obs;
+  var myTurfsPage = 1.obs;
+  var myTurfsHasMore = true.obs;
+  var isFetchingMoreTurfs = false.obs;
   // Filters (reactive — UI binds to these)
   var bookingsStatusFilter = ''.obs; // '' means all
   var bookingsSearch = ''.obs;
+  var bookingsSourceFilter = ''.obs; // '' means all, 'online', 'direct'
+  var bookingsTurfFilter = ''.obs; // '' means all, or turfId
 
   // Finances & Payout Details
   var walletBalance = 0.0.obs;
@@ -90,7 +95,13 @@ class OwnerViewmodel extends GetxController {
     }
   }
 
-  String get _token => Get.find<LocalStorageService>().getToken() ?? '';
+  String get _token {
+    if (Get.isRegistered<AuthViewmodel>()) {
+      final t = Get.find<AuthViewmodel>().token.value;
+      if (t.isNotEmpty) return t;
+    }
+    return Get.find<LocalStorageService>().getToken() ?? '';
+  }
 
   void _showError(String msg) => Get.snackbar(
     'Error',
@@ -146,22 +157,72 @@ class OwnerViewmodel extends GetxController {
   Future<void> fetchMyTurfs() async {
     try {
       isTurfsLoading.value = true;
-      final res = await _turfService.findMyTurfs(_token);
+      myTurfsPage.value = 1;
+      myTurfsHasMore.value = true;
+      final res = await _turfService.findMyTurfs(_token, page: 1, limit: 10);
       if (res['success']) {
         final data = res['data'];
         List<dynamic> list = [];
         if (data is List) {
           list = data;
-        } else if (data is Map && data['turfs'] is List) {
-          list = data['turfs'];
+        } else if (data is Map) {
+          if (data['items'] is List) {
+            list = data['items'];
+          } else if (data['turfs'] is List) {
+            list = data['turfs'];
+          }
         }
         myTurfs.value = list
             .map((e) => TurfModel.fromJson(e as Map<String, dynamic>))
             .toList();
+        if (data is Map && data.containsKey('hasMore')) {
+          myTurfsHasMore.value = data['hasMore'] == true;
+        } else {
+          myTurfsHasMore.value = list.length >= 10;
+        }
       }
     } catch (_) {
     } finally {
       isTurfsLoading.value = false;
+    }
+  }
+
+  Future<void> loadNextTurfsPage() async {
+    if (!myTurfsHasMore.value || isFetchingMoreTurfs.value) return;
+    try {
+      isFetchingMoreTurfs.value = true;
+      final nextPage = myTurfsPage.value + 1;
+      final res = await _turfService.findMyTurfs(_token, page: nextPage, limit: 10);
+      if (res['success']) {
+        final data = res['data'];
+        List<dynamic> list = [];
+        if (data is List) {
+          list = data;
+        } else if (data is Map) {
+          if (data['items'] is List) {
+            list = data['items'];
+          } else if (data['turfs'] is List) {
+            list = data['turfs'];
+          }
+        }
+        final newTurfs = list
+            .map((e) => TurfModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+
+        final existingIds = myTurfs.map((t) => t.id).toSet();
+        final fresh = newTurfs.where((t) => !existingIds.contains(t.id)).toList();
+        myTurfs.addAll(fresh);
+
+        myTurfsPage.value = nextPage;
+        if (data is Map && data.containsKey('hasMore')) {
+          myTurfsHasMore.value = data['hasMore'] == true;
+        } else {
+          myTurfsHasMore.value = list.length >= 10;
+        }
+      }
+    } catch (_) {
+    } finally {
+      isFetchingMoreTurfs.value = false;
     }
   }
 
@@ -213,9 +274,16 @@ class OwnerViewmodel extends GetxController {
   // ── Bookings ─────────────────────────────────────────────
 
   /// Reset filters/pagination and reload page 1.
-  Future<void> fetchAllBookings({String? status, String? search}) async {
+  Future<void> fetchAllBookings({
+    String? status,
+    String? search,
+    String? source,
+    String? turfId,
+  }) async {
     if (status != null) bookingsStatusFilter.value = status;
     if (search != null) bookingsSearch.value = search;
+    if (source != null) bookingsSourceFilter.value = source;
+    if (turfId != null) bookingsTurfFilter.value = turfId;
     bookingsPage.value = 1;
     bookingsHasMore.value = true;
     await _loadBookingsPage(1);
@@ -239,10 +307,19 @@ class OwnerViewmodel extends GetxController {
         _token,
         page: page,
         limit: 10,
-        status: bookingsStatusFilter.value.isEmpty
+        status: bookingsStatusFilter.value.isEmpty ||
+                bookingsStatusFilter.value == 'all'
             ? null
             : bookingsStatusFilter.value,
         search: bookingsSearch.value.isEmpty ? null : bookingsSearch.value,
+        source: bookingsSourceFilter.value.isEmpty ||
+                bookingsSourceFilter.value == 'all'
+            ? null
+            : bookingsSourceFilter.value,
+        turfId: bookingsTurfFilter.value.isEmpty ||
+                bookingsTurfFilter.value == 'all'
+            ? null
+            : bookingsTurfFilter.value,
       );
 
       if (res['success']) {
@@ -284,23 +361,34 @@ class OwnerViewmodel extends GetxController {
     }
   }
 
-  Future<void> confirmBooking(String id) async {
+  Future<bool> updateBookingStatus(String id, String status) async {
     try {
       final res = await _bookingService.updateStatus(
         token: _token,
         id: id,
-        status: 'confirmed',
+        status: status,
       );
       if (res['success']) {
-        _showSuccess('Booking confirmed');
+        _showSuccess('Booking marked as $status');
         await fetchAllBookings();
         _computeStats();
+        return true;
       } else {
-        _showError(res['message'] ?? 'Failed to confirm');
+        _showError(res['message'] ?? 'Failed to update status');
+        return false;
       }
     } catch (e) {
       _showError(e.toString());
+      return false;
     }
+  }
+
+  Future<void> confirmBooking(String id) async {
+    await updateBookingStatus(id, 'confirmed');
+  }
+
+  Future<void> completeBooking(String id) async {
+    await updateBookingStatus(id, 'completed');
   }
 
   Future<void> cancelBooking(String id, {String? reason}) async {
@@ -380,8 +468,14 @@ class OwnerViewmodel extends GetxController {
   Future<List<String>> fetchBookedSlots(String turfId, String date) async {
     try {
       final res = await _turfService.getBookedSlots(id: turfId, date: date);
-      if (res['success'] == true && res['data'] is List) {
-        return (res['data'] as List).map((s) => s.toString()).toList();
+      if (res['success'] == true) {
+        final raw = res['data'];
+        final List list = raw is List
+            ? raw
+            : (raw is Map && raw['data'] is List
+                ? raw['data']
+                : (raw is Map && raw['items'] is List ? raw['items'] : []));
+        return list.map((s) => s.toString()).toList();
       }
     } catch (_) {}
     return [];
@@ -406,10 +500,13 @@ class OwnerViewmodel extends GetxController {
           _mergePayoutDetailsFromMap(data['payoutDetails'] as Map);
         }
 
-        final list = data['payouts'] ?? data['history'] ?? [];
-        if (list is List) {
-          payoutHistory.value = list.cast<Map<String, dynamic>>();
-        }
+        final rawList = data['payouts'] ?? data['history'];
+        final List list = rawList is List
+            ? rawList
+            : (rawList is Map && rawList['items'] is List
+                ? rawList['items']
+                : []);
+        payoutHistory.value = list.cast<Map<String, dynamic>>();
       }
     } catch (_) {
     } finally {

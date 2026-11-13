@@ -30,7 +30,10 @@ class PaymentViewmodel extends GetxController {
       final response = await _paymentService.history(token);
 
       if (response['success']) {
-        final List data = response['data'] ?? [];
+        final raw = response['data'];
+        final List data = raw is List
+            ? raw
+            : (raw is Map && raw['items'] is List ? raw['items'] : []);
         paymentHistory.value = data
             .map((json) => PaymentModel.fromJson(json))
             .toList();

@@ -31,7 +31,10 @@ class _ProfilePageState extends State<ProfilePage> {
         vm.currentUser['role']?.toString().toLowerCase() == 'turf_owner';
     if (isOwner) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        Get.find<OwnerViewmodel>().fetchFinancesSummary();
+        final oVm = Get.isRegistered<OwnerViewmodel>()
+            ? Get.find<OwnerViewmodel>()
+            : Get.put(OwnerViewmodel(), permanent: true);
+        oVm.fetchFinancesSummary();
       });
     }
   }
@@ -41,7 +44,9 @@ class _ProfilePageState extends State<ProfilePage> {
     final colors = Theme.of(context).extension<AppColors>()!;
     final textTheme = Theme.of(context).textTheme;
     final vm = Get.find<AuthViewmodel>();
-    final ownerVm = Get.find<OwnerViewmodel>();
+    final ownerVm = Get.isRegistered<OwnerViewmodel>()
+        ? Get.find<OwnerViewmodel>()
+        : Get.put(OwnerViewmodel(), permanent: true);
 
     return Scaffold(
       backgroundColor: colors.white,

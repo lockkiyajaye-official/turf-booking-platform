@@ -19,6 +19,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   final List<String> _filters = [
     'All',
     'Football',
@@ -31,13 +32,24 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Get.find<TurfViewmodel>().fetchAllTurfs();
     });
   }
 
+  void _onScroll() {
+    if (_scrollController.hasClients &&
+        _scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200) {
+      Get.find<TurfViewmodel>().loadNextTurfsPage();
+    }
+  }
+
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -275,6 +287,7 @@ class _HomePageState extends State<HomePage> {
             // handles all scrolling.
             Expanded(
               child: CustomScrollView(
+                controller: _scrollController,
                 slivers: [
                   // Banner
                   SliverToBoxAdapter(child: SizedBox(height: 16.h)),
@@ -454,54 +467,74 @@ class _HomePageState extends State<HomePage> {
 
                         // Cards
                         final columns = context.turfGridColumns;
-                        return Padding(
-                          padding: EdgeInsets.fromLTRB(
-                            isTablet ? 20.w : 16.w,
-                            4.h,
-                            isTablet ? 20.w : 16.w,
-                            24.h,
-                          ),
-                          child: columns > 1
-                              ? GridView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  gridDelegate:
-                                      SliverGridDelegateWithFixedCrossAxisCount(
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.fromLTRB(
+                                isTablet ? 20.w : 16.w,
+                                4.h,
+                                isTablet ? 20.w : 16.w,
+                                12.h,
+                              ),
+                              child: columns > 1
+                                  ? GridView.builder(
+                                      shrinkWrap: true,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      gridDelegate:
+                                          SliverGridDelegateWithFixedCrossAxisCount(
                                         crossAxisCount: columns,
                                         crossAxisSpacing: 16,
                                         mainAxisSpacing: 16,
                                         mainAxisExtent: 168,
                                       ),
-                                  itemCount: filteredTurfs.length,
-                                  itemBuilder: (context, i) {
-                                    final turf = filteredTurfs[i];
-                                    return VenueCard(
-                                      turf: turf,
-                                      margin: EdgeInsets.zero,
-                                      distanceKm: vm.getDistanceToTurf(turf),
-                                      onBookNow: () => Get.to(
-                                        () => TurfDetailsPage(turf: turf),
-                                      ),
-                                    );
-                                  },
-                                )
-                              : Column(
-                                  children: [
-                                    for (final turf in filteredTurfs)
-                                      Padding(
-                                        padding: EdgeInsets.only(bottom: 12.h),
-                                        child: VenueCard(
+                                      itemCount: filteredTurfs.length,
+                                      itemBuilder: (context, i) {
+                                        final turf = filteredTurfs[i];
+                                        return VenueCard(
                                           turf: turf,
-                                          distanceKm: vm.getDistanceToTurf(
-                                            turf,
-                                          ),
+                                          margin: EdgeInsets.zero,
+                                          distanceKm:
+                                              vm.getDistanceToTurf(turf),
                                           onBookNow: () => Get.to(
                                             () => TurfDetailsPage(turf: turf),
                                           ),
-                                        ),
-                                      ),
-                                  ],
+                                        );
+                                      },
+                                    )
+                                  : Column(
+                                      children: [
+                                        for (final turf in filteredTurfs)
+                                          Padding(
+                                            padding:
+                                                EdgeInsets.only(bottom: 12.h),
+                                            child: VenueCard(
+                                              turf: turf,
+                                              distanceKm:
+                                                  vm.getDistanceToTurf(turf),
+                                              onBookNow: () => Get.to(
+                                                () =>
+                                                    TurfDetailsPage(turf: turf),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                            ),
+                            if (vm.isFetchingMoreTurfs.value)
+                              Padding(
+                                padding: EdgeInsets.only(bottom: 24.h),
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    color: colors.primary,
+                                    strokeWidth: 2,
+                                  ),
                                 ),
+                              )
+                            else
+                              SizedBox(height: 12.h),
+                          ],
                         );
                       },
                     ),

@@ -67,9 +67,14 @@ class TurfService {
     double? minPrice,
     double? maxPrice,
     String? amenities,
+    int page = 1,
+    int limit = 10,
   }) async {
     try {
-      final queryParams = <String, String>{};
+      final queryParams = <String, String>{
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
       if (search != null && search.isNotEmpty) queryParams['search'] = search;
       if (minPrice != null) queryParams['minPrice'] = minPrice.toString();
       if (maxPrice != null) queryParams['maxPrice'] = maxPrice.toString();
@@ -83,10 +88,21 @@ class TurfService {
     }
   }
 
-  Future<Map<String, dynamic>> findMyTurfs(String token) async {
+  Future<Map<String, dynamic>> findMyTurfs(
+    String token, {
+    int page = 1,
+    int limit = 10,
+    String? search,
+  }) async {
     try {
+      final queryParams = <String, String>{
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
+      if (search != null && search.isNotEmpty) queryParams['search'] = search;
+      final uri = Uri.parse('$_base/my-turfs').replace(queryParameters: queryParams);
       final response = await http.get(
-        Uri.parse('$_base/my-turfs'),
+        uri,
         headers: _headers(token),
       );
       return _handleResponse(response);

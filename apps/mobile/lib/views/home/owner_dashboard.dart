@@ -8,6 +8,7 @@ import 'package:mobile/views/booking/add_turf_page.dart';
 import 'package:mobile/views/booking/my_turf_page.dart';
 import 'package:mobile/views/booking/owner_booking_page.dart';
 import 'package:mobile/views/booking/widgets/direct_booking_sheet.dart';
+import 'package:mobile/views/booking/widgets/owner_booking_details_sheet.dart';
 import 'package:mobile/views/notifications/notificaiton_page.dart';
 
 class OwnerDashboardPage extends StatelessWidget {
@@ -262,6 +263,7 @@ class OwnerDashboardPage extends StatelessWidget {
                           booking: booking,
                           colors: colors,
                           textTheme: textTheme,
+                          vm: vm,
                         );
                       }, childCount: bookingCount),
                       gridDelegate:
@@ -285,6 +287,7 @@ class OwnerDashboardPage extends StatelessWidget {
                           booking: booking,
                           colors: colors,
                           textTheme: textTheme,
+                          vm: vm,
                         ),
                       );
                     },
@@ -436,11 +439,13 @@ class _BookingRow extends StatelessWidget {
   final Map<String, dynamic> booking;
   final AppColors colors;
   final TextTheme textTheme;
+  final OwnerViewmodel vm;
 
   const _BookingRow({
     required this.booking,
     required this.colors,
     required this.textTheme,
+    required this.vm,
   });
 
   Color _statusColor(String status) {
@@ -484,89 +489,100 @@ class _BookingRow extends StatelessWidget {
         booking['price'] ??
         0;
 
-    return Container(
-      padding: EdgeInsets.all(14.w),
-      decoration: BoxDecoration(
-        color: colors.white,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => showOwnerBookingDetailsSheet(
+          context,
+          booking: booking,
+          vm: vm,
+        ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE8E8E8)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: colors.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              Icons.sports_soccer_rounded,
-              color: colors.primary,
-              size: 20,
-            ),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  turfName,
-                  style: textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: colors.textTitle,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 2.h),
-                Text(
-                  '$userName • $date',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colors.textGrey,
-                    fontSize: 12.sp,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '₹$amount',
-                style: textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: colors.textTitle,
-                ),
-              ),
-              SizedBox(height: 4.h),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
-                decoration: BoxDecoration(
-                  color: _statusColor(status).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  status[0].toUpperCase() + status.substring(1),
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w600,
-                    color: _statusColor(status),
-                  ),
-                ),
+        child: Container(
+          padding: EdgeInsets.all(14.w),
+          decoration: BoxDecoration(
+            color: colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE8E8E8)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
-        ],
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.sports_soccer_rounded,
+                  color: colors.primary,
+                  size: 20,
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      turfName,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: colors.textTitle,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      '$userName • $date',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colors.textGrey,
+                        fontSize: 12.sp,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '₹$amount',
+                    style: textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colors.textTitle,
+                    ),
+                  ),
+                  SizedBox(height: 4.h),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                    decoration: BoxDecoration(
+                      color: _statusColor(status).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      status[0].toUpperCase() + status.substring(1),
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w600,
+                        color: _statusColor(status),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
