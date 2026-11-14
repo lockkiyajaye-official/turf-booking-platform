@@ -72,7 +72,6 @@ class AppColors extends ThemeExtension<AppColors> {
 
   final Color verified;
 
-
   const AppColors({
     required this.textPrimary,
     required this.textSecondary,
@@ -136,7 +135,7 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.green800,
 
     required this.white,
-    required this.verified
+    required this.verified,
   });
 
   @override

@@ -71,290 +71,279 @@ class _LoginPageState extends State<LoginPage> {
             constraints: const BoxConstraints(maxWidth: 480),
             child: LayoutBuilder(
               builder: (context, constraints) {
-            return SingleChildScrollView(
-              keyboardDismissBehavior:
-                  ScrollViewKeyboardDismissBehavior.onDrag,
-              child: ConstrainedBox(
-                constraints:
-                    BoxConstraints(minHeight: constraints.maxHeight),
-                child: IntrinsicHeight(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // ── SKIP TO GUEST MODE ──
-                        Align(
-                          alignment: Alignment.topRight,
-                          child: TextButton.icon(
-                            onPressed: () => controller.enterGuestMode(),
-                            icon: Text(
-                              'Skip',
-                              style: textTheme.bodyMedium?.copyWith(
-                                color: colors.textGrey,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            label: Icon(
-                              Icons.arrow_forward_ios_rounded,
-                              size: 13.sp,
-                              color: colors.textGrey,
-                            ),
-                          ),
-                        ),
-
-                        const Spacer(flex: 1),
-
-                        // ── LOGO with subtle shadow to lift it off the page ──
-                        Container(
-                          width: 80.w,
-                          height: 80.h,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFFE43434).withOpacity(0.15),
-                                blurRadius: 24,
-                                spreadRadius: 2,
-                                offset: const Offset(0, 6),
-                              ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: Image.asset(
-                              AppAssets.appLogo,
-                              width: 80.w,
-                              height: 80.h,
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                        ),
-
-                        SizedBox(height: 16.h),
-                        Text('Welcome Back', style: textTheme.titleLarge),
-                        SizedBox(height: 6.h),
-                        Text(
-                          'Login to continue your game',
-                          style: textTheme.bodyMedium
-                              ?.copyWith(color: colors.textGrey),
-                          textAlign: TextAlign.center,
-                        ),
-
-                        const Spacer(flex: 2),
-
-                        // ── FORM GROUP with a light card background ──
-                        Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.all(20.w),
-                          decoration: BoxDecoration(
-                            color: colors.background,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: colors.textGrey.withOpacity(0.15),
-                              width: 1,
-                            ),
-                            // Very subtle shadow so the form feels grounded
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.04),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Email ",
-                                style: textTheme.bodySmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: colors.textTitle,
+                return SingleChildScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
+                    child: IntrinsicHeight(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 24.w),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // ── SKIP TO GUEST MODE ──
+                            Align(
+                              alignment: Alignment.topRight,
+                              child: TextButton.icon(
+                                onPressed: () => controller.enterGuestMode(),
+                                icon: Text(
+                                  'Skip',
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: colors.textGrey,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              ),
-                              SizedBox(height: 8.h),
-
-                              MyTextField(
-                                controller: _identityController,
-                                height: 50.h,
-                                width: double.infinity,
-                                type: TextInputType.text,
-                                fillColor: colors.background,
-                                hintText:
-                                    "Enter your email",
-                                onChanged: _onIdentityChanged,
-                                prefixIcon: Icon(
-                                  _isPhone
-                                      ? Icons.phone_outlined
-                                      : Icons.person_outline,
+                                label: Icon(
+                                  Icons.arrow_forward_ios_rounded,
+                                  size: 13.sp,
                                   color: colors.textGrey,
                                 ),
                               ),
-
-                              SizedBox(height: 14.h),
-
-                              Obx(() {
-                                final isSending = controller.isSendingOtp.value;
-                                final isGoogle = controller.isGoogleLoading.value;
-                                return MyButtons(
-                                  text: "Send OTP",
-                                  loadingText: "Sending OTP...",
-                                  isLoading: isSending,
-                                  height: 50.h,
-                                  width: double.infinity,
-                                  onTap: (isSending || isGoogle)
-                                      ? null
-                                      : () => _handleSendOtp(controller),
-                                  textStyle: textTheme.bodyMedium
-                                      ?.copyWith(color: Colors.white),
-                                  backgroundColor: const Color(0xFFE43434),
-                                );
-                              }),
-                            ],
-                          ),
-                        ),
-
-                        SizedBox(height: 24.h),
-
-                        // ── DIVIDER ──
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Container(
-                                  height: 1.h, color: colors.textGrey.withOpacity(0.4)),
                             ),
-                            Padding(
-                              padding:
-                                  EdgeInsets.symmetric(horizontal: 12.w),
-                              child: Text(
-                                "Or sign in with",
-                                style: textTheme.bodySmall?.copyWith(
-                                    color: colors.textTitle),
+
+                            const Spacer(flex: 1),
+
+                            // ── LOGO with subtle shadow to lift it off the page ──
+                            Container(
+                              width: 80.w,
+                              height: 80.h,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(
+                                      0xFFE43434,
+                                    ).withValues(alpha: 0.15),
+                                    blurRadius: 24,
+                                    spreadRadius: 2,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: Image.asset(
+                                  AppAssets.appLogo,
+                                  width: 80.w,
+                                  height: 80.h,
+                                  fit: BoxFit.contain,
+                                ),
                               ),
                             ),
-                            Expanded(
-                              child: Container(
-                                  height: 1.h, color: colors.textGrey.withOpacity(0.4)),
+
+                            SizedBox(height: 16.h),
+                            Text('Welcome Back', style: textTheme.titleLarge),
+                            SizedBox(height: 6.h),
+                            Text(
+                              'Login to continue your game',
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colors.textGrey,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
-                          ],
-                        ),
 
-                        SizedBox(height: 20.h),
+                            const Spacer(flex: 2),
 
-                        // ── SOCIAL LOGINS (Google & Apple) ──
-                        Obx(() {
-                          final isSending = controller.isSendingOtp.value;
-                          final isGoogle = controller.isGoogleLoading.value;
-                          final isApple = controller.isAppleLoading.value;
-                          final isBusy = isSending || isGoogle || isApple;
-
-                          if (Platform.isIOS) {
-                            return Column(
-                              children: [
-                                SocialLogin(
-                                  text: "Continue with Apple",
-                                  icon: Icons.apple,
-                                  iconColor: Colors.white,
-                                  textColor: Colors.white,
-                                  backgroundColor: Colors.black,
-                                  borderColor: Colors.black,
-                                  width: double.infinity,
-                                  isLoading: isApple,
-                                  loadingText: "Signing in with Apple...",
-                                  onTap: isBusy
-                                      ? null
-                                      : () => controller.loginWithApple(),
+                            // ── FORM GROUP with a light card background ──
+                            Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.all(20.w),
+                              decoration: BoxDecoration(
+                                color: colors.background,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: colors.textGrey.withValues(
+                                    alpha: 0.15,
+                                  ),
+                                  width: 1,
                                 ),
-                                SizedBox(height: 12.h),
-                                SocialLogin(
-                                  text: "Continue with Google",
-                                  asset: AppAssets.google,
-                                  width: double.infinity,
-                                  isLoading: isGoogle,
-                                  loadingText: "Signing in with Google...",
-                                  onTap: isBusy
-                                      ? null
-                                      : () => controller.loginWithGoogle(),
+                                // Very subtle shadow so the form feels grounded
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.04),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Email ",
+                                    style: textTheme.bodySmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: colors.textTitle,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8.h),
+
+                                  MyTextField(
+                                    controller: _identityController,
+                                    height: 50.h,
+                                    width: double.infinity,
+                                    type: TextInputType.text,
+                                    fillColor: colors.background,
+                                    hintText: "Enter your email",
+                                    onChanged: _onIdentityChanged,
+                                    prefixIcon: Icon(
+                                      _isPhone
+                                          ? Icons.phone_outlined
+                                          : Icons.person_outline,
+                                      color: colors.textGrey,
+                                    ),
+                                  ),
+
+                                  SizedBox(height: 14.h),
+
+                                  Obx(() {
+                                    final isSending =
+                                        controller.isSendingOtp.value;
+                                    final isGoogle =
+                                        controller.isGoogleLoading.value;
+                                    return MyButtons(
+                                      text: "Send OTP",
+                                      loadingText: "Sending OTP...",
+                                      isLoading: isSending,
+                                      height: 50.h,
+                                      width: double.infinity,
+                                      onTap: (isSending || isGoogle)
+                                          ? null
+                                          : () => _handleSendOtp(controller),
+                                      textStyle: textTheme.bodyMedium?.copyWith(
+                                        color: Colors.white,
+                                      ),
+                                      backgroundColor: const Color(0xFFE43434),
+                                    );
+                                  }),
+                                ],
+                              ),
+                            ),
+
+                            SizedBox(height: 24.h),
+
+                            // ── DIVIDER ──
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    height: 1.h,
+                                    color: colors.textGrey.withValues(
+                                      alpha: 0.4,
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 12.w,
+                                  ),
+                                  child: Text(
+                                    "Or sign in with",
+                                    style: textTheme.bodySmall?.copyWith(
+                                      color: colors.textTitle,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Container(
+                                    height: 1.h,
+                                    color: colors.textGrey.withValues(
+                                      alpha: 0.4,
+                                    ),
+                                  ),
                                 ),
                               ],
-                            );
-                          }
-
-                          return SocialLogin(
-                            text: "Google",
-                            asset: AppAssets.google,
-                            isLoading: isGoogle,
-                            onTap: isBusy
-                                ? null
-                                : () => controller.loginWithGoogle(),
-                          );
-                        }),
-
-                        SizedBox(height: 14.h),
-
-                        // ── BROWSE AS GUEST BUTTON ──
-                        OutlinedButton.icon(
-                          onPressed: () => controller.enterGuestMode(),
-                          icon: Icon(
-                            Icons.explore_outlined,
-                            color: colors.primary,
-                            size: 18.sp,
-                          ),
-                          label: Text(
-                            "Continue as Guest",
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: colors.primary,
-                              fontWeight: FontWeight.w600,
                             ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: Size(double.infinity, 50.h),
-                            side: BorderSide(
-                              color: colors.primary.withOpacity(0.5),
-                              width: 1.2,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
 
-                        const Spacer(flex: 3),
+                            SizedBox(height: 20.h),
 
-                        // ── SIGN UP — anchored at bottom ──
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Don't have an account?",
-                              style: textTheme.bodySmall
-                                  ?.copyWith(color: colors.textGrey),
+                            // ── SOCIAL & GUEST LOGINS (Google, Apple, Guest) ──
+                            Obx(() {
+                              final isSending = controller.isSendingOtp.value;
+                              final isGoogle = controller.isGoogleLoading.value;
+                              final isApple = controller.isAppleLoading.value;
+                              final isBusy = isSending || isGoogle || isApple;
+
+                              return Column(
+                                children: [
+                                  if (Platform.isIOS) ...[
+                                    SocialLogin(
+                                      text: "Continue with Apple",
+                                      icon: Icons.apple,
+                                      iconColor: Colors.white,
+                                      textColor: Colors.white,
+                                      backgroundColor: Colors.black,
+                                      borderColor: Colors.black,
+                                      width: double.infinity,
+                                      isLoading: isApple,
+                                      loadingText: "Signing in with Apple...",
+                                      onTap: isBusy
+                                          ? null
+                                          : () => controller.loginWithApple(),
+                                    ),
+                                    SizedBox(height: 12.h),
+                                  ],
+                                  SocialLogin(
+                                    text: "Continue with Google",
+                                    asset: AppAssets.google,
+                                    width: double.infinity,
+                                    isLoading: isGoogle,
+                                    loadingText: "Signing in with Google...",
+                                    onTap: isBusy
+                                        ? null
+                                        : () => controller.loginWithGoogle(),
+                                  ),
+                                  SizedBox(height: 12.h),
+                                  SocialLogin(
+                                    text: "Continue as Guest",
+                                    icon: Icons.explore_outlined,
+                                    width: double.infinity,
+                                    onTap: isBusy
+                                        ? null
+                                        : () => controller.enterGuestMode(),
+                                  ),
+                                ],
+                              );
+                            }),
+
+                            const Spacer(flex: 3),
+
+                            // ── SIGN UP — anchored at bottom ──
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "Don't have an account?",
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: colors.textGrey,
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () =>
+                                      Get.toNamed(RoutePaths.signup),
+                                  child: const Text(
+                                    "Sign Up",
+                                    style: TextStyle(color: Color(0xFFE43434)),
+                                  ),
+                                ),
+                              ],
                             ),
-                            TextButton(
-                              onPressed: () =>
-                                  Get.toNamed(RoutePaths.signup),
-                              child: const Text(
-                                "Sign Up",
-                                style:
-                                    TextStyle(color: Color(0xFFE43434)),
-                              ),
-                            ),
+
+                            SizedBox(height: 8.h),
                           ],
                         ),
-
-                        SizedBox(height: 8.h),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ),
-            );
-          },
+                );
+              },
+            ),
+          ),
         ),
       ),
-    ),
-  ),
-);
-}
+    );
+  }
 }

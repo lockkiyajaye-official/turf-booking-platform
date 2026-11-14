@@ -39,7 +39,7 @@ class FloatingNavBar extends StatelessWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, -2),
           ),
@@ -101,11 +101,7 @@ class _NavBarItem extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              item.icon,
-              color: color,
-              size: 22.sp,
-            ),
+            Icon(item.icon, color: color, size: 22.sp),
             SizedBox(height: 4.h),
             Text(
               item.label,

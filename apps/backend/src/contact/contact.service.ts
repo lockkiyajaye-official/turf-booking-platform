@@ -32,10 +32,26 @@ export class ContactService {
     return savedMessage;
   }
 
-  async findAll(): Promise<ContactMessage[]> {
-    return await this.contactRepository.find({
+  async findAll(page?: number, limit?: number) {
+    const pageNum = page && page > 0 ? Number(page) : 1;
+    const limitNum = limit && limit > 0 ? Number(limit) : 10;
+    const skip = (pageNum - 1) * limitNum;
+
+    const [items, total] = await this.contactRepository.findAndCount({
       order: { createdAt: 'DESC' },
+      skip,
+      take: limitNum,
     });
+    const totalPages = Math.ceil(total / limitNum);
+
+    return {
+      items,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPages,
+      hasMore: pageNum < totalPages,
+    };
   }
 
   async findByUser(userId?: string, email?: string): Promise<ContactMessage[]> {

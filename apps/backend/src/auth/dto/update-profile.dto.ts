@@ -19,6 +19,10 @@ export class UpdateProfileDto {
   phone?: string;
 
   @IsOptional()
+  @IsString()
+  otp?: string;
+
+  @IsOptional()
   @IsDateString()
   dateOfBirth?: string;
 

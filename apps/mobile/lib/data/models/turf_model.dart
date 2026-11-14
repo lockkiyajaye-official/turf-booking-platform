@@ -1,4 +1,5 @@
 import 'package:mobile/data/models/user_model.dart';
+import 'package:mobile/data/services/uploadcare_service.dart';
 
 class TurfModel {
   final String id;
@@ -102,6 +103,8 @@ class TurfModel {
           : [],
       images: json['images'] != null
           ? List<String>.from(json['images'])
+              .map((u) => UploadcareService.normalizeCdnUrl(u))
+              .toList()
           : [],
       availableSlots: json['availableSlots'] != null
           ? List<String>.from(json['availableSlots'])

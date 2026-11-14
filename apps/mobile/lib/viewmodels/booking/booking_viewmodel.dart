@@ -12,6 +12,11 @@ class BookingViewmodel extends GetxController {
   var myBookings = <BookingModel>[].obs;
   var selectedBooking = Rxn<BookingModel>();
 
+  // Pagination state
+  var bookingsPage = 1.obs;
+  var bookingsHasMore = true.obs;
+  var isFetchingMoreBookings = false.obs;
+
   Future<void> fetchMyBookings() async {
     final token = _authViewmodel.token.value;
     if (token.isEmpty) {
@@ -20,14 +25,29 @@ class BookingViewmodel extends GetxController {
 
     try {
       isLoading.value = true;
-      final response = await _bookingService.findAll(token);
+      bookingsPage.value = 1;
+      bookingsHasMore.value = true;
+      final response = await _bookingService.findAll(token, page: 1, limit: 10);
 
       if (response['success']) {
-        final responseData = response['data'];
-        final List data = (responseData is Map ? responseData['items'] : responseData) ?? [];
-        myBookings.value = data.map((json) => BookingModel.fromJson(json)).toList();
+        final raw = response['data'];
+        final List data = raw is List
+            ? raw
+            : (raw is Map && raw['items'] is List ? raw['items'] : []);
+        myBookings.value = data
+            .map((json) => BookingModel.fromJson(json))
+            .toList();
+        if (raw is Map && raw.containsKey('hasMore')) {
+          bookingsHasMore.value = raw['hasMore'] == true;
+        } else {
+          bookingsHasMore.value = data.length >= 10;
+        }
       } else {
-        Get.snackbar('Error', response['message'] ?? 'Failed to fetch bookings', backgroundColor: Colors.red.shade100);
+        Get.snackbar(
+          'Error',
+          response['message'] ?? 'Failed to fetch bookings',
+          backgroundColor: Colors.red.shade100,
+        );
       }
     } catch (e) {
       Get.snackbar('Error', e.toString(), backgroundColor: Colors.red.shade100);
@@ -36,23 +56,73 @@ class BookingViewmodel extends GetxController {
     }
   }
 
+  Future<void> loadNextPage() async {
+    if (!bookingsHasMore.value || isFetchingMoreBookings.value) return;
+    final token = _authViewmodel.token.value;
+    if (token.isEmpty) return;
+
+    try {
+      isFetchingMoreBookings.value = true;
+      final nextPage = bookingsPage.value + 1;
+      final response = await _bookingService.findAll(token, page: nextPage, limit: 10);
+
+      if (response['success']) {
+        final raw = response['data'];
+        final List data = raw is List
+            ? raw
+            : (raw is Map && raw['items'] is List ? raw['items'] : []);
+        final newBookings = data.map((json) => BookingModel.fromJson(json)).toList();
+
+        final existingIds = myBookings.map((b) => b.id).toSet();
+        final fresh = newBookings.where((b) => !existingIds.contains(b.id)).toList();
+        myBookings.addAll(fresh);
+
+        bookingsPage.value = nextPage;
+        if (raw is Map && raw.containsKey('hasMore')) {
+          bookingsHasMore.value = raw['hasMore'] == true;
+        } else {
+          bookingsHasMore.value = data.length >= 10;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading next bookings page: $e');
+    } finally {
+      isFetchingMoreBookings.value = false;
+    }
+  }
+
   Future<void> createBooking(Map<String, dynamic> data) async {
     final token = _authViewmodel.token.value;
     if (token.isEmpty) {
-      Get.snackbar('Error', 'Not authenticated', backgroundColor: Colors.red.shade100);
+      Get.snackbar(
+        'Error',
+        'Not authenticated',
+        backgroundColor: Colors.red.shade100,
+      );
       return;
     }
 
     try {
       isLoading.value = true;
-      final response = await _bookingService.createBooking(token: token, data: data);
+      final response = await _bookingService.createBooking(
+        token: token,
+        data: data,
+      );
 
       if (response['success']) {
-        Get.snackbar('Success', 'Booking successful!', backgroundColor: Colors.green.shade100);
+        Get.snackbar(
+          'Success',
+          'Booking successful!',
+          backgroundColor: Colors.green.shade100,
+        );
         await fetchMyBookings();
         Get.back();
       } else {
-        Get.snackbar('Error', response['message'] ?? 'Failed to book', backgroundColor: Colors.red.shade100);
+        Get.snackbar(
+          'Error',
+          response['message'] ?? 'Failed to book',
+          backgroundColor: Colors.red.shade100,
+        );
       }
     } catch (e) {
       Get.snackbar('Error', e.toString(), backgroundColor: Colors.red.shade100);
@@ -85,7 +155,11 @@ class BookingViewmodel extends GetxController {
 
     try {
       isLoading.value = true;
-      final response = await _bookingService.cancelBooking(token, id, reason: reason);
+      final response = await _bookingService.cancelBooking(
+        token,
+        id,
+        reason: reason,
+      );
 
       if (response['success'] == true) {
         await fetchMyBookings();

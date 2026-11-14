@@ -82,8 +82,14 @@ interface RegisterWithEmailOtpData {
     otp: string;
     firstName: string;
     lastName: string;
-    phone?: string;
+    phone: string;
     role: "user" | "turf_owner";
+    businessName?: string;
+    businessAddress?: string;
+    businessPhone?: string;
+    taxId?: string;
+    businessRegistrationDoc?: string;
+    identityDoc?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

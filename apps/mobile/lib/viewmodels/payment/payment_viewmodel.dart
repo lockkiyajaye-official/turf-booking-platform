@@ -10,14 +10,18 @@ class PaymentViewmodel extends GetxController {
 
   var isLoading = false.obs;
   var paymentHistory = <PaymentModel>[].obs;
-  
+
   // Owner stats
   var ownerSummary = <String, dynamic>{}.obs;
 
   Future<void> fetchPaymentHistory() async {
     final token = _authViewmodel.token.value;
     if (token.isEmpty) {
-      Get.snackbar('Error', 'Not authenticated', backgroundColor: Colors.red.shade100);
+      Get.snackbar(
+        'Error',
+        'Not authenticated',
+        backgroundColor: Colors.red.shade100,
+      );
       return;
     }
 
@@ -26,10 +30,19 @@ class PaymentViewmodel extends GetxController {
       final response = await _paymentService.history(token);
 
       if (response['success']) {
-        final List data = response['data'] ?? [];
-        paymentHistory.value = data.map((json) => PaymentModel.fromJson(json)).toList();
+        final raw = response['data'];
+        final List data = raw is List
+            ? raw
+            : (raw is Map && raw['items'] is List ? raw['items'] : []);
+        paymentHistory.value = data
+            .map((json) => PaymentModel.fromJson(json))
+            .toList();
       } else {
-        Get.snackbar('Error', response['message'] ?? 'Failed to fetch payment history', backgroundColor: Colors.red.shade100);
+        Get.snackbar(
+          'Error',
+          response['message'] ?? 'Failed to fetch payment history',
+          backgroundColor: Colors.red.shade100,
+        );
       }
     } catch (e) {
       Get.snackbar('Error', e.toString(), backgroundColor: Colors.red.shade100);
@@ -49,7 +62,11 @@ class PaymentViewmodel extends GetxController {
       if (response['success']) {
         ownerSummary.value = Map<String, dynamic>.from(response['data'] ?? {});
       } else {
-        Get.snackbar('Error', response['message'] ?? 'Failed to load summary', backgroundColor: Colors.red.shade100);
+        Get.snackbar(
+          'Error',
+          response['message'] ?? 'Failed to load summary',
+          backgroundColor: Colors.red.shade100,
+        );
       }
     } catch (e) {
       Get.snackbar('Error', e.toString(), backgroundColor: Colors.red.shade100);
@@ -67,10 +84,18 @@ class PaymentViewmodel extends GetxController {
       final response = await _paymentService.requestPayout(token, amount);
 
       if (response['success']) {
-        Get.snackbar('Success', 'Payout requested successfully', backgroundColor: Colors.green.shade100);
+        Get.snackbar(
+          'Success',
+          'Payout requested successfully',
+          backgroundColor: Colors.green.shade100,
+        );
         await fetchOwnerSummary();
       } else {
-        Get.snackbar('Error', response['message'] ?? 'Failed to request payout', backgroundColor: Colors.red.shade100);
+        Get.snackbar(
+          'Error',
+          response['message'] ?? 'Failed to request payout',
+          backgroundColor: Colors.red.shade100,
+        );
       }
     } catch (e) {
       Get.snackbar('Error', e.toString(), backgroundColor: Colors.red.shade100);

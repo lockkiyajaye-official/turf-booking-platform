@@ -13,17 +13,17 @@ class UserService {
   }
 
   Map<String, dynamic> _handleResponse(http.Response response) {
-    var data;
+    dynamic data;
     try {
       data = jsonDecode(response.body);
     } catch (_) {
       data = response.body;
     }
-    
+
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return {'success': true, 'data': data};
     }
-    
+
     String errorMessage = 'Something went wrong';
     if (data is Map && data.containsKey('message')) {
       final msg = data['message'];
@@ -36,10 +36,7 @@ class UserService {
       errorMessage = data;
     }
 
-    return {
-      'success': false,
-      'message': errorMessage,
-    };
+    return {'success': false, 'message': errorMessage};
   }
 
   Future<Map<String, dynamic>> findAll(String token, {String? role}) async {
@@ -100,7 +97,7 @@ class UserService {
       final response = await http.post(
         Uri.parse('$_base/turf-owners/$id/approve'),
         headers: _headers(token),
-        body: jsonEncode({if (approvalNotes != null) 'approvalNotes': approvalNotes}),
+        body: jsonEncode({'approvalNotes': ?approvalNotes}),
       );
       return _handleResponse(response);
     } catch (e) {

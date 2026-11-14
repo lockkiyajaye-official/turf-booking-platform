@@ -162,7 +162,7 @@ export default function Footer() {
                                 </div>
                                 <div>
                                     <p className="text-white/70 text-sm">Address</p>
-                                    <p className="text-white text-sm font-medium">Mumbai, India</p>
+                                    <p className="text-white text-sm font-medium">Naharlagun, India</p>
                                 </div>
                             </div>
                         </div>

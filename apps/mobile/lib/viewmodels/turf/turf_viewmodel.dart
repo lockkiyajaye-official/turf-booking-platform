@@ -15,6 +15,12 @@ class TurfViewmodel extends GetxController {
   var myTurfs = <TurfModel>[].obs;
   var selectedTurf = Rxn<TurfModel>();
 
+  // Pagination state for turfs
+  var turfsPage = 1.obs;
+  var turfsHasMore = true.obs;
+  var isFetchingMoreTurfs = false.obs;
+  var activeSearch = ''.obs;
+
   // Location state
   var isLocationLoading = false.obs;
   var currentPosition = Rxn<Position>();
@@ -31,7 +37,7 @@ class TurfViewmodel extends GetxController {
       if (pos != null) {
         currentPosition.value = pos;
         isUsingCurrentLocation.value = true;
-        
+
         final placeName = await _locationService.getAddressFromCoordinates(
           pos.latitude,
           pos.longitude,
@@ -39,7 +45,11 @@ class TurfViewmodel extends GetxController {
         selectedLocationName.value = placeName ?? 'Current Location';
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to get device location', backgroundColor: Colors.red.shade100);
+      Get.snackbar(
+        'Error',
+        'Failed to get device location',
+        backgroundColor: Colors.red.shade100,
+      );
     } finally {
       isLocationLoading.value = false;
     }
@@ -70,22 +80,79 @@ class TurfViewmodel extends GetxController {
   Future<void> fetchAllTurfs({String? search}) async {
     try {
       isLoading.value = true;
+      turfsPage.value = 1;
+      turfsHasMore.value = true;
+      activeSearch.value = search ?? '';
+
       final token = _authViewmodel.token.value;
       final response = await _turfService.findAll(
         token: token.isNotEmpty ? token : null,
         search: search,
+        page: 1,
+        limit: 10,
       );
 
       if (response['success']) {
-        final List data = response['data'] ?? [];
+        final raw = response['data'];
+        final List data = raw is List
+            ? raw
+            : (raw is Map && raw['items'] is List ? raw['items'] : []);
         turfs.value = data.map((json) => TurfModel.fromJson(json)).toList();
+        if (raw is Map && raw.containsKey('hasMore')) {
+          turfsHasMore.value = raw['hasMore'] == true;
+        } else {
+          turfsHasMore.value = data.length >= 10;
+        }
       } else {
-        Get.snackbar('Error', response['message'] ?? 'Failed to fetch turfs', backgroundColor: Colors.red.shade100);
+        Get.snackbar(
+          'Error',
+          response['message'] ?? 'Failed to fetch turfs',
+          backgroundColor: Colors.red.shade100,
+        );
       }
     } catch (e) {
       Get.snackbar('Error', e.toString(), backgroundColor: Colors.red.shade100);
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  // Load next page of turfs on scroll
+  Future<void> loadNextTurfsPage() async {
+    if (!turfsHasMore.value || isFetchingMoreTurfs.value) return;
+    try {
+      isFetchingMoreTurfs.value = true;
+      final nextPage = turfsPage.value + 1;
+      final token = _authViewmodel.token.value;
+      final response = await _turfService.findAll(
+        token: token.isNotEmpty ? token : null,
+        search: activeSearch.value.isNotEmpty ? activeSearch.value : null,
+        page: nextPage,
+        limit: 10,
+      );
+
+      if (response['success']) {
+        final raw = response['data'];
+        final List data = raw is List
+            ? raw
+            : (raw is Map && raw['items'] is List ? raw['items'] : []);
+        final newTurfs = data.map((json) => TurfModel.fromJson(json)).toList();
+
+        final existingIds = turfs.map((t) => t.id).toSet();
+        final fresh = newTurfs.where((t) => !existingIds.contains(t.id)).toList();
+        turfs.addAll(fresh);
+
+        turfsPage.value = nextPage;
+        if (raw is Map && raw.containsKey('hasMore')) {
+          turfsHasMore.value = raw['hasMore'] == true;
+        } else {
+          turfsHasMore.value = data.length >= 10;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading next turfs page: $e');
+    } finally {
+      isFetchingMoreTurfs.value = false;
     }
   }
 
@@ -99,10 +166,17 @@ class TurfViewmodel extends GetxController {
       final response = await _turfService.findMyTurfs(token);
 
       if (response['success']) {
-        final List data = response['data'] ?? [];
+        final raw = response['data'];
+        final List data = raw is List
+            ? raw
+            : (raw is Map && raw['items'] is List ? raw['items'] : []);
         myTurfs.value = data.map((json) => TurfModel.fromJson(json)).toList();
       } else {
-        Get.snackbar('Error', response['message'] ?? 'Failed to fetch your turfs', backgroundColor: Colors.red.shade100);
+        Get.snackbar(
+          'Error',
+          response['message'] ?? 'Failed to fetch your turfs',
+          backgroundColor: Colors.red.shade100,
+        );
       }
     } catch (e) {
       Get.snackbar('Error', e.toString(), backgroundColor: Colors.red.shade100);
@@ -120,7 +194,11 @@ class TurfViewmodel extends GetxController {
       if (response['success']) {
         selectedTurf.value = TurfModel.fromJson(response['data']);
       } else {
-        Get.snackbar('Error', response['message'] ?? 'Failed to fetch turf details', backgroundColor: Colors.red.shade100);
+        Get.snackbar(
+          'Error',
+          response['message'] ?? 'Failed to fetch turf details',
+          backgroundColor: Colors.red.shade100,
+        );
       }
     } catch (e) {
       Get.snackbar('Error', e.toString(), backgroundColor: Colors.red.shade100);
@@ -133,7 +211,11 @@ class TurfViewmodel extends GetxController {
   Future<void> createTurf(Map<String, dynamic> data) async {
     final token = _authViewmodel.token.value;
     if (token.isEmpty) {
-      Get.snackbar('Error', 'Not authenticated', backgroundColor: Colors.red.shade100);
+      Get.snackbar(
+        'Error',
+        'Not authenticated',
+        backgroundColor: Colors.red.shade100,
+      );
       return;
     }
 
@@ -142,11 +224,19 @@ class TurfViewmodel extends GetxController {
       final response = await _turfService.createTurf(token: token, data: data);
 
       if (response['success']) {
-        Get.snackbar('Success', 'Turf created successfully', backgroundColor: Colors.green.shade100);
+        Get.snackbar(
+          'Success',
+          'Turf created successfully',
+          backgroundColor: Colors.green.shade100,
+        );
         await fetchMyTurfs();
         Get.back(); // go back after creation
       } else {
-        Get.snackbar('Error', response['message'] ?? 'Failed to create turf', backgroundColor: Colors.red.shade100);
+        Get.snackbar(
+          'Error',
+          response['message'] ?? 'Failed to create turf',
+          backgroundColor: Colors.red.shade100,
+        );
       }
     } catch (e) {
       Get.snackbar('Error', e.toString(), backgroundColor: Colors.red.shade100);

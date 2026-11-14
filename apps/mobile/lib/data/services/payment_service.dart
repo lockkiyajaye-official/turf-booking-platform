@@ -37,10 +37,18 @@ class PaymentService {
   }
 
   /// Fetch user payment history
-  Future<Map<String, dynamic>> history(String token) async {
+  Future<Map<String, dynamic>> history(
+    String token, {
+    int page = 1,
+    int limit = 10,
+  }) async {
     try {
+      final uri = Uri.parse('$_base/history').replace(queryParameters: {
+        'page': page.toString(),
+        'limit': limit.toString(),
+      });
       final res = await http.get(
-        Uri.parse('$_base/history'),
+        uri,
         headers: _headers(token),
       );
       return _handleResponse(res);
@@ -92,6 +100,23 @@ class PaymentService {
         Uri.parse('$_base/owner/payouts'),
         headers: _headers(token),
         body: jsonEncode({'amount': amount}),
+      );
+      return _handleResponse(res);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Fetch itemized fee breakdown for a turf slot
+  Future<Map<String, dynamic>> getFeePreview({
+    required String token,
+    required String turfId,
+    int hours = 1,
+  }) async {
+    try {
+      final res = await http.get(
+        Uri.parse('$_base/fee-preview?turfId=$turfId&hours=$hours'),
+        headers: _headers(token),
       );
       return _handleResponse(res);
     } catch (e) {

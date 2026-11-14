@@ -67,9 +67,29 @@ export interface TurfOwner {
     firstName: string;
     lastName: string;
     businessName?: string;
+    businessAddress?: string;
+    businessPhone?: string;
+    businessDescription?: string;
+    taxId?: string;
+    businessRegistrationDoc?: string;
+    identityDoc?: string;
+    verificationDocuments?: Array<{ name: string; url: string; type: string }>;
+    customPlatformFeePercent?: number | null;
+    customGatewayFeePercent?: number | null;
     isApproved?: boolean;
+    approvalNotes?: string;
     createdAt: string;
     address?: string;
+    turfs?: Array<{
+        id: string;
+        name: string;
+        location?: string;
+        city?: string;
+        pricePerHour: number;
+        isPublished?: boolean;
+        images?: string[];
+        sportType?: string[];
+    }>;
 }
 
 export type BookingStatus = "pending" | "confirmed" | "cancelled" | "completed";
@@ -81,6 +101,11 @@ export interface Booking {
     endTime: string;
     totalPrice: number;
     status: BookingStatus;
+    bookingSource?: "online" | "direct";
+    customerName?: string;
+    customerPhone?: string;
+    paymentMethod?: string;
+    notes?: string;
     createdAt: string;
     user: {
         id: string;

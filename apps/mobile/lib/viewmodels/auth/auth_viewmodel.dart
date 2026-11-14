@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobile/data/services/auth_service.dart';
@@ -22,13 +23,17 @@ class AuthViewmodel extends GetxController {
 
   Future<void> _ensureGoogleInitialized() async {
     final serverClientId = AppConstants.googleServerClientId;
-    print(
-      '[Google] ensuring initialized with serverClientId: "$serverClientId" (alreadyInit=$_googleSignInInitialized)',
-    );
+    if (kDebugMode) {
+      print(
+        '[Google] ensuring initialized with serverClientId: "$serverClientId" (alreadyInit=$_googleSignInInitialized)',
+      );
+    }
     if (_googleSignInInitialized) return;
-    print(
-      '[Google] initializing GoogleSignIn with serverClientId: "$serverClientId"',
-    );
+    if (kDebugMode) {
+      print(
+        '[Google] initializing GoogleSignIn with serverClientId: "$serverClientId"',
+      );
+    }
     await _googleSignIn.initialize(
       serverClientId: serverClientId.isNotEmpty ? serverClientId : null,
     );
@@ -52,6 +57,12 @@ class AuthViewmodel extends GetxController {
   final lastNameController = TextEditingController();
   final phoneController = TextEditingController();
   final otpController = TextEditingController();
+
+  // Turf Owner Onboarding & Verification Controllers
+  final businessNameController = TextEditingController();
+  final businessAddressController = TextEditingController();
+  final businessDocController = TextEditingController();
+  final identityDocController = TextEditingController();
 
   // ──────────────────────────────────────────────
   // Observable State
@@ -127,12 +138,18 @@ class AuthViewmodel extends GetxController {
     final password = passwordController.text.trim();
     final firstName = firstNameController.text.trim();
     final lastName = lastNameController.text.trim();
+    final phone = phoneController.text.trim();
 
     if (email.isEmpty ||
         password.isEmpty ||
         firstName.isEmpty ||
         lastName.isEmpty) {
       _showError('All fields are required');
+      return;
+    }
+
+    if (phone.isEmpty || phone.length < 10) {
+      _showError('Phone number is required');
       return;
     }
 
@@ -143,6 +160,7 @@ class AuthViewmodel extends GetxController {
         password: password,
         firstName: firstName,
         lastName: lastName,
+        phone: phone,
         role: selectedRole.value,
       );
 
@@ -225,44 +243,66 @@ class AuthViewmodel extends GetxController {
     try {
       isGoogleLoading.value = true;
       isLoading.value = true;
-      print('[Google] start');
-      print(
-        '[Google] serverClientId from env: "${AppConstants.googleServerClientId}"',
-      );
+      if (kDebugMode) {
+        print('[Google] start');
+      }
+      if (kDebugMode) {
+        print(
+          '[Google] serverClientId from env: "${AppConstants.googleServerClientId}"',
+        );
+      }
 
       await _ensureGoogleInitialized();
-      print('[Google] initialized');
+      if (kDebugMode) {
+        print('[Google] initialized');
+      }
 
       final supported = _googleSignIn.supportsAuthenticate();
-      print('[Google] supportsAuthenticate: $supported');
+      if (kDebugMode) {
+        print('[Google] supportsAuthenticate: $supported');
+      }
       if (!supported) {
         _showError('Google Sign-In is not supported on this platform');
         return;
       }
 
-      print('[Google] calling _googleSignIn.authenticate()...');
+      if (kDebugMode) {
+        print('[Google] calling _googleSignIn.authenticate()...');
+      }
       final account = await _googleSignIn.authenticate();
       _googleAccount = account;
-      print('[Google] authenticated account email: ${account.email}');
+      if (kDebugMode) {
+        print('[Google] authenticated account email: ${account.email}');
+      }
 
       // Extract idToken directly from authentication
       final auth = account.authentication;
       final idToken = auth.idToken;
-      print('[Google] idToken available: ${idToken != null && idToken.isNotEmpty}');
+      if (kDebugMode) {
+        print(
+          '[Google] idToken available: ${idToken != null && idToken.isNotEmpty}',
+        );
+      }
 
       // Safely attempt authorizeServer without failing whole sign-in
       String? serverAuthCode;
       try {
-        print('[Google] requesting server authorization...');
+        if (kDebugMode) {
+          print('[Google] requesting server authorization...');
+        }
         final serverAuth = await account.authorizationClient.authorizeServer([
           'openid',
           'email',
           'profile',
         ]);
         serverAuthCode = serverAuth?.serverAuthCode;
-        print('[Google] serverAuthCode: $serverAuthCode');
+        if (kDebugMode) {
+          print('[Google] serverAuthCode: $serverAuthCode');
+        }
       } catch (authErr) {
-        print('[Google] authorizeServer bypass / note: $authErr');
+        if (kDebugMode) {
+          print('[Google] authorizeServer bypass / note: $authErr');
+        }
       }
 
       if ((serverAuthCode == null || serverAuthCode.isEmpty) &&
@@ -271,14 +311,18 @@ class AuthViewmodel extends GetxController {
         return;
       }
 
-      print(
-        '[Google] sending credentials to backend at ${AppConstants.baseUrl}/auth/google/token...',
-      );
+      if (kDebugMode) {
+        print(
+          '[Google] sending credentials to backend at ${AppConstants.baseUrl}/auth/google/token...',
+        );
+      }
       final response = await _authService.loginWithGoogle(
         idToken: idToken,
         serverAuthCode: serverAuthCode,
       );
-      print('[Google] backend response: $response');
+      if (kDebugMode) {
+        print('[Google] backend response: $response');
+      }
 
       if (response['success'] == true && response['data'] != null) {
         _saveSession(response['data']);
@@ -287,36 +331,48 @@ class AuthViewmodel extends GetxController {
         _showError(response['message'] ?? 'Google login failed');
       }
     } on GoogleSignInException catch (e) {
-      print(
-        '[Google] GoogleSignInException: code=${e.code}, description="${e.description}"',
-      );
+      if (kDebugMode) {
+        print(
+          '[Google] GoogleSignInException: code=${e.code}, description="${e.description}"',
+        );
+      }
       if (e.code == GoogleSignInExceptionCode.canceled) {
-        print('[Google] User dismissed sign-in prompt.');
+        if (kDebugMode) {
+          print('[Google] User dismissed sign-in prompt.');
+        }
         return;
       }
       final desc = e.description ?? '';
       final lower = desc.toLowerCase();
       if (lower.contains('cancel') || lower.contains('interrupted')) {
-        print('[Google] User cancelled sign-in.');
+        if (kDebugMode) {
+          print('[Google] User cancelled sign-in.');
+        }
         return;
       }
       _showError(
         'Google Sign-In error: ${desc.isNotEmpty ? desc : e.code.name}',
       );
     } catch (e) {
-      print('[Google] generic error: $e');
+      if (kDebugMode) {
+        print('[Google] generic error: $e');
+      }
       final errStr = e.toString().toLowerCase();
       if (errStr.contains('cancel') ||
           errStr.contains('12501') ||
           errStr.contains('interrupted')) {
-        print('[Google] User cancelled sign-in.');
+        if (kDebugMode) {
+          print('[Google] User cancelled sign-in.');
+        }
         return;
       }
       _showError('Google Sign-In error: ${e.toString()}');
     } finally {
       isGoogleLoading.value = false;
       isLoading.value = false;
-      print('[Google] done, isLoading=false');
+      if (kDebugMode) {
+        print('[Google] done, isLoading=false');
+      }
     }
   }
 
@@ -327,7 +383,9 @@ class AuthViewmodel extends GetxController {
     try {
       isAppleLoading.value = true;
       isLoading.value = true;
-      print('[Apple] start sign-in');
+      if (kDebugMode) {
+        print('[Apple] start sign-in');
+      }
 
       final credential = await SignInWithApple.getAppleIDCredential(
         scopes: [
@@ -337,9 +395,11 @@ class AuthViewmodel extends GetxController {
       );
 
       final identityToken = credential.identityToken;
-      print(
-        '[Apple] received credential. IdentityToken present: ${identityToken != null && identityToken.isNotEmpty}',
-      );
+      if (kDebugMode) {
+        print(
+          '[Apple] received credential. IdentityToken present: ${identityToken != null && identityToken.isNotEmpty}',
+        );
+      }
 
       if (identityToken == null || identityToken.isEmpty) {
         _showError('Apple Sign-In failed: could not retrieve identity token');
@@ -352,7 +412,9 @@ class AuthViewmodel extends GetxController {
         firstName: credential.givenName,
         lastName: credential.familyName,
       );
-      print('[Apple] backend response: $response');
+      if (kDebugMode) {
+        print('[Apple] backend response: $response');
+      }
 
       if (response['success'] == true && response['data'] != null) {
         _saveSession(response['data']);
@@ -361,26 +423,36 @@ class AuthViewmodel extends GetxController {
         _showError(response['message'] ?? 'Apple login failed');
       }
     } on SignInWithAppleAuthorizationException catch (e) {
-      print(
-        '[Apple] SignInWithAppleAuthorizationException: code=${e.code}, message="${e.message}"',
-      );
+      if (kDebugMode) {
+        print(
+          '[Apple] SignInWithAppleAuthorizationException: code=${e.code}, message="${e.message}"',
+        );
+      }
       if (e.code == AuthorizationErrorCode.canceled) {
-        print('[Apple] User dismissed sign-in.');
+        if (kDebugMode) {
+          print('[Apple] User dismissed sign-in.');
+        }
         return;
       }
       _showError('Apple Sign-In failed: ${e.message}');
     } catch (e) {
-      print('[Apple] error: $e');
+      if (kDebugMode) {
+        print('[Apple] error: $e');
+      }
       final errStr = e.toString().toLowerCase();
       if (errStr.contains('cancel') || errStr.contains('cancelled')) {
-        print('[Apple] User cancelled sign-in.');
+        if (kDebugMode) {
+          print('[Apple] User cancelled sign-in.');
+        }
         return;
       }
       _showError('Apple Sign-In error: ${e.toString()}');
     } finally {
       isAppleLoading.value = false;
       isLoading.value = false;
-      print('[Apple] done, isLoading=false');
+      if (kDebugMode) {
+        print('[Apple] done, isLoading=false');
+      }
     }
   }
 
@@ -389,12 +461,12 @@ class AuthViewmodel extends GetxController {
   // ──────────────────────────────────────────────
 
   Future<void> requestRegistrationOtp() async {
+    if (isSendingOtp.value) return;
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
     final firstName = firstNameController.text.trim();
     final lastName = lastNameController.text.trim();
     final phone = phoneController.text.trim();
-    final normalizedPhone = phone.startsWith('+') ? phone : '+91$phone';
 
     if (firstName.isEmpty || lastName.isEmpty) {
       _showError('Please enter your first and last name');
@@ -406,21 +478,13 @@ class AuthViewmodel extends GetxController {
       return;
     }
 
-    final hasEmail = email.isNotEmpty;
-    final hasPhone = phone.isNotEmpty;
-
-    if (!hasEmail && !hasPhone) {
-      _showError('Please enter your email or phone number');
+    if (phone.isEmpty || phone.length < 10) {
+      _showError('Phone number is required (minimum 10 digits)');
       return;
     }
 
-    if (hasEmail && !GetUtils.isEmail(email)) {
+    if (email.isEmpty || !GetUtils.isEmail(email)) {
       _showError('Please enter a valid email address');
-      return;
-    }
-
-    if (hasPhone && phone.length < 10) {
-      _showError('Please enter a valid phone number');
       return;
     }
 
@@ -428,17 +492,11 @@ class AuthViewmodel extends GetxController {
       isSendingOtp.value = true;
       isLoading.value = true;
 
-      Map<String, dynamic> response;
-      if (hasEmail) {
-        response = await _authService.requestEmailOtp(email: email);
-      } else {
-        response = await _authService.requestPhoneOtp(phone: normalizedPhone);
-      }
+      final response = await _authService.requestEmailOtp(email: email);
 
       if (response['success']) {
         otpSent.value = true;
-        final dest = hasEmail ? email : phone;
-        _showSuccess('OTP sent to $dest');
+        _showSuccess('OTP sent to $email');
         Get.toNamed(RoutePaths.otpVerification);
       } else {
         _showError(response['message'] ?? 'Failed to send OTP');
@@ -452,6 +510,7 @@ class AuthViewmodel extends GetxController {
   }
 
   Future<void> verifyOtpAndRegister(String otp) async {
+    if (isLoading.value) return;
     final email = emailController.text.trim();
     final rawPhone = phoneController.text.trim();
     final phone = rawPhone.startsWith('+') ? rawPhone : '+91$rawPhone';
@@ -459,8 +518,14 @@ class AuthViewmodel extends GetxController {
     final lastName = lastNameController.text.trim();
     final hasEmail = email.isNotEmpty;
 
+    if (rawPhone.isEmpty || rawPhone.length < 10) {
+      _showError('Phone number is required');
+      return;
+    }
+
     try {
       isLoading.value = true;
+      final isOwner = selectedRole.value == 'turf_owner';
 
       Map<String, dynamic> response;
       if (hasEmail) {
@@ -470,7 +535,15 @@ class AuthViewmodel extends GetxController {
           firstName: firstName,
           lastName: lastName,
           role: selectedRole.value,
-          phone: rawPhone.isNotEmpty ? phone : null,
+          phone: phone,
+          businessName: isOwner ? businessNameController.text.trim() : null,
+          businessAddress: isOwner
+              ? businessAddressController.text.trim()
+              : null,
+          businessRegistrationDoc: isOwner
+              ? businessDocController.text.trim()
+              : null,
+          identityDoc: isOwner ? identityDocController.text.trim() : null,
         );
       } else {
         response = await _authService.registerWithPhoneOtp(
@@ -695,15 +768,27 @@ class AuthViewmodel extends GetxController {
       return;
     }
 
+    if (phone.isEmpty || phone.length < 10) {
+      _showError('Phone number is required');
+      return;
+    }
+
     try {
       isLoading.value = true;
+      final isOwner = selectedRole.value == 'turf_owner';
       final response = await _authService.registerWithEmailOtp(
         email: email,
         otp: otp,
         firstName: firstName,
         lastName: lastName,
         role: selectedRole.value,
-        phone: phone.isNotEmpty ? phone : null,
+        phone: phone,
+        businessName: isOwner ? businessNameController.text.trim() : null,
+        businessAddress: isOwner ? businessAddressController.text.trim() : null,
+        businessRegistrationDoc: isOwner
+            ? businessDocController.text.trim()
+            : null,
+        identityDoc: isOwner ? identityDocController.text.trim() : null,
       );
 
       if (response['success']) {
@@ -805,6 +890,27 @@ class AuthViewmodel extends GetxController {
       _showError(e.toString());
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<bool> requestContactOtp() async {
+    if (token.value.isEmpty) {
+      _showError('Not authenticated');
+      return false;
+    }
+
+    try {
+      final response = await _authService.requestContactOtp(token: token.value);
+      if (response['success'] == true) {
+        _showSuccess(response['message'] ?? 'OTP sent to your email');
+        return true;
+      } else {
+        _showError(response['message'] ?? 'Failed to send OTP to email');
+        return false;
+      }
+    } catch (e) {
+      _showError(e.toString());
+      return false;
     }
   }
 
@@ -943,6 +1049,10 @@ class AuthViewmodel extends GetxController {
     lastNameController.clear();
     phoneController.clear();
     otpController.clear();
+    businessNameController.clear();
+    businessAddressController.clear();
+    businessDocController.clear();
+    identityDocController.clear();
     isSendingOtp.value = false;
     isGoogleLoading.value = false;
   }
@@ -956,6 +1066,10 @@ class AuthViewmodel extends GetxController {
     lastNameController.dispose();
     phoneController.dispose();
     otpController.dispose();
+    businessNameController.dispose();
+    businessAddressController.dispose();
+    businessDocController.dispose();
+    identityDocController.dispose();
     super.onClose();
   }
 }

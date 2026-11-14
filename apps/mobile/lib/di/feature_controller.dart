@@ -18,8 +18,8 @@ class AuthBinding extends Bindings {
     Get.put<PaymentViewmodel>(PaymentViewmodel(), permanent: true);
     Get.put<DashboardViewmodel>(DashboardViewmodel(), permanent: true);
     Get.put<FavoriteViewmodel>(FavoriteViewmodel(), permanent: true);
-    Get.lazyPut<OwnerViewmodel>(() => OwnerViewmodel());
-    Get.lazyPut<SupportViewmodel>(() => SupportViewmodel());
+    Get.put<OwnerViewmodel>(OwnerViewmodel(), permanent: true);
+    Get.put<SupportViewmodel>(SupportViewmodel(), permanent: true);
   }
 }
 

@@ -57,6 +57,7 @@ export class TurfsController {
   findMyTurfs(
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('search') search?: string,
     @Request() req?: any,
   ) {
     return this.turfsService.findByOwner(
@@ -64,6 +65,7 @@ export class TurfsController {
       true,
       page ? parseInt(page, 10) : undefined,
       limit ? parseInt(limit, 10) : undefined,
+      search,
     );
   }
 

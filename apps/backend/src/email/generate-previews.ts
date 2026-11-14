@@ -66,7 +66,7 @@ const bookingPreview = renderBookingConfirmationEmail({
   bookingId: 'bk_98f412a883e2',
   customerName: 'Arjun Verma',
   turfName: 'All-Stars Turf Arena (Pitch 1)',
-  turfLocation: 'Koramangala 4th Block, Bengaluru',
+  turfLocation: 'Koramangala 4th Block, Naharlagun',
   bookingDate: 'Saturday, 12 Sept 2026',
   startTime: '19:00',
   endTime: '21:00',

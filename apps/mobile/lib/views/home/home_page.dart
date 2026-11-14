@@ -19,6 +19,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   final List<String> _filters = [
     'All',
     'Football',
@@ -31,13 +32,24 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Get.find<TurfViewmodel>().fetchAllTurfs();
     });
   }
 
+  void _onScroll() {
+    if (_scrollController.hasClients &&
+        _scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200) {
+      Get.find<TurfViewmodel>().loadNextTurfsPage();
+    }
+  }
+
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -58,10 +70,7 @@ class _HomePageState extends State<HomePage> {
         decoration: BoxDecoration(
           color: colors.white,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: const Color(0xFFE8E8E8),
-            width: 1,
-          ),
+          border: Border.all(color: const Color(0xFFE8E8E8), width: 1),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.05),
@@ -72,11 +81,7 @@ class _HomePageState extends State<HomePage> {
         ),
         child: Row(
           children: [
-            Icon(
-              Icons.location_on_rounded,
-              color: colors.primary,
-              size: 20.sp,
-            ),
+            Icon(Icons.location_on_rounded, color: colors.primary, size: 20.sp),
             SizedBox(width: 8.w),
             Expanded(
               child: GetX<TurfViewmodel>(
@@ -149,7 +154,7 @@ class _HomePageState extends State<HomePage> {
           ),
           ValueListenableBuilder<TextEditingValue>(
             valueListenable: _searchController,
-            builder: (_, value, __) {
+            builder: (_, value, _) {
               if (value.text.isEmpty) return const SizedBox.shrink();
               return Padding(
                 padding: EdgeInsets.only(left: 8.w),
@@ -188,214 +193,162 @@ class _HomePageState extends State<HomePage> {
           children: [
             SizedBox(height: isTablet ? 12.h : 8.h),
 
-          // ── Header (Unified row on iPad, 2 rows on mobile) ──
-          if (isTablet)
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: horizontalPad),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 260.w,
-                    child: _buildLocationSelector(colors, textTheme),
-                  ),
-                  SizedBox(width: 14.w),
-                  Expanded(
-                    child: _buildSearchBar(colors, textTheme),
-                  ),
-                  SizedBox(width: 14.w),
-                  _HeaderIconButton(
-                    icon: Icons.notifications_outlined,
-                    colors: colors,
-                    onTap: () => Get.to(() => const NotificationPage()),
-                  ),
-                ],
-              ),
-            )
-          else ...[
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: horizontalPad),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildLocationSelector(colors, textTheme),
-                  ),
-                  SizedBox(width: 12.w),
-                  _HeaderIconButton(
-                    icon: Icons.notifications_outlined,
-                    colors: colors,
-                    onTap: () => Get.to(() => const NotificationPage()),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 14.h),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: horizontalPad),
-              child: _buildSearchBar(colors, textTheme),
-            ),
-          ],
-
-          SizedBox(height: 16.h),
-
-          // ── Filter chips ────────────────────────────────────
-          SizedBox(
-            height: 38.h,
-            child: ListView.separated(
-              padding: EdgeInsets.symmetric(horizontal: horizontalPad),
-              scrollDirection: Axis.horizontal,
-              itemCount: _filters.length,
-              separatorBuilder: (_, __) => SizedBox(width: isTablet ? 10.w : 8.w),
-              itemBuilder: (context, index) {
-                final selected = _selectedFilter == index;
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedFilter = index),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isTablet ? 18.w : 16.w,
-                      vertical: 8.h,
+            // ── Header (Unified row on iPad, 2 rows on mobile) ──
+            if (isTablet)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: horizontalPad),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 260.w,
+                      child: _buildLocationSelector(colors, textTheme),
                     ),
-                    decoration: BoxDecoration(
-                      color: selected ? colors.primary : colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: selected
-                            ? colors.primary
-                            : const Color(0xFFE8E8E8),
-                      ),
+                    SizedBox(width: 14.w),
+                    Expanded(child: _buildSearchBar(colors, textTheme)),
+                    SizedBox(width: 14.w),
+                    _HeaderIconButton(
+                      icon: Icons.notifications_outlined,
+                      colors: colors,
+                      onTap: () => Get.to(() => const NotificationPage()),
                     ),
-                    child: Text(
-                      _filters[index],
-                      style: textTheme.bodySmall?.copyWith(
-                        color: selected ? Colors.white : colors.textGrey,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          SizedBox(height: 16.h),
-
-          // ── Scrollable body ─────────────────────────────────
-          // GetX cannot return Sliver widgets, so the turf list lives inside
-          // a SliverToBoxAdapter as a plain Column. The parent CustomScrollView
-          // handles all scrolling.
-          Expanded(
-            child: CustomScrollView(
-              slivers: [
-                // Banner
-                SliverToBoxAdapter(child: SizedBox(height: 16.h)),
-
-                // Section title
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isTablet ? 20.w : 16.w,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Nearby Turfs',
-                          style: textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            fontSize: isTablet ? 17.sp : null,
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () => Get.to(() => const AllTurfsPage()),
-                          child: Text(
-                            'See all',
-                            style: textTheme.bodySmall?.copyWith(
-                              color: colors.primary,
-                              fontWeight: FontWeight.w600,
-                              fontSize: isTablet ? 13.sp : null,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  ],
                 ),
+              )
+            else ...[
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: horizontalPad),
+                child: Row(
+                  children: [
+                    Expanded(child: _buildLocationSelector(colors, textTheme)),
+                    SizedBox(width: 12.w),
+                    _HeaderIconButton(
+                      icon: Icons.notifications_outlined,
+                      colors: colors,
+                      onTap: () => Get.to(() => const NotificationPage()),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 14.h),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: horizontalPad),
+                child: _buildSearchBar(colors, textTheme),
+              ),
+            ],
 
-                // Turf list
-                SliverToBoxAdapter(
-                  child: GetX<TurfViewmodel>(
-                    builder: (vm) {
-                      // Loading
-                      if (vm.isLoading.value && vm.turfs.isEmpty) {
-                        return SizedBox(
-                          height: 200.h,
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              color: colors.primary,
+            SizedBox(height: 16.h),
+
+            // ── Filter chips ────────────────────────────────────
+            SizedBox(
+              height: 38.h,
+              child: ListView.separated(
+                padding: EdgeInsets.symmetric(horizontal: horizontalPad),
+                scrollDirection: Axis.horizontal,
+                itemCount: _filters.length,
+                separatorBuilder: (_, _) =>
+                    SizedBox(width: isTablet ? 10.w : 8.w),
+                itemBuilder: (context, index) {
+                  final selected = _selectedFilter == index;
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedFilter = index),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isTablet ? 18.w : 16.w,
+                        vertical: 8.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: selected ? colors.primary : colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: selected
+                              ? colors.primary
+                              : const Color(0xFFE8E8E8),
+                        ),
+                      ),
+                      child: Text(
+                        _filters[index],
+                        style: textTheme.bodySmall?.copyWith(
+                          color: selected ? Colors.white : colors.textGrey,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            SizedBox(height: 16.h),
+
+            // ── Scrollable body ─────────────────────────────────
+            // GetX cannot return Sliver widgets, so the turf list lives inside
+            // a SliverToBoxAdapter as a plain Column. The parent CustomScrollView
+            // handles all scrolling.
+            Expanded(
+              child: CustomScrollView(
+                controller: _scrollController,
+                slivers: [
+                  // Banner
+                  SliverToBoxAdapter(child: SizedBox(height: 16.h)),
+
+                  // Section title
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isTablet ? 20.w : 16.w,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Nearby Turfs',
+                            style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              fontSize: isTablet ? 17.sp : null,
                             ),
                           ),
-                        );
-                      }
-
-                      // Filter list by selected sport filter, search text, and location selection
-                      final selectedSport = _filters[_selectedFilter];
-                      final searchQuery = _searchController.text
-                          .trim()
-                          .toLowerCase();
-                      final activeLocation = vm.selectedLocationName.value;
-                      final isUsingGps = vm.isUsingCurrentLocation.value;
-
-                      List<TurfModel> filteredTurfs = vm.turfs.where((turf) {
-                        final matchesSearch =
-                            searchQuery.isEmpty ||
-                            turf.name.toLowerCase().contains(searchQuery) ||
-                            turf.address.toLowerCase().contains(searchQuery);
-
-                        final matchesSport =
-                            selectedSport == 'All' ||
-                            turf.sports.any(
-                              (s) => s.toLowerCase().contains(
-                                selectedSport.toLowerCase(),
+                          TextButton(
+                            onPressed: () => Get.to(() => const AllTurfsPage()),
+                            child: Text(
+                              'See all',
+                              style: textTheme.bodySmall?.copyWith(
+                                color: colors.primary,
+                                fontWeight: FontWeight.w600,
+                                fontSize: isTablet ? 13.sp : null,
                               ),
-                            ) ||
-                            turf.amenities.any(
-                              (a) => a.toLowerCase().contains(
-                                selectedSport.toLowerCase(),
-                              ),
-                            ) ||
-                            (turf.description ?? '').toLowerCase().contains(
-                              selectedSport.toLowerCase(),
-                            );
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
 
-                        bool matchesLocation = true;
-                        if (!isUsingGps &&
-                            activeLocation.isNotEmpty &&
-                            activeLocation != 'Select Location' &&
-                            activeLocation != 'All Locations') {
-                          final locLower = activeLocation.toLowerCase();
-                          final cityMatch = (turf.city ?? '')
-                              .toLowerCase()
-                              .contains(locLower);
-                          final stateMatch = (turf.state ?? '')
-                              .toLowerCase()
-                              .contains(locLower);
-                          final addressMatch = turf.address
-                              .toLowerCase()
-                              .contains(locLower);
-                          matchesLocation =
-                              cityMatch || stateMatch || addressMatch;
+                  // Turf list
+                  SliverToBoxAdapter(
+                    child: GetX<TurfViewmodel>(
+                      builder: (vm) {
+                        // Loading
+                        if (vm.isLoading.value && vm.turfs.isEmpty) {
+                          return SizedBox(
+                            height: 200.h,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: colors.primary,
+                              ),
+                            ),
+                          );
                         }
 
-                        return matchesSearch && matchesSport && matchesLocation;
-                      }).toList();
+                        // Filter list by selected sport filter, search text, and location selection
+                        final selectedSport = _filters[_selectedFilter];
+                        final searchQuery = _searchController.text
+                            .trim()
+                            .toLowerCase();
+                        final activeLocation = vm.selectedLocationName.value;
+                        final isUsingGps = vm.isUsingCurrentLocation.value;
 
-                      // If location filter resulted in empty list, fall back to showing all available turfs matching search & sport
-                      if (filteredTurfs.isEmpty &&
-                          !isUsingGps &&
-                          activeLocation.isNotEmpty &&
-                          activeLocation != 'Select Location' &&
-                          activeLocation != 'All Locations') {
-                        filteredTurfs = vm.turfs.where((turf) {
+                        List<TurfModel> filteredTurfs = vm.turfs.where((turf) {
                           final matchesSearch =
                               searchQuery.isEmpty ||
                               turf.name.toLowerCase().contains(searchQuery) ||
@@ -417,107 +370,183 @@ class _HomePageState extends State<HomePage> {
                                 selectedSport.toLowerCase(),
                               );
 
-                          return matchesSearch && matchesSport;
+                          bool matchesLocation = true;
+                          if (!isUsingGps &&
+                              activeLocation.isNotEmpty &&
+                              activeLocation != 'Select Location' &&
+                              activeLocation != 'All Locations') {
+                            final locLower = activeLocation.toLowerCase();
+                            final cityMatch = (turf.city ?? '')
+                                .toLowerCase()
+                                .contains(locLower);
+                            final stateMatch = (turf.state ?? '')
+                                .toLowerCase()
+                                .contains(locLower);
+                            final addressMatch = turf.address
+                                .toLowerCase()
+                                .contains(locLower);
+                            matchesLocation =
+                                cityMatch || stateMatch || addressMatch;
+                          }
+
+                          return matchesSearch &&
+                              matchesSport &&
+                              matchesLocation;
                         }).toList();
-                      }
 
-                      // If using GPS location, sort turfs by distance (closest first)
-                      if (isUsingGps && vm.currentPosition.value != null) {
-                        filteredTurfs.sort((a, b) {
-                          final distA =
-                              vm.getDistanceToTurf(a) ?? double.infinity;
-                          final distB =
-                              vm.getDistanceToTurf(b) ?? double.infinity;
-                          return distA.compareTo(distB);
-                        });
-                      }
+                        // If location filter resulted in empty list, fall back to showing all available turfs matching search & sport
+                        if (filteredTurfs.isEmpty &&
+                            !isUsingGps &&
+                            activeLocation.isNotEmpty &&
+                            activeLocation != 'Select Location' &&
+                            activeLocation != 'All Locations') {
+                          filteredTurfs = vm.turfs.where((turf) {
+                            final matchesSearch =
+                                searchQuery.isEmpty ||
+                                turf.name.toLowerCase().contains(searchQuery) ||
+                                turf.address.toLowerCase().contains(
+                                  searchQuery,
+                                );
 
-                      // Empty
-                      if (filteredTurfs.isEmpty) {
-                        return SizedBox(
-                          height: 200.h,
-                          child: Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.sports_soccer_outlined,
-                                  size: 48.sp,
-                                  color: colors.textGrey,
-                                ),
-                                SizedBox(height: 12.h),
-                                Text(
-                                  'No turfs available for the selected filter.',
-                                  style: textTheme.bodyMedium?.copyWith(
+                            final matchesSport =
+                                selectedSport == 'All' ||
+                                turf.sports.any(
+                                  (s) => s.toLowerCase().contains(
+                                    selectedSport.toLowerCase(),
+                                  ),
+                                ) ||
+                                turf.amenities.any(
+                                  (a) => a.toLowerCase().contains(
+                                    selectedSport.toLowerCase(),
+                                  ),
+                                ) ||
+                                (turf.description ?? '').toLowerCase().contains(
+                                  selectedSport.toLowerCase(),
+                                );
+
+                            return matchesSearch && matchesSport;
+                          }).toList();
+                        }
+
+                        // If using GPS location, sort turfs by distance (closest first)
+                        if (isUsingGps && vm.currentPosition.value != null) {
+                          filteredTurfs.sort((a, b) {
+                            final distA =
+                                vm.getDistanceToTurf(a) ?? double.infinity;
+                            final distB =
+                                vm.getDistanceToTurf(b) ?? double.infinity;
+                            return distA.compareTo(distB);
+                          });
+                        }
+
+                        // Empty
+                        if (filteredTurfs.isEmpty) {
+                          return SizedBox(
+                            height: 200.h,
+                            child: Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.sports_soccer_outlined,
+                                    size: 48.sp,
                                     color: colors.textGrey,
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }
-
-                      // Cards
-                      final columns = context.turfGridColumns;
-                      return Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          isTablet ? 20.w : 16.w,
-                          4.h,
-                          isTablet ? 20.w : 16.w,
-                          24.h,
-                        ),
-                        child: columns > 1
-                            ? GridView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                gridDelegate:
-                                    SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: columns,
-                                  crossAxisSpacing: 16,
-                                  mainAxisSpacing: 16,
-                                  mainAxisExtent: 168,
-                                ),
-                                itemCount: filteredTurfs.length,
-                                itemBuilder: (context, i) {
-                                  final turf = filteredTurfs[i];
-                                  return VenueCard(
-                                    turf: turf,
-                                    margin: EdgeInsets.zero,
-                                    distanceKm: vm.getDistanceToTurf(turf),
-                                    onBookNow: () => Get.to(
-                                      () => TurfDetailsPage(turf: turf),
+                                  SizedBox(height: 12.h),
+                                  Text(
+                                    'No turfs available for the selected filter.',
+                                    style: textTheme.bodyMedium?.copyWith(
+                                      color: colors.textGrey,
                                     ),
-                                  );
-                                },
-                              )
-                            : Column(
-                                children: [
-                                  for (final turf in filteredTurfs)
-                                    Padding(
-                                      padding: EdgeInsets.only(bottom: 12.h),
-                                      child: VenueCard(
-                                        turf: turf,
-                                        distanceKm: vm.getDistanceToTurf(turf),
-                                        onBookNow: () => Get.to(
-                                          () => TurfDetailsPage(turf: turf),
-                                        ),
-                                      ),
-                                    ),
+                                  ),
                                 ],
                               ),
-                      );
-                    },
+                            ),
+                          );
+                        }
+
+                        // Cards
+                        final columns = context.turfGridColumns;
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.fromLTRB(
+                                isTablet ? 20.w : 16.w,
+                                4.h,
+                                isTablet ? 20.w : 16.w,
+                                12.h,
+                              ),
+                              child: columns > 1
+                                  ? GridView.builder(
+                                      shrinkWrap: true,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      gridDelegate:
+                                          SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: columns,
+                                        crossAxisSpacing: 16,
+                                        mainAxisSpacing: 16,
+                                        mainAxisExtent: 168,
+                                      ),
+                                      itemCount: filteredTurfs.length,
+                                      itemBuilder: (context, i) {
+                                        final turf = filteredTurfs[i];
+                                        return VenueCard(
+                                          turf: turf,
+                                          margin: EdgeInsets.zero,
+                                          distanceKm:
+                                              vm.getDistanceToTurf(turf),
+                                          onBookNow: () => Get.to(
+                                            () => TurfDetailsPage(turf: turf),
+                                          ),
+                                        );
+                                      },
+                                    )
+                                  : Column(
+                                      children: [
+                                        for (final turf in filteredTurfs)
+                                          Padding(
+                                            padding:
+                                                EdgeInsets.only(bottom: 12.h),
+                                            child: VenueCard(
+                                              turf: turf,
+                                              distanceKm:
+                                                  vm.getDistanceToTurf(turf),
+                                              onBookNow: () => Get.to(
+                                                () =>
+                                                    TurfDetailsPage(turf: turf),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                            ),
+                            if (vm.isFetchingMoreTurfs.value)
+                              Padding(
+                                padding: EdgeInsets.only(bottom: 24.h),
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    color: colors.primary,
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              )
+                            else
+                              SizedBox(height: 12.h),
+                          ],
+                        );
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
 
 // ── Reusable header icon button ──────────────────────────────
@@ -545,7 +574,7 @@ class _HeaderIconButton extends StatelessWidget {
           border: Border.all(color: const Color(0xFFE8E8E8)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),

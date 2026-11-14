@@ -85,10 +85,11 @@ export default function AdminContact() {
     const fetchMessages = async () => {
         try {
             setLoading(true);
-            const response = await api.get("/contact/admin");
+            const response = await api.get("/contact/admin", { params: { limit: 100 } });
             const result = response.data;
             if (result.success) {
-                const items = result.data || [];
+                const raw = result.data;
+                const items = Array.isArray(raw) ? raw : (raw?.items || []);
                 setMessages(items);
                 if (items.length > 0 && !selectedMessage) {
                     setSelectedMessage(items[0]);

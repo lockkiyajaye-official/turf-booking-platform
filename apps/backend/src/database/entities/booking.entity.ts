@@ -45,6 +45,15 @@ export class Booking {
   @Column()
   endTime: string; // e.g., "07:00"
 
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  basePrice: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  platformFee: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  gatewayFee: number;
+
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   totalPrice: number;
 
@@ -54,6 +63,18 @@ export class Booking {
     default: BookingStatus.PENDING,
   })
   status: BookingStatus;
+
+  @Column({ default: 'online' })
+  bookingSource: string; // 'online' | 'direct'
+
+  @Column({ nullable: true })
+  customerName: string;
+
+  @Column({ nullable: true })
+  customerPhone: string;
+
+  @Column({ default: 'online' })
+  paymentMethod: string; // 'online' | 'offline' | 'cash' | 'direct_upi'
 
   @Column({ nullable: true, type: 'text' })
   notes: string;

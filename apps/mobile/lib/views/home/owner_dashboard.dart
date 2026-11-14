@@ -7,7 +7,8 @@ import 'package:mobile/viewmodels/turf/owner_viewmodel.dart';
 import 'package:mobile/views/booking/add_turf_page.dart';
 import 'package:mobile/views/booking/my_turf_page.dart';
 import 'package:mobile/views/booking/owner_booking_page.dart';
-import 'package:mobile/views/booking/owner_finances_page.dart';
+import 'package:mobile/views/booking/widgets/direct_booking_sheet.dart';
+import 'package:mobile/views/booking/widgets/owner_booking_details_sheet.dart';
 import 'package:mobile/views/notifications/notificaiton_page.dart';
 
 class OwnerDashboardPage extends StatelessWidget {
@@ -18,7 +19,11 @@ class OwnerDashboardPage extends StatelessWidget {
     final colors = Theme.of(context).extension<AppColors>()!;
     final textTheme = Theme.of(context).textTheme;
     final authVm = Get.find<AuthViewmodel>();
-    final vm = Get.find<OwnerViewmodel>()..loadDashboard();
+    final vm =
+        (Get.isRegistered<OwnerViewmodel>()
+              ? Get.find<OwnerViewmodel>()
+              : Get.put(OwnerViewmodel(), permanent: true))
+          ..loadDashboard();
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -44,7 +49,8 @@ class OwnerDashboardPage extends StatelessWidget {
                               Text(
                                 'Welcome back,',
                                 style: textTheme.bodySmall?.copyWith(
-                                    color: colors.textGrey),
+                                  color: colors.textGrey,
+                                ),
                               ),
                               Text(
                                 first.isEmpty ? 'Owner' : first,
@@ -71,8 +77,8 @@ class OwnerDashboardPage extends StatelessWidget {
                     return SizedBox(
                       height: 110.h,
                       child: Center(
-                          child:
-                              CircularProgressIndicator(color: colors.primary)),
+                        child: CircularProgressIndicator(color: colors.primary),
+                      ),
                     );
                   }
                   final stats = vm.stats;
@@ -120,8 +126,9 @@ class OwnerDashboardPage extends StatelessWidget {
                   padding: EdgeInsets.symmetric(horizontal: 20.w),
                   child: Text(
                     'Quick Actions',
-                    style: textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700),
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
@@ -131,48 +138,53 @@ class OwnerDashboardPage extends StatelessWidget {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20.w),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _ActionTile(
-                          icon: Icons.add_circle_outline_rounded,
-                          label: 'Add Turf',
-                          colors: colors,
-                          textTheme: textTheme,
-                          onTap: () => Get.to(() => const AddTurfPage()),
+                  child: IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: _ActionTile(
+                            icon: Icons.bookmark_add_rounded,
+                            label: 'Direct Booking',
+                            colors: colors,
+                            textTheme: textTheme,
+                            onTap: () =>
+                                showDirectBookingModal(context, vm: vm),
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: _ActionTile(
-                          icon: Icons.list_alt_rounded,
-                          label: 'My Turfs',
-                          colors: colors,
-                          textTheme: textTheme,
-                          onTap: () => Get.to(() => const MyTurfsPage()),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: _ActionTile(
+                            icon: Icons.add_circle_outline_rounded,
+                            label: 'Add Turf',
+                            colors: colors,
+                            textTheme: textTheme,
+                            onTap: () => Get.to(() => const AddTurfPage()),
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: _ActionTile(
-                          icon: Icons.book_online_rounded,
-                          label: 'Bookings',
-                          colors: colors,
-                          textTheme: textTheme,
-                          onTap: () => Get.to(() => const OwnerBookingsPage()),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: _ActionTile(
+                            icon: Icons.list_alt_rounded,
+                            label: 'My Turfs',
+                            colors: colors,
+                            textTheme: textTheme,
+                            onTap: () => Get.to(() => const MyTurfsPage()),
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: _ActionTile(
-                          icon: Icons.payments_outlined,
-                          label: 'Finances',
-                          colors: colors,
-                          textTheme: textTheme,
-                          onTap: () => Get.to(() => const OwnerFinancesPage()),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: _ActionTile(
+                            icon: Icons.book_online_rounded,
+                            label: 'Bookings',
+                            colors: colors,
+                            textTheme: textTheme,
+                            onTap: () =>
+                                Get.to(() => const OwnerBookingsPage()),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -188,11 +200,13 @@ class OwnerDashboardPage extends StatelessWidget {
                     children: [
                       Text(
                         'Recent Bookings',
-                        style: textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       TextButton(
-                        onPressed: () => Get.to(() => const OwnerBookingsPage()),
+                        onPressed: () =>
+                            Get.to(() => const OwnerBookingsPage()),
                         child: Text(
                           'See all',
                           style: textTheme.bodySmall?.copyWith(
@@ -214,8 +228,7 @@ class OwnerDashboardPage extends StatelessWidget {
                     child: SizedBox(
                       height: 120.h,
                       child: Center(
-                        child:
-                            CircularProgressIndicator(color: colors.primary),
+                        child: CircularProgressIndicator(color: colors.primary),
                       ),
                     ),
                   );
@@ -227,37 +240,39 @@ class OwnerDashboardPage extends StatelessWidget {
                       child: Center(
                         child: Text(
                           'No bookings yet',
-                          style: textTheme.bodyMedium
-                              ?.copyWith(color: colors.textGrey),
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: colors.textGrey,
+                          ),
                         ),
                       ),
                     ),
                   );
                 }
                 final isTablet = context.isTablet;
-                final bookingCount = vm.recentBookings.length > 6 ? 6 : vm.recentBookings.length;
+                final bookingCount = vm.recentBookings.length > 6
+                    ? 6
+                    : vm.recentBookings.length;
 
                 if (isTablet) {
                   return SliverPadding(
                     padding: EdgeInsets.symmetric(horizontal: 20.w),
                     sliver: SliverGrid(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, i) {
-                          final booking = vm.recentBookings[i];
-                          return _BookingRow(
-                            booking: booking,
-                            colors: colors,
-                            textTheme: textTheme,
-                          );
-                        },
-                        childCount: bookingCount,
-                      ),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 12,
-                        mainAxisExtent: 84,
-                      ),
+                      delegate: SliverChildBuilderDelegate((context, i) {
+                        final booking = vm.recentBookings[i];
+                        return _BookingRow(
+                          booking: booking,
+                          colors: colors,
+                          textTheme: textTheme,
+                          vm: vm,
+                        );
+                      }, childCount: bookingCount),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 12,
+                            mainAxisExtent: 84,
+                          ),
                     ),
                   );
                 }
@@ -272,6 +287,7 @@ class OwnerDashboardPage extends StatelessWidget {
                           booking: booking,
                           colors: colors,
                           textTheme: textTheme,
+                          vm: vm,
                         ),
                       );
                     },
@@ -320,7 +336,7 @@ class _StatCard extends StatelessWidget {
           border: Border.all(color: const Color(0xFFE8E8E8)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -332,7 +348,7 @@ class _StatCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, color: color, size: 18),
@@ -381,31 +397,35 @@ class _ActionTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 16.h),
+        padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 4.w),
         decoration: BoxDecoration(
           color: colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFFE8E8E8)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
           ],
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: colors.primary, size: 26),
+            Icon(icon, color: colors.primary, size: 24),
             SizedBox(height: 6.h),
             Text(
               label,
               style: textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: colors.textTitle,
-                fontSize: 11.sp,
+                fontSize: 10.5.sp,
+                height: 1.15,
               ),
               textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -419,11 +439,13 @@ class _BookingRow extends StatelessWidget {
   final Map<String, dynamic> booking;
   final AppColors colors;
   final TextTheme textTheme;
+  final OwnerViewmodel vm;
 
   const _BookingRow({
     required this.booking,
     required this.colors,
     required this.textTheme,
+    required this.vm,
   });
 
   Color _statusColor(String status) {
@@ -444,12 +466,14 @@ class _BookingRow extends StatelessWidget {
     final status = (booking['status'] as String? ?? 'pending').toLowerCase();
 
     final turfObj = booking['turf'];
-    final turfName = (turfObj is Map ? turfObj['name'] as String? : null) ??
+    final turfName =
+        (turfObj is Map ? turfObj['name'] as String? : null) ??
         booking['turfName'] as String? ??
         'Unknown Turf';
 
     final userObj = booking['user'];
-    final userName = (userObj is Map ? userObj['name'] as String? : null) ??
+    final userName =
+        (userObj is Map ? userObj['name'] as String? : null) ??
         booking['userName'] as String? ??
         'Player';
 
@@ -459,87 +483,106 @@ class _BookingRow extends StatelessWidget {
       date = rawDate.toString().split('T').first;
     }
 
-    final amount = booking['totalPrice'] ?? booking['totalAmount'] ?? booking['price'] ?? 0;
+    final amount =
+        booking['totalPrice'] ??
+        booking['totalAmount'] ??
+        booking['price'] ??
+        0;
 
-    return Container(
-      padding: EdgeInsets.all(14.w),
-      decoration: BoxDecoration(
-        color: colors.white,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => showOwnerBookingDetailsSheet(
+          context,
+          booking: booking,
+          vm: vm,
+        ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE8E8E8)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: colors.primary.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(Icons.sports_soccer_rounded,
-                color: colors.primary, size: 20),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  turfName,
-                  style: textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: colors.textTitle,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 2.h),
-                Text(
-                  '$userName • $date',
-                  style: textTheme.bodySmall
-                      ?.copyWith(color: colors.textGrey, fontSize: 12.sp),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '₹$amount',
-                style: textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: colors.textTitle,
-                ),
-              ),
-              SizedBox(height: 4.h),
-              Container(
-                padding:
-                    EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
-                decoration: BoxDecoration(
-                  color: _statusColor(status).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  status[0].toUpperCase() + status.substring(1),
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w600,
-                    color: _statusColor(status),
-                  ),
-                ),
+        child: Container(
+          padding: EdgeInsets.all(14.w),
+          decoration: BoxDecoration(
+            color: colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE8E8E8)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
-        ],
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.sports_soccer_rounded,
+                  color: colors.primary,
+                  size: 20,
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      turfName,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: colors.textTitle,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      '$userName • $date',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colors.textGrey,
+                        fontSize: 12.sp,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '₹$amount',
+                    style: textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colors.textTitle,
+                    ),
+                  ),
+                  SizedBox(height: 4.h),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                    decoration: BoxDecoration(
+                      color: _statusColor(status).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      status[0].toUpperCase() + status.substring(1),
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w600,
+                        color: _statusColor(status),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -563,14 +606,17 @@ class _NotifBadge extends StatelessWidget {
           border: Border.all(color: const Color(0xFFE8E8E8)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: Icon(Icons.notifications_outlined,
-            color: colors.primary, size: 22),
+        child: Icon(
+          Icons.notifications_outlined,
+          color: colors.primary,
+          size: 22,
+        ),
       ),
     );
   }

@@ -1,3 +1,5 @@
+import 'package:mobile/data/services/uploadcare_service.dart';
+
 class UserModel {
   final String id;
   final String email;
@@ -46,7 +48,9 @@ class UserModel {
       walletBalance: json['walletBalance'] != null 
           ? double.tryParse(json['walletBalance'].toString()) 
           : null,
-      profileImage: json['profileImage'],
+      profileImage: json['profileImage'] != null
+          ? UploadcareService.normalizeCdnUrl(json['profileImage'] as String)
+          : null,
     );
   }
 

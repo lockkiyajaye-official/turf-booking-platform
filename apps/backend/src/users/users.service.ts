@@ -35,24 +35,20 @@ export class UsersService {
 
         query.orderBy('user.createdAt', 'DESC');
 
-        if (page) {
-            const pageNum = page > 0 ? page : 1;
-            const limitNum = limit && limit > 0 ? limit : 10;
-            const skip = (pageNum - 1) * limitNum;
+        const pageNum = page && page > 0 ? Number(page) : 1;
+        const limitNum = limit && limit > 0 ? Number(limit) : 10;
+        const skip = (pageNum - 1) * limitNum;
 
-            const [items, total] = await query.skip(skip).take(limitNum).getManyAndCount();
-            const totalPages = Math.ceil(total / limitNum);
-            return {
-                items,
-                total,
-                page: pageNum,
-                limit: limitNum,
-                totalPages,
-                hasMore: pageNum < totalPages,
-            };
-        }
-
-        return query.getMany();
+        const [items, total] = await query.skip(skip).take(limitNum).getManyAndCount();
+        const totalPages = Math.ceil(total / limitNum);
+        return {
+            items,
+            total,
+            page: pageNum,
+            limit: limitNum,
+            totalPages,
+            hasMore: pageNum < totalPages,
+        };
     }
 
     async findOne(id: string) {
@@ -68,12 +64,28 @@ export class UsersService {
         return user;
     }
 
-    async getTurfOwners() {
-        return this.userRepository.find({
+    async getTurfOwners(page?: number, limit?: number) {
+        const pageNum = page && page > 0 ? Number(page) : 1;
+        const limitNum = limit && limit > 0 ? Number(limit) : 10;
+        const skip = (pageNum - 1) * limitNum;
+
+        const [items, total] = await this.userRepository.findAndCount({
             where: { role: UserRole.TURF_OWNER },
             relations: ['turfs'],
             order: { createdAt: 'DESC' },
+            skip,
+            take: limitNum,
         });
+
+        const totalPages = Math.ceil(total / limitNum);
+        return {
+            items,
+            total,
+            page: pageNum,
+            limit: limitNum,
+            totalPages,
+            hasMore: pageNum < totalPages,
+        };
     }
 
     async approveTurfOwner(id: string, approvalNotes?: string) {
@@ -105,6 +117,33 @@ export class UsersService {
         user.approvalNotes = approvalNotes || '';
         await this.userRepository.save(user);
 
+        return user;
+    }
+
+    async updateTurfOwnerCommission(
+        id: string,
+        customPlatformFeePercent: number | null,
+        customGatewayFeePercent?: number | null,
+    ) {
+        const user = await this.findOne(id);
+
+        if (user.role !== UserRole.TURF_OWNER) {
+            throw new BadRequestException('User is not a turf owner');
+        }
+
+        user.customPlatformFeePercent =
+            customPlatformFeePercent !== undefined && customPlatformFeePercent !== null
+                ? Number(customPlatformFeePercent)
+                : null;
+
+        if (customGatewayFeePercent !== undefined) {
+            user.customGatewayFeePercent =
+                customGatewayFeePercent !== null
+                    ? Number(customGatewayFeePercent)
+                    : null;
+        }
+
+        await this.userRepository.save(user);
         return user;
     }
 

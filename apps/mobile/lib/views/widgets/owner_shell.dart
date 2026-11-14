@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:mobile/viewmodels/turf/owner_viewmodel.dart';
 import 'package:mobile/views/booking/my_turf_page.dart';
 import 'package:mobile/views/booking/owner_booking_page.dart';
 import 'package:mobile/views/home/owner_dashboard.dart';
@@ -15,6 +17,14 @@ class OwnerShell extends StatefulWidget {
 class _OwnerShellState extends State<OwnerShell> {
   int _currentIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    if (!Get.isRegistered<OwnerViewmodel>()) {
+      Get.put(OwnerViewmodel(), permanent: true);
+    }
+  }
+
   final _pages = const [
     OwnerDashboardPage(),
     MyTurfsPage(),
@@ -25,7 +35,10 @@ class _OwnerShellState extends State<OwnerShell> {
   static const _ownerNavItems = [
     FloatingNavItem(label: 'Home', icon: Icons.dashboard_rounded),
     FloatingNavItem(label: 'My Turfs', icon: Icons.sports_soccer_rounded),
-    FloatingNavItem(label: 'Bookings', icon: Icons.confirmation_number_outlined),
+    FloatingNavItem(
+      label: 'Bookings',
+      icon: Icons.confirmation_number_outlined,
+    ),
     FloatingNavItem(label: 'Profile', icon: Icons.person_outline_rounded),
   ];
 

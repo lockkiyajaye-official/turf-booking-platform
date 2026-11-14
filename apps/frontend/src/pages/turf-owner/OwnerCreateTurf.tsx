@@ -14,6 +14,45 @@ const AMENITY_OPTIONS = [
     "Equipment Rental", "Spectator Seating", "Restrooms", "Security",
 ];
 
+const INDIAN_STATES = [
+    "Andaman and Nicobar Islands",
+    "Andhra Pradesh",
+    "Arunachal Pradesh",
+    "Assam",
+    "Bihar",
+    "Chandigarh",
+    "Chhattisgarh",
+    "Dadra and Nagar Haveli and Daman and Diu",
+    "Delhi",
+    "Goa",
+    "Gujarat",
+    "Haryana",
+    "Himachal Pradesh",
+    "Jammu and Kashmir",
+    "Jharkhand",
+    "Karnataka",
+    "Kerala",
+    "Ladakh",
+    "Lakshadweep",
+    "Madhya Pradesh",
+    "Maharashtra",
+    "Manipur",
+    "Meghalaya",
+    "Mizoram",
+    "Nagaland",
+    "Odisha",
+    "Puducherry",
+    "Punjab",
+    "Rajasthan",
+    "Sikkim",
+    "Tamil Nadu",
+    "Telangana",
+    "Tripura",
+    "Uttar Pradesh",
+    "Uttarakhand",
+    "West Bengal",
+];
+
 const DEFAULT_FORM = {
     name: "", description: "", address: "", city: "", state: "", pincode: "",
     pricePerHour: "", contactPhone: "", contactEmail: "", capacity: "",
@@ -123,7 +162,7 @@ export default function OwnerCreateTurf() {
                 ? [images[primaryIndex]?.cdnUrl, ...images.filter((_, i) => i !== primaryIndex).map((img) => img.cdnUrl)].filter(Boolean)
                 : [];
 
-            await api.post("/turfs", {
+            const response = await api.post("/turfs", {
                 name: formData.name,
                 description: formData.description,
                 address: formData.address,
@@ -145,8 +184,17 @@ export default function OwnerCreateTurf() {
                 longitude: formData.longitude ? parseFloat(formData.longitude) : undefined,
                 googleMapUrl: formData.googleMapUrl || undefined,
                 mapUrl: formData.googleMapUrl || undefined,
+                cancellationPolicyEnabled: formData.cancellationPolicyEnabled,
+                fullRefundHours: Number(formData.fullRefundHours),
+                partialRefundHours: Number(formData.partialRefundHours),
+                partialRefundPercentage: Number(formData.partialRefundPercentage),
             });
-            navigate("/owner/turfs");
+            const createdId = response.data?.id || response.data?.turf?.id;
+            if (createdId) {
+                navigate(`/owner/turfs/${createdId}`, { replace: true });
+            } else {
+                navigate("/owner/turfs", { replace: true });
+            }
         } catch (error: any) {
             alert(error.response?.data?.message || "Failed to create turf");
         } finally {
@@ -157,18 +205,20 @@ export default function OwnerCreateTurf() {
     const filteredSlots = generatedSlots.filter((s: string) => s.includes(slotSearch));
 
     return (
-        <div className="p-4 sm:p-8 w-full max-w-4xl mx-auto space-y-8">
-            <div className="flex items-center gap-4">
-                <button onClick={() => navigate("/owner/turfs")} className="text-gray-400 hover:text-gray-600 transition-colors">
-                    <X className="w-6 h-6" />
-                </button>
-                <div>
-                    <h1 className="text-3xl font-black text-gray-900 tracking-tight">Create New Listing</h1>
-                    <p className="text-gray-500 mt-1 font-medium">Fill in the details to list your turf</p>
-                </div>
-            </div>
+        <div className="min-h-screen bg-gray-50/50">
+            <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-20 animate-in fade-in duration-300">
+                <div className="max-w-4xl mx-auto space-y-8">
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => navigate("/owner/turfs")} className="text-gray-400 hover:text-gray-600 transition-colors p-1.5 rounded-lg hover:bg-gray-100">
+                            <X className="w-6 h-6" />
+                        </button>
+                        <div>
+                            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Create New Listing</h1>
+                            <p className="text-gray-600 mt-1 font-medium tracking-wide">Fill in the details to list your turf facility</p>
+                        </div>
+                    </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="bg-white rounded-2xl shadow-xs border border-gray-200 overflow-hidden">
                 <div className="h-1 bg-[#E33E33]" />
                 <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-8">
                     <section>
@@ -207,12 +257,22 @@ export default function OwnerCreateTurf() {
                                 </Field>
                             </div>
                             <Field label="City *">
-                                <input type="text" required placeholder="e.g., Bengaluru" className={inputCls}
+                                <input type="text" required placeholder="e.g., Naharlagun" className={inputCls}
                                     value={formData.city} onChange={(e) => set("city", e.target.value)} />
                             </Field>
                             <Field label="State">
-                                <input type="text" placeholder="e.g., Karnataka" className={inputCls}
-                                    value={formData.state} onChange={(e) => set("state", e.target.value)} />
+                                <select
+                                    className={inputCls}
+                                    value={formData.state}
+                                    onChange={(e) => set("state", e.target.value)}
+                                >
+                                    <option value="">Select State</option>
+                                    {INDIAN_STATES.map((st) => (
+                                        <option key={st} value={st}>
+                                            {st}
+                                        </option>
+                                    ))}
+                                </select>
                             </Field>
                             <Field label="Pincode">
                                 <input type="text" placeholder="e.g., 560001" className={inputCls}
@@ -428,7 +488,9 @@ export default function OwnerCreateTurf() {
                         </button>
                     </div>
                 </form>
-            </div>
+                    </div>
+                </div>
+            </main>
         </div>
     );
 }

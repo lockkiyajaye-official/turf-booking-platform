@@ -16,28 +16,42 @@ class DashboardViewmodel extends GetxController {
   Future<void> fetchOwnerDashboard() async {
     final token = _authViewmodel.token.value;
     if (token.isEmpty) {
-      Get.snackbar('Error', 'Not authenticated', backgroundColor: Colors.red.shade100);
+      Get.snackbar(
+        'Error',
+        'Not authenticated',
+        backgroundColor: Colors.red.shade100,
+      );
       return;
     }
 
     try {
       isLoading.value = true;
-      
+
       // Fetch stats
       final statsResponse = await _dashboardService.getStatistics(token);
       if (statsResponse['success']) {
         stats.value = DashboardStatsModel.fromJson(statsResponse['data']);
       } else {
-        Get.snackbar('Error', statsResponse['message'] ?? 'Failed to fetch dashboard stats', backgroundColor: Colors.red.shade100);
+        Get.snackbar(
+          'Error',
+          statsResponse['message'] ?? 'Failed to fetch dashboard stats',
+          backgroundColor: Colors.red.shade100,
+        );
       }
 
       // Fetch recent bookings
-      final bookingsResponse = await _dashboardService.getBookings(token: token);
+      final bookingsResponse = await _dashboardService.getBookings(
+        token: token,
+      );
       if (bookingsResponse['success']) {
-         final List data = bookingsResponse['data'] ?? [];
-         recentBookings.value = data.map((json) => BookingModel.fromJson(json)).toList();
+        final raw = bookingsResponse['data'];
+        final List data = raw is List
+            ? raw
+            : (raw is Map && raw['items'] is List ? raw['items'] : []);
+        recentBookings.value = data
+            .map((json) => BookingModel.fromJson(json))
+            .toList();
       }
-
     } catch (e) {
       Get.snackbar('Error', e.toString(), backgroundColor: Colors.red.shade100);
     } finally {

@@ -7,11 +7,14 @@ import express from 'express';
 
 
 const server = express();
+server.use(express.json({ limit: '50mb' }));
+server.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 export const createServer = async () => {
   const app = await NestFactory.create(
     AppModule,
     new ExpressAdapter(server),
+    { bodyParser: false },
   );
 
   app.useGlobalPipes(

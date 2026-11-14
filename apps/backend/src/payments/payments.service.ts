@@ -16,6 +16,7 @@ import { Booking, BookingStatus } from '../database/entities/booking.entity';
 import { Turf } from '../database/entities/turf.entity';
 import { User, UserRole } from '../database/entities/user.entity';
 import { Payout, PayoutStatus } from '../database/entities/payout.entity';
+import { PlatformSettings } from '../database/entities/platform-settings.entity';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { VerifyPaymentDto } from './dto/verify-payment.dto';
 
@@ -35,6 +36,8 @@ export class PaymentsService {
         private readonly userRepository: Repository<User>,
         @InjectRepository(Payout)
         private readonly payoutRepository: Repository<Payout>,
+        @InjectRepository(PlatformSettings)
+        private readonly settingsRepository: Repository<PlatformSettings>,
         private readonly configService: ConfigService,
     ) {
         this.razorpay = new Razorpay({
@@ -44,22 +47,111 @@ export class PaymentsService {
     }
 
     /**
+     * Get or initialize platform charge and gateway fee settings
+     */
+    async getSettings(): Promise<PlatformSettings> {
+        let settings = await this.settingsRepository.findOne({ where: { id: 'default' } });
+        if (!settings) {
+            settings = this.settingsRepository.create({
+                id: 'default',
+                platformFeePercent: 5.0,
+                gatewayFeePercent: 2.0,
+                gatewayGstPercent: 18.0,
+                isActive: true,
+            });
+            await this.settingsRepository.save(settings);
+        }
+        return settings;
+    }
+
+    /**
+     * Update global fee settings (Admin)
+     */
+    async updateSettings(update: Partial<PlatformSettings>): Promise<PlatformSettings> {
+        const settings = await this.getSettings();
+        if (update.platformFeePercent !== undefined) {
+            settings.platformFeePercent = Number(update.platformFeePercent);
+        }
+        if (update.gatewayFeePercent !== undefined) {
+            settings.gatewayFeePercent = Number(update.gatewayFeePercent);
+        }
+        if (update.gatewayGstPercent !== undefined) {
+            settings.gatewayGstPercent = Number(update.gatewayGstPercent);
+        }
+        if (update.isActive !== undefined) {
+            settings.isActive = Boolean(update.isActive);
+        }
+        return this.settingsRepository.save(settings);
+    }
+
+    /**
+     * Calculate itemized fee breakdown for booking a turf
+     */
+    async calculateFeeBreakdown(turfId: string, hours: number) {
+        const turf = await this.turfRepository.findOne({
+            where: { id: turfId },
+            relations: ['owner'],
+        });
+
+        if (!turf) {
+            throw new NotFoundException('Turf not found');
+        }
+
+        const settings = await this.getSettings();
+        const basePrice = Math.round(Number(turf.pricePerHour) * hours * 100) / 100;
+
+        // Platform fee: per-owner override takes precedence if set, otherwise global default
+        const platformFeePercent =
+            turf.owner?.customPlatformFeePercent !== null &&
+            turf.owner?.customPlatformFeePercent !== undefined
+                ? Number(turf.owner.customPlatformFeePercent)
+                : Number(settings.platformFeePercent);
+
+        const platformFee = Math.round(basePrice * (platformFeePercent / 100) * 100) / 100;
+
+        // Gateway fee: 2% base + 18% GST on the 2% = 2.36%
+        const gatewayFeePercent =
+            turf.owner?.customGatewayFeePercent !== null &&
+            turf.owner?.customGatewayFeePercent !== undefined
+                ? Number(turf.owner.customGatewayFeePercent)
+                : Number(settings.gatewayFeePercent);
+
+        const gstPercent = Number(settings.gatewayGstPercent);
+        const effectiveGatewayPercent = gatewayFeePercent * (1 + gstPercent / 100);
+
+        const subtotal = basePrice + platformFee;
+        const gatewayFee = Math.round(subtotal * (effectiveGatewayPercent / 100) * 100) / 100;
+
+        const totalPrice = Math.round((subtotal + gatewayFee) * 100) / 100;
+
+        return {
+            basePrice,
+            platformFee,
+            platformFeePercent,
+            gatewayFee,
+            gatewayFeePercent,
+            gatewayGstPercent: gstPercent,
+            effectiveGatewayPercent: Math.round(effectiveGatewayPercent * 100) / 100,
+            totalPrice,
+            hours,
+            pricePerHour: Number(turf.pricePerHour),
+            ownerId: turf.ownerId,
+        };
+    }
+
+    /**
      * Create a Razorpay order for a booking and a corresponding Payment record.
-     * Industry-standard flow:
-     *  - Customer pays the platform's account (your Razorpay account)
-     *  - We track how much each turf owner should receive via walletBalance
-     *  - Actual bank payouts to owners are done in batches via payouts (future step)
      */
     async createOrder(dto: CreatePaymentDto, user: User) {
         const turf = await this.turfRepository.findOne({
             where: { id: dto.turfId },
+            relations: ['owner'],
         });
 
         if (!turf || !turf.isPublished) {
             throw new NotFoundException('Turf not found or not published');
         }
 
-        // Calculate price the same way BookingsService does
         const startHour = parseInt(dto.startTime.split(':')[0]);
         const endHour = parseInt(dto.endTime.split(':')[0]);
         const hours = endHour - startHour;
@@ -68,9 +160,9 @@ export class PaymentsService {
             throw new BadRequestException('Invalid time slot');
         }
 
-        const totalPrice = Number(turf.pricePerHour) * hours;
+        const breakdown = await this.calculateFeeBreakdown(turf.id, hours);
 
-        // Create a booking in PENDING state
+        // Create a booking in PENDING state with itemized price breakdown
         const booking = this.bookingRepository.create({
             turfId: turf.id,
             turf,
@@ -79,13 +171,16 @@ export class PaymentsService {
             bookingDate: new Date(dto.bookingDate),
             startTime: dto.startTime,
             endTime: dto.endTime,
-            totalPrice,
+            basePrice: breakdown.basePrice,
+            platformFee: breakdown.platformFee,
+            gatewayFee: breakdown.gatewayFee,
+            totalPrice: breakdown.totalPrice,
             status: BookingStatus.PENDING,
         });
 
         const savedBooking = await this.bookingRepository.save(booking);
 
-        const amountInPaise = Math.round(totalPrice * 100);
+        const amountInPaise = Math.round(breakdown.totalPrice * 100);
 
         const order = await this.razorpay.orders.create({
             amount: amountInPaise,
@@ -95,6 +190,9 @@ export class PaymentsService {
             notes: {
                 turfId: turf.id,
                 userId: user.id,
+                basePrice: String(breakdown.basePrice),
+                platformFee: String(breakdown.platformFee),
+                gatewayFee: String(breakdown.gatewayFee),
             },
         });
 
@@ -106,7 +204,10 @@ export class PaymentsService {
             turfId: turf.id,
             turf,
             ownerId: turf.ownerId,
-            amount: totalPrice,
+            baseAmount: breakdown.basePrice,
+            platformFee: breakdown.platformFee,
+            gatewayFee: breakdown.gatewayFee,
+            amount: breakdown.totalPrice,
             currency: 'INR',
             provider: 'razorpay',
             status: PaymentStatus.CREATED,
@@ -120,6 +221,10 @@ export class PaymentsService {
             amount: amountInPaise,
             currency: 'INR',
             bookingId: savedBooking.id,
+            basePrice: breakdown.basePrice,
+            platformFee: breakdown.platformFee,
+            gatewayFee: breakdown.gatewayFee,
+            totalPrice: breakdown.totalPrice,
             RazorpayKeyId: this.configService.get<string>('RAZORPAY_KEY_ID'),
             customer: {
                 name: `${user.firstName} ${user.lastName}`,
@@ -212,7 +317,13 @@ export class PaymentsService {
 
         if (owner && owner.role === UserRole.TURF_OWNER) {
             const currentBalance = Number(owner.walletBalance || 0);
-            owner.walletBalance = currentBalance + Number(payment.amount);
+            const creditAmount =
+                Number(payment.baseAmount) > 0
+                    ? Number(payment.baseAmount)
+                    : Number(booking.basePrice) > 0
+                    ? Number(booking.basePrice)
+                    : Number(payment.amount);
+            owner.walletBalance = currentBalance + creditAmount;
             await this.userRepository.save(owner);
         }
 
@@ -437,14 +548,22 @@ export class PaymentsService {
     /**
      * Payment history for a normal user.
      */
-    async getUserPayments(user: User) {
-        const payments = await this.paymentRepository.find({
+    async getUserPayments(user: User, page?: number, limit?: number) {
+        const pageNum = page && page > 0 ? Number(page) : 1;
+        const limitNum = limit && limit > 0 ? Number(limit) : 10;
+        const skip = (pageNum - 1) * limitNum;
+
+        const [payments, total] = await this.paymentRepository.findAndCount({
             where: { userId: user.id },
             relations: ['booking', 'turf'],
             order: { createdAt: 'DESC' },
+            skip,
+            take: limitNum,
         });
 
-        return payments.map((p) => ({
+        const totalPages = Math.ceil(total / limitNum);
+
+        const items = payments.map((p) => ({
             id: p.id,
             amount: Number(p.amount),
             currency: p.currency,
@@ -458,20 +577,37 @@ export class PaymentsService {
             razorpayOrderId: p.razorpayOrderId,
             razorpayPaymentId: p.razorpayPaymentId,
         }));
+
+        return {
+            items,
+            total,
+            page: pageNum,
+            limit: limitNum,
+            totalPages,
+            hasMore: pageNum < totalPages,
+        };
     }
 
     /**
      * Admin view of payouts, optionally filtered by status.
      */
-    async getAdminPayouts(status?: PayoutStatus) {
+    async getAdminPayouts(status?: PayoutStatus, page?: number, limit?: number) {
+        const pageNum = page && page > 0 ? Number(page) : 1;
+        const limitNum = limit && limit > 0 ? Number(limit) : 10;
+        const skip = (pageNum - 1) * limitNum;
+
         const where = status ? { status } : {};
-        const payouts = await this.payoutRepository.find({
+        const [payouts, total] = await this.payoutRepository.findAndCount({
             where,
             order: { createdAt: 'DESC' },
             relations: ['owner'],
+            skip,
+            take: limitNum,
         });
 
-        return payouts.map((p) => ({
+        const totalPages = Math.ceil(total / limitNum);
+
+        const items = payouts.map((p) => ({
             id: p.id,
             amount: Number(p.amount),
             status: p.status,
@@ -493,6 +629,15 @@ export class PaymentsService {
                   }
                 : undefined,
         }));
+
+        return {
+            items,
+            total,
+            page: pageNum,
+            limit: limitNum,
+            totalPages,
+            hasMore: pageNum < totalPages,
+        };
     }
 
     /**

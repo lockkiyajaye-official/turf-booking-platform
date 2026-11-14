@@ -9,7 +9,8 @@ import {
   Put,
   Delete,
   UseGuards,
-  Request
+  Request,
+  Query,
 } from '@nestjs/common';
 import { ContactService } from './contact.service';
 import { CreateContactDto } from './dto/create-contact.dto';
@@ -86,10 +87,16 @@ export class ContactController {
   @Get('admin')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  async getAllMessages() {
+  async getAllMessages(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
     return {
       success: true,
-      data: await this.contactService.findAll()
+      data: await this.contactService.findAll(
+        page ? parseInt(page, 10) : undefined,
+        limit ? parseInt(limit, 10) : undefined,
+      ),
     };
   }
 

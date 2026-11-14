@@ -12,10 +12,7 @@ import 'package:mobile/views/widgets/my_text_field.dart';
 class SupportPage extends StatefulWidget {
   final int initialTab;
 
-  const SupportPage({
-    super.key,
-    this.initialTab = 0,
-  });
+  const SupportPage({super.key, this.initialTab = 0});
 
   @override
   State<SupportPage> createState() => _SupportPageState();
@@ -80,6 +77,7 @@ class _SupportPageState extends State<SupportPage>
   }
 
   Future<void> _submitForm() async {
+    if (_supportVm.isSubmitting.value) return;
     final subject = _subjectController.text.trim();
     final message = _messageController.text.trim();
 
@@ -239,130 +237,132 @@ class _SupportPageState extends State<SupportPage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-          Text(
-            'Frequently Asked Questions',
-            style: textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: colors.textTitle,
-            ),
-          ),
-          SizedBox(height: 12.h),
-          ..._faqs.map(
-            (faq) => Padding(
-              padding: EdgeInsets.only(bottom: 8.h),
-              child: Material(
-                color: colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  side: const BorderSide(color: Color(0xFFE8E8E8)),
+              Text(
+                'Frequently Asked Questions',
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colors.textTitle,
                 ),
-                clipBehavior: Clip.antiAlias,
-                child: ExpansionTile(
-                  shape: const Border(),
-                  collapsedShape: const Border(),
-                  title: Text(
-                    faq['question']!,
-                    style: textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colors.textTitle,
+              ),
+              SizedBox(height: 12.h),
+              ..._faqs.map(
+                (faq) => Padding(
+                  padding: EdgeInsets.only(bottom: 8.h),
+                  child: Material(
+                    color: colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: const BorderSide(color: Color(0xFFE8E8E8)),
                     ),
-                  ),
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.all(12.w),
-                      child: Text(
-                        faq['answer']!,
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colors.textGrey,
+                    clipBehavior: Clip.antiAlias,
+                    child: ExpansionTile(
+                      shape: const Border(),
+                      collapsedShape: const Border(),
+                      title: Text(
+                        faq['question']!,
+                        style: textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colors.textTitle,
                         ),
                       ),
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.all(12.w),
+                          child: Text(
+                            faq['answer']!,
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colors.textGrey,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
-          SizedBox(height: 24.h),
-          Text(
-            'Contact Support',
-            style: textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: colors.textTitle,
-            ),
-          ),
-          SizedBox(height: 12.h),
-          Text(
-            'Subject',
-            style: textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: colors.textTitle,
-            ),
-          ),
-          SizedBox(height: 6.h),
-          MyTextField(
-            height: 50.h,
-            type: TextInputType.text,
-            fillColor: colors.white,
-            controller: _subjectController,
-            hintText: 'e.g. Issue with booking (min 5 chars)',
-          ),
-          SizedBox(height: 14.h),
-          Text(
-            'Message',
-            style: textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: colors.textTitle,
-            ),
-          ),
-          SizedBox(height: 6.h),
-          Container(
-            decoration: BoxDecoration(
-              color: colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: colors.textMuted.withValues(alpha: 0.5),
-              ),
-            ),
-            child: TextFormField(
-              controller: _messageController,
-              maxLines: 4,
-              style: textTheme.bodyMedium?.copyWith(
-                color: colors.textTitle,
-                fontWeight: FontWeight.w500,
-              ),
-              decoration: InputDecoration(
-                hintText:
-                    'Describe your issue or question (min 10 chars)...',
-                hintStyle: textTheme.bodySmall?.copyWith(
-                  color: colors.textMuted.withValues(alpha: 0.7),
+              SizedBox(height: 24.h),
+              Text(
+                'Contact Support',
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colors.textTitle,
                 ),
-                contentPadding: EdgeInsets.all(12.w),
-                border: InputBorder.none,
               ),
-            ),
-          ),
-          SizedBox(height: 24.h),
-          Obx(
-            () => MyButtons(
-              text: _supportVm.isSubmitting.value
-                  ? 'Submitting...'
-                  : 'Submit Support Ticket',
-              height: 48.h,
-              width: double.infinity,
-              onTap: _supportVm.isSubmitting.value ? () {} : _submitForm,
-              backgroundColor: colors.primary,
-              textStyle: textTheme.bodyMedium?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
+              SizedBox(height: 12.h),
+              Text(
+                'Subject',
+                style: textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colors.textTitle,
+                ),
               ),
-            ),
+              SizedBox(height: 6.h),
+              MyTextField(
+                height: 50.h,
+                type: TextInputType.text,
+                fillColor: colors.white,
+                controller: _subjectController,
+                hintText: 'e.g. Issue with booking (min 5 chars)',
+              ),
+              SizedBox(height: 14.h),
+              Text(
+                'Message',
+                style: textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colors.textTitle,
+                ),
+              ),
+              SizedBox(height: 6.h),
+              Container(
+                decoration: BoxDecoration(
+                  color: colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: colors.textMuted.withValues(alpha: 0.5),
+                  ),
+                ),
+                child: TextFormField(
+                  controller: _messageController,
+                  maxLines: 4,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colors.textTitle,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  decoration: InputDecoration(
+                    hintText:
+                        'Describe your issue or question (min 10 chars)...',
+                    hintStyle: textTheme.bodySmall?.copyWith(
+                      color: colors.textMuted.withValues(alpha: 0.7),
+                    ),
+                    contentPadding: EdgeInsets.all(12.w),
+                    border: InputBorder.none,
+                  ),
+                ),
+              ),
+              SizedBox(height: 24.h),
+              Obx(
+                () => MyButtons(
+                  text: _supportVm.isSubmitting.value
+                      ? 'Submitting...'
+                      : 'Submit Support Ticket',
+                  isLoading: _supportVm.isSubmitting.value,
+                  loadingText: 'Submitting...',
+                  height: 48.h,
+                  width: double.infinity,
+                  onTap: _supportVm.isSubmitting.value ? null : _submitForm,
+                  backgroundColor: colors.primary,
+                  textStyle: textTheme.bodyMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              SizedBox(height: 24.h),
+            ],
           ),
-          SizedBox(height: 24.h),
-        ],
+        ),
       ),
-    ),
-  ),
-);
+    );
   }
 
   Widget _buildMyRequestsTab(AppColors colors, TextTheme textTheme) {
@@ -500,10 +500,7 @@ class _SupportPageState extends State<SupportPage>
                   ),
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 8.w,
-                    vertical: 3.h,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
                   decoration: BoxDecoration(
                     color: ticket.statusBgColor,
                     borderRadius: BorderRadius.circular(10),

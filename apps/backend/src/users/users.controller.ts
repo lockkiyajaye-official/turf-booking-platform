@@ -42,8 +42,14 @@ export class UsersController {
     }
 
     @Get('turf-owners')
-    getTurfOwners() {
-        return this.usersService.getTurfOwners();
+    getTurfOwners(
+        @Query('page') page?: string,
+        @Query('limit') limit?: string,
+    ) {
+        return this.usersService.getTurfOwners(
+            page ? parseInt(page, 10) : undefined,
+            limit ? parseInt(limit, 10) : undefined,
+        );
     }
 
     @Get(':id')
@@ -65,6 +71,19 @@ export class UsersController {
         @Body('approvalNotes') approvalNotes: string,
     ) {
         return this.usersService.rejectTurfOwner(id, approvalNotes);
+    }
+
+    @Patch('turf-owners/:id/commission')
+    updateCommission(
+        @Param('id') id: string,
+        @Body('customPlatformFeePercent') customPlatformFeePercent: number | null,
+        @Body('customGatewayFeePercent') customGatewayFeePercent?: number | null,
+    ) {
+        return this.usersService.updateTurfOwnerCommission(
+            id,
+            customPlatformFeePercent,
+            customGatewayFeePercent,
+        );
     }
 
     @Patch(':id')

@@ -24,8 +24,19 @@ class FavoriteViewmodel extends GetxController {
     try {
       isLoading.value = true;
       final result = await _favoriteService.getFavorites(token);
-      if (result['success'] == true && result['data'] is List) {
-        final list = (result['data'] as List)
+      if (result['success'] == true) {
+        final raw = result['data'];
+        List listData = [];
+        if (raw is List) {
+          listData = raw;
+        } else if (raw is Map) {
+          if (raw['data'] is List) {
+            listData = raw['data'];
+          } else if (raw['items'] is List) {
+            listData = raw['items'];
+          }
+        }
+        final list = listData
             .map((json) => TurfModel.fromJson(json))
             .toList();
         favoriteTurfs.assignAll(list);

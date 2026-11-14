@@ -4,6 +4,7 @@ import {
     CheckCircle2,
     Clock,
     MapPin,
+    Store,
     XCircle,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -19,11 +20,36 @@ import {
 import api from "../../services/api";
 import type { Booking, BookingStatus } from "./types";
 
+function format12Hour(time24: string): string {
+    if (!time24) return "";
+    const trimmed = time24.trim();
+    if (trimmed.includes("AM") || trimmed.includes("PM")) return trimmed;
+    const [hStr, mStr] = trimmed.split(":");
+    let h = parseInt(hStr, 10);
+    const m = mStr ? parseInt(mStr, 10) : 0;
+    if (isNaN(h)) return trimmed;
+    const period = h >= 12 ? "PM" : "AM";
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${String(h12).padStart(2, "0")}:${String(m).padStart(2, "0")} ${period}`;
+}
+
+function formatSlot12H(start: string, end?: string): string {
+    if (!end) {
+        if (start.includes("-")) {
+            const parts = start.split("-");
+            return `${format12Hour(parts[0])} - ${format12Hour(parts[1])}`;
+        }
+        return format12Hour(start);
+    }
+    return `${format12Hour(start)} - ${format12Hour(end)}`;
+}
+
 export default function AdminBookings() {
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [statusTab, setStatusTab] = useState<string>("all");
+    const [sourceTab, setSourceTab] = useState<"all" | "online" | "direct">("all");
     const [sortBy, setSortBy] = useState<"newest" | "slot_asc" | "slot_desc" | "amount_desc">(
         "newest",
     );
@@ -121,18 +147,24 @@ export default function AdminBookings() {
             list = list.filter((b) => b.status === statusTab);
         }
 
+        if (sourceTab !== "all") {
+            list = list.filter((b) => (b.bookingSource || "online") === sourceTab);
+        }
+
         if (search.trim()) {
             const term = search.toLowerCase();
             list = list.filter((b) => {
                 const customer = `${b.user?.firstName || ""} ${b.user?.lastName || ""}`.toLowerCase();
+                const directCustomer = (b.customerName || "").toLowerCase();
                 const turfName = (b.turf?.name || "").toLowerCase();
                 const turfAddr = (b.turf?.address || "").toLowerCase();
                 const bookingId = (b.id || "").toLowerCase();
                 const customerEmail = (b.user?.email || "").toLowerCase();
-                const customerPhone = (b.user?.phone || "").toLowerCase();
+                const customerPhone = (b.customerPhone || b.user?.phone || "").toLowerCase();
 
                 return (
                     customer.includes(term) ||
+                    directCustomer.includes(term) ||
                     turfName.includes(term) ||
                     turfAddr.includes(term) ||
                     bookingId.includes(term) ||
@@ -254,15 +286,30 @@ export default function AdminBookings() {
                     setStatusTab(tab);
                     setCurrentPage(1);
                 }}
-                hasActiveFilters={Boolean(search || statusTab !== "all" || sortBy !== "newest")}
+                hasActiveFilters={Boolean(search || statusTab !== "all" || sourceTab !== "all" || sortBy !== "newest")}
                 onResetFilters={() => {
                     setSearch("");
                     setStatusTab("all");
+                    setSourceTab("all");
                     setSortBy("newest");
                     setCurrentPage(1);
                 }}
                 rightSlot={
                     <div className="flex items-center gap-2">
+                        <select
+                            value={sourceTab}
+                            onChange={(e) => {
+                                setSourceTab(
+                                    e.target.value as "all" | "online" | "direct",
+                                );
+                                setCurrentPage(1);
+                            }}
+                            className="text-xs bg-gray-50 border border-gray-200 rounded-xl px-2.5 py-2 font-semibold text-gray-700 focus:outline-none focus:ring-1 focus:ring-red-200"
+                        >
+                            <option value="all">All Channels</option>
+                            <option value="online">Online App Only</option>
+                            <option value="direct">Direct / Offline Only</option>
+                        </select>
                         <ArrowUpDown className="w-3.5 h-3.5 text-gray-400" />
                         <select
                             value={sortBy}
@@ -316,9 +363,17 @@ export default function AdminBookings() {
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 text-xs sm:text-sm">
                                     {paginatedBookings.map((b) => {
-                                        const initials =
-                                            `${b.user?.firstName?.charAt(0) || ""}${b.user?.lastName?.charAt(0) || ""}`.toUpperCase() ||
-                                            "C";
+                                        const isDirect = b.bookingSource === "direct";
+                                        const initials = isDirect
+                                            ? "DB"
+                                            : `${b.user?.firstName?.charAt(0) || ""}${b.user?.lastName?.charAt(0) || ""}`.toUpperCase() ||
+                                              "C";
+                                        const customerName = isDirect
+                                            ? b.customerName || "Direct Customer"
+                                            : `${b.user?.firstName || ""} ${b.user?.lastName || ""}`.trim() || "Player";
+                                        const customerContact = isDirect
+                                            ? b.customerPhone || "Direct Walk-in"
+                                            : b.user?.phone || b.user?.email || "—";
 
                                         return (
                                             <tr
@@ -328,9 +383,21 @@ export default function AdminBookings() {
                                                 {/* Booking Ref */}
                                                 <td className="py-3.5 px-5">
                                                     <div className="space-y-1">
-                                                        <span className="font-mono text-xs font-bold text-gray-800 bg-gray-100 px-2 py-0.5 rounded border border-gray-200/60">
-                                                            #{b.id.slice(0, 8)}
-                                                        </span>
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className="font-mono text-xs font-bold text-gray-800 bg-gray-100 px-2 py-0.5 rounded border border-gray-200/60">
+                                                                #{b.id.slice(0, 8)}
+                                                            </span>
+                                                            {isDirect ? (
+                                                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">
+                                                                    <Store className="w-2.5 h-2.5" />
+                                                                    Direct
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                                                                    Online
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         <p className="text-[10px] text-gray-400">
                                                             Booked on{" "}
                                                             {new Date(
@@ -359,16 +426,21 @@ export default function AdminBookings() {
                                                 {/* Customer */}
                                                 <td className="py-3.5 px-5">
                                                     <div className="flex items-center gap-2.5">
-                                                        <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-200 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0">
+                                                        <div
+                                                            className={`w-8 h-8 rounded-full border font-bold text-xs flex items-center justify-center shrink-0 ${
+                                                                isDirect
+                                                                    ? "bg-purple-50 border-purple-200 text-purple-700"
+                                                                    : "bg-blue-50 border-blue-200 text-blue-700"
+                                                            }`}
+                                                        >
                                                             {initials}
                                                         </div>
                                                         <div>
                                                             <p className="font-bold text-gray-900">
-                                                                {b.user?.firstName}{" "}
-                                                                {b.user?.lastName}
+                                                                {customerName}
                                                             </p>
                                                             <p className="text-[11px] text-gray-500">
-                                                                {b.user?.phone || b.user?.email || "—"}
+                                                                {customerContact}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -393,11 +465,22 @@ export default function AdminBookings() {
                                                         <div className="flex items-center gap-1.5 text-[11px] text-gray-600">
                                                             <Clock className="w-3 h-3 text-gray-400" />
                                                             <span>
-                                                                {b.startTime} - {b.endTime}
+                                                                {formatSlot12H(b.startTime, b.endTime)}
                                                             </span>
                                                         </div>
-                                                        <div className="font-black text-gray-900 text-xs">
-                                                            ₹{b.totalPrice.toLocaleString("en-IN")}
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-black text-gray-900 text-xs">
+                                                                ₹{b.totalPrice.toLocaleString("en-IN")}
+                                                            </span>
+                                                            {isDirect ? (
+                                                                <span className="text-[10px] font-semibold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">
+                                                                    Offline (Not in Balance)
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                                                                    Online Platform
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </td>

@@ -1,3 +1,5 @@
+import 'package:mobile/data/services/uploadcare_service.dart';
+
 /// Mirrors the JSON returned by BookingsService (bookings.service.ts).
 /// Adjust field names here if your DTO/serializer differs.
 class BookingModel {
@@ -45,7 +47,9 @@ class BookingModel {
       turfName: (turf['name'] ?? 'Turf') as String,
       turfType: (turf['sportType'] ?? turf['type'] ?? 'Cricket Turf') as String,
       turfLocation: (turf['address'] ?? '') as String,
-      turfImage: images.isNotEmpty ? images.first as String : null,
+      turfImage: images.isNotEmpty
+          ? UploadcareService.normalizeCdnUrl(images.first as String)
+          : null,
       bookingDate: DateTime.parse(json['bookingDate'] as String),
       startTime: json['startTime'] as String,
       endTime: json['endTime'] as String,

@@ -67,7 +67,7 @@ class _FavoriteVenuesPageState extends State<FavoriteVenuesPage> {
                     width: 72.w,
                     height: 72.w,
                     decoration: BoxDecoration(
-                      color: colors.primary.withOpacity(0.08),
+                      color: colors.primary.withValues(alpha: 0.08),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -88,7 +88,9 @@ class _FavoriteVenuesPageState extends State<FavoriteVenuesPage> {
                   SizedBox(height: 8.h),
                   Text(
                     'Sign in to quickly access and book the sports grounds you love.',
-                    style: textTheme.bodySmall?.copyWith(color: colors.textGrey),
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colors.textGrey,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   SizedBox(height: 20.h),
@@ -169,7 +171,8 @@ class _FavoriteVenuesPageState extends State<FavoriteVenuesPage> {
                     return VenueCard(
                       turf: turf,
                       margin: EdgeInsets.zero,
-                      onBookNow: () => Get.to(() => TurfDetailsPage(turf: turf)),
+                      onBookNow: () =>
+                          Get.to(() => TurfDetailsPage(turf: turf)),
                     );
                   },
                 )

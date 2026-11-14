@@ -113,7 +113,7 @@ class _SearchPageState extends State<SearchPage> {
                   border: Border.all(color: const Color(0xFFE8E8E8)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -255,7 +255,7 @@ class _DefaultView extends StatelessWidget {
               : ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: turfs.length,
-                  separatorBuilder: (_, __) => SizedBox(width: 12.w),
+                  separatorBuilder: (_, _) => SizedBox(width: 12.w),
                   itemBuilder: (_, i) =>
                       _PopularTurfCard(turf: turfs[i], textTheme: textTheme),
                 ),
@@ -428,11 +428,11 @@ class _SearchResultsViewState extends State<_SearchResultsView> {
                             ),
                             gridDelegate:
                                 SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: columns,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 14,
-                              mainAxisExtent: 130,
-                            ),
+                                  crossAxisCount: columns,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 14,
+                                  mainAxisExtent: 130,
+                                ),
                             itemCount: _sortedTurfs.length,
                             itemBuilder: (_, i) => _ResultCard(
                               turf: _sortedTurfs[i],
@@ -448,7 +448,7 @@ class _SearchResultsViewState extends State<_SearchResultsView> {
                               32.h,
                             ),
                             itemCount: _sortedTurfs.length,
-                            separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                            separatorBuilder: (_, _) => SizedBox(height: 12.h),
                             itemBuilder: (_, i) => _ResultCard(
                               turf: _sortedTurfs[i],
                               textTheme: textTheme,
@@ -492,7 +492,7 @@ class _ResultCard extends StatelessWidget {
           border: Border.all(color: const Color(0xFFE8E8E8)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -513,7 +513,7 @@ class _ResultCard extends StatelessWidget {
                     width: 130.w.clamp(120.0, 160.0),
                     height: 120.h.clamp(110.0, 140.0),
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, _, _) => Container(
                       width: 130.w.clamp(120.0, 160.0),
                       height: 120.h.clamp(110.0, 140.0),
                       color: Colors.grey[200],
@@ -538,7 +538,7 @@ class _ResultCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(6),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.14),
+                          color: Colors.black.withValues(alpha: 0.14),
                           blurRadius: 4,
                           offset: const Offset(0, 1),
                         ),
@@ -602,7 +602,6 @@ class _ResultCard extends StatelessWidget {
                 ),
               ],
             ),
-
 
             // ── Right: details ─────────────────────────────────
             Expanded(
@@ -734,7 +733,10 @@ class _PopularTurfCard extends StatelessWidget {
                       height: 90.h,
                       width: 115.w,
                       color: Colors.grey[200],
-                      child: const Icon(Icons.sports_soccer, color: Colors.grey),
+                      child: const Icon(
+                        Icons.sports_soccer,
+                        color: Colors.grey,
+                      ),
                     ),
                   ),
                 ),

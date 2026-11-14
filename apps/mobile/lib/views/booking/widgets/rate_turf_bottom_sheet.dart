@@ -10,8 +10,12 @@ class RateTurfBottomSheet extends StatefulWidget {
   final String turfName;
   final String? bookingId;
   final ReviewModel? initialReview;
-  final Function(int rating, String? comment, ReviewSummaryModel? updatedSummary)?
-      onReviewSubmitted;
+  final Function(
+    int rating,
+    String? comment,
+    ReviewSummaryModel? updatedSummary,
+  )?
+  onReviewSubmitted;
   final Function(ReviewSummaryModel? updatedSummary)? onReviewDeleted;
 
   const RateTurfBottomSheet({
@@ -31,7 +35,7 @@ class RateTurfBottomSheet extends StatefulWidget {
     String? bookingId,
     ReviewModel? initialReview,
     Function(int rating, String? comment, ReviewSummaryModel? updatedSummary)?
-        onReviewSubmitted,
+    onReviewSubmitted,
     Function(ReviewSummaryModel? updatedSummary)? onReviewDeleted,
   }) {
     return showModalBottomSheet(
@@ -117,6 +121,7 @@ class _RateTurfBottomSheetState extends State<RateTurfBottomSheet> {
   }
 
   Future<void> _handleSubmit() async {
+    if (_isSubmitting) return;
     final token = _authVm.token.value;
     if (token.isEmpty) {
       Get.snackbar(
@@ -160,7 +165,9 @@ class _RateTurfBottomSheetState extends State<RateTurfBottomSheet> {
 
       Get.snackbar(
         'Thank You!',
-        _isEdit ? 'Your review has been updated' : 'Your review has been submitted',
+        _isEdit
+            ? 'Your review has been updated'
+            : 'Your review has been submitted',
         backgroundColor: _primaryGreen,
         colorText: Colors.white,
         snackPosition: SnackPosition.BOTTOM,
@@ -178,6 +185,7 @@ class _RateTurfBottomSheetState extends State<RateTurfBottomSheet> {
   }
 
   Future<void> _handleDelete() async {
+    if (_isDeleting) return;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(

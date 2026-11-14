@@ -1,9 +1,10 @@
 import { Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import TurfCard from "../components/TurfCard";
+import Pagination from "../components/Pagination";
 import { addFavorite, getFavorites, removeFavorite } from "../services/favorites";
 
 interface Turf {
@@ -26,6 +27,12 @@ export default function Turfs() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+
+    // Pagination state
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(12);
+    const [totalItems, setTotalItems] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
 
     useEffect(() => {
         if (!user) return;
@@ -57,50 +64,69 @@ export default function Turfs() {
         }
     };
 
-    useEffect(() => {
-        const params = new URLSearchParams(routerLocation.search);
-        const searchQuery = params.get("search");
-        
-        const fetchTurfsQuery = async () => {
+    const fetchTurfs = useCallback(
+        async (targetPage = page, targetPageSize = pageSize, querySearch = search) => {
             try {
                 setLoading(true);
-                const queryParams: any = {};
-                if (searchQuery) {
-                    queryParams.search = searchQuery;
-                    setSearch(searchQuery);
+                const queryParams: Record<string, any> = {
+                    page: targetPage,
+                    limit: targetPageSize,
+                };
+                if (querySearch.trim()) {
+                    queryParams.search = querySearch.trim();
                 }
+
                 const response = await api.get("/turfs", { params: queryParams });
-                setTurfs(response.data);
+                const data = response.data;
+
+                if (data && typeof data === "object" && "items" in data) {
+                    setTurfs(data.items || []);
+                    setTotalItems(data.total || 0);
+                    setTotalPages(data.totalPages || 1);
+                    setPage(data.page || targetPage);
+                } else if (Array.isArray(data)) {
+                    setTurfs(data);
+                    setTotalItems(data.length);
+                    setTotalPages(Math.ceil(data.length / targetPageSize) || 1);
+                } else {
+                    setTurfs([]);
+                    setTotalItems(0);
+                    setTotalPages(1);
+                }
             } catch (error) {
                 console.error("Failed to fetch turfs:", error);
             } finally {
                 setLoading(false);
             }
-        };
-        
-        fetchTurfsQuery();
-    }, [routerLocation.search]);
+        },
+        [page, pageSize, search]
+    );
 
-    const fetchTurfs = async () => {
-        try {
-            const response = await api.get("/turfs", {
-                params: { search },
-            });
-            setTurfs(response.data);
-        } catch (error) {
-            console.error("Failed to fetch turfs:", error);
-        } finally {
-            setLoading(false);
+    useEffect(() => {
+        const params = new URLSearchParams(routerLocation.search);
+        const searchQuery = params.get("search") || "";
+        if (searchQuery) {
+            setSearch(searchQuery);
         }
+        fetchTurfs(1, pageSize, searchQuery);
+    }, [routerLocation.search, pageSize]);
+
+    const handleSearchSubmit = () => {
+        setPage(1);
+        fetchTurfs(1, pageSize, search);
     };
 
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-xl">Loading turfs...</div>
-            </div>
-        );
-    }
+    const handlePageChange = (newPage: number) => {
+        setPage(newPage);
+        fetchTurfs(newPage, pageSize, search);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    const handlePageSizeChange = (newPageSize: number) => {
+        setPageSize(newPageSize);
+        setPage(1);
+        fetchTurfs(1, newPageSize, search);
+    };
 
     return (
         <div className="min-h-screen bg-gray-50/50">
@@ -112,7 +138,7 @@ export default function Turfs() {
                     <p className="text-lg text-gray-500 mb-6">
                         Discover top-rated turfs around you and book instantly.
                     </p>
-                    
+
                     <div className="flex gap-3">
                         <div className="relative flex-1">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -124,40 +150,66 @@ export default function Turfs() {
                                 className="block w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 sm:text-base transition-colors shadow-sm"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                onKeyPress={(e) => e.key === "Enter" && fetchTurfs()}
+                                onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
                             />
                         </div>
                         <button
-                            onClick={fetchTurfs}
-                            className="bg-[#e53935] text-white px-8 py-3 rounded-lg font-bold hover:bg-red-600 transition-colors shadow-sm whitespace-nowrap"
+                            onClick={handleSearchSubmit}
+                            className="bg-[#e53935] text-white px-8 py-3 rounded-lg font-bold hover:bg-red-600 transition-colors shadow-sm whitespace-nowrap cursor-pointer"
                         >
                             Search
                         </button>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {turfs.map((turf) => (
-                        <TurfCard
-                            key={turf.id}
-                            {...turf}
-                            isFavorite={favoriteIds.has(turf.id)}
-                            onToggleFavorite={() => handleToggleFavorite(turf.id)}
-                            onClick={() => {
-                                if (user) {
-                                    navigate(`/turfs/${turf.id}`);
-                                } else {
-                                    navigate("/login", {
-                                        state: { returnTo: `/turfs/${turf.id}` },
-                                    });
-                                }
-                            }}
-                        />
-                    ))}
-                </div>
+                {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                            <div
+                                key={n}
+                                className="bg-white rounded-2xl h-80 animate-pulse border border-gray-100 p-4 flex flex-col justify-between"
+                            >
+                                <div className="bg-gray-200 h-48 rounded-xl w-full mb-4" />
+                                <div className="bg-gray-200 h-5 rounded w-3/4 mb-2" />
+                                <div className="bg-gray-200 h-4 rounded w-1/2" />
+                            </div>
+                        ))}
+                    </div>
+                ) : turfs.length > 0 ? (
+                    <div className="space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {turfs.map((turf) => (
+                                <TurfCard
+                                    key={turf.id}
+                                    {...turf}
+                                    isFavorite={favoriteIds.has(turf.id)}
+                                    onToggleFavorite={() => handleToggleFavorite(turf.id)}
+                                    onClick={() => {
+                                        if (user) {
+                                            navigate(`/turfs/${turf.id}`);
+                                        } else {
+                                            navigate("/login", {
+                                                state: { returnTo: `/turfs/${turf.id}` },
+                                            });
+                                        }
+                                    }}
+                                />
+                            ))}
+                        </div>
 
-                {turfs.length === 0 && (
-                    <div className="text-center py-20 bg-white rounded-xl border border-gray-100 mt-6">
+                        <Pagination
+                            currentPage={page}
+                            totalPages={totalPages}
+                            totalItems={totalItems}
+                            pageSize={pageSize}
+                            pageSizeOptions={[8, 12, 24, 36]}
+                            onPageChange={handlePageChange}
+                            onPageSizeChange={handlePageSizeChange}
+                            accentColor="red"
+                        />
+                    </div>
+                ) : (
+                    <div className="text-center py-20 bg-white rounded-2xl border border-gray-100 mt-6 shadow-xs">
                         <span className="text-5xl mb-4 block opacity-40">🏟️</span>
                         <p className="text-gray-500 text-lg font-medium">
                             No turfs found. Try a different search.

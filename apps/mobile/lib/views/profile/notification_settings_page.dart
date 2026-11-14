@@ -8,7 +8,8 @@ class NotificationSettingsPage extends StatefulWidget {
   const NotificationSettingsPage({super.key});
 
   @override
-  State<NotificationSettingsPage> createState() => _NotificationSettingsPageState();
+  State<NotificationSettingsPage> createState() =>
+      _NotificationSettingsPageState();
 }
 
 class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
@@ -53,7 +54,11 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: colors.textTitle, size: 20),
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            color: colors.textTitle,
+            size: 20,
+          ),
           onPressed: () => Get.back(),
         ),
         title: Text(
@@ -80,7 +85,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                 child: Column(
                   children: [
                     SwitchListTile(
-                      activeColor: colors.primary,
+                      activeThumbColor: colors.primary,
                       title: Text(
                         'Booking Confirmations',
                         style: textTheme.bodyMedium?.copyWith(
@@ -90,14 +95,16 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                       ),
                       subtitle: Text(
                         'Receive email notifications when your bookings are confirmed',
-                        style: textTheme.bodySmall?.copyWith(color: colors.textGrey),
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colors.textGrey,
+                        ),
                       ),
                       value: _emailBookings,
                       onChanged: (val) => _updateSetting('emailBookings', val),
                     ),
                     const Divider(height: 1),
                     SwitchListTile(
-                      activeColor: colors.primary,
+                      activeThumbColor: colors.primary,
                       title: Text(
                         'Payment Receipts',
                         style: textTheme.bodyMedium?.copyWith(
@@ -107,14 +114,16 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                       ),
                       subtitle: Text(
                         'Receive email receipts for completed transactions',
-                        style: textTheme.bodySmall?.copyWith(color: colors.textGrey),
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colors.textGrey,
+                        ),
                       ),
                       value: _emailPayments,
                       onChanged: (val) => _updateSetting('emailPayments', val),
                     ),
                     const Divider(height: 1),
                     SwitchListTile(
-                      activeColor: colors.primary,
+                      activeThumbColor: colors.primary,
                       title: Text(
                         'Promotions & Updates',
                         style: textTheme.bodyMedium?.copyWith(
@@ -124,7 +133,9 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                       ),
                       subtitle: Text(
                         'Receive promotional offers and turf availability announcements',
-                        style: textTheme.bodySmall?.copyWith(color: colors.textGrey),
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colors.textGrey,
+                        ),
                       ),
                       value: _emailPromos,
                       onChanged: (val) => _updateSetting('emailPromos', val),

@@ -229,6 +229,13 @@ export class AuthService {
       firstName: dto.firstName,
       lastName: dto.lastName,
       role: dto.role,
+      businessName: dto.businessName,
+      businessAddress: dto.businessAddress,
+      businessPhone: dto.businessPhone,
+      taxId: dto.taxId,
+      businessRegistrationDoc: dto.businessRegistrationDoc,
+      identityDoc: dto.identityDoc,
+      verificationDocuments: dto.verificationDocuments,
       phoneVerified: true,
       emailVerified: dto.email ? false : undefined,
       onboardingStatus: OnboardingStatus.PENDING,
@@ -282,6 +289,13 @@ export class AuthService {
       firstName: dto.firstName,
       lastName: dto.lastName,
       role: dto.role,
+      businessName: dto.businessName,
+      businessAddress: dto.businessAddress,
+      businessPhone: dto.businessPhone,
+      taxId: dto.taxId,
+      businessRegistrationDoc: dto.businessRegistrationDoc,
+      identityDoc: dto.identityDoc,
+      verificationDocuments: dto.verificationDocuments,
       emailVerified: true,
       phoneVerified: dto.phone ? false : undefined,
       onboardingStatus: OnboardingStatus.PENDING,
@@ -643,6 +657,22 @@ export class AuthService {
     };
   }
 
+  async requestContactOtp(userId: string) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    if (!user.email) {
+      throw new BadRequestException('No registered email found for this account to receive OTP');
+    }
+    await this.otpService.requestEmailOtp(user.email);
+    return {
+      success: true,
+      message: `OTP has been sent to ${user.email}`,
+      email: user.email,
+    };
+  }
+
   async updateProfile(userId: string, updateData: UpdateProfileDto) {
     const user = await this.userRepository.findOne({ where: { id: userId } });
 
@@ -650,36 +680,70 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
+    const isEmailChanging = Boolean(
+      updateData.email &&
+      updateData.email.trim().toLowerCase() !== (user.email || '').trim().toLowerCase(),
+    );
+    const isPhoneChanging = Boolean(
+      updateData.phone &&
+      updateData.phone.trim() !== (user.phone || '').trim(),
+    );
+
+    // If email or phone is changing, verify OTP sent to the user's email
+    if (isEmailChanging || isPhoneChanging) {
+      if (!updateData.otp || !updateData.otp.trim()) {
+        throw new BadRequestException(
+          'Verification OTP sent to your email is required to update email or phone number',
+        );
+      }
+
+      if (!user.email) {
+        throw new BadRequestException(
+          'Cannot verify OTP because account has no registered email',
+        );
+      }
+
+      const isValidOtp = await this.otpService.verifyEmailOtp(
+        user.email,
+        updateData.otp.trim(),
+      );
+
+      if (!isValidOtp) {
+        throw new BadRequestException('Invalid or expired OTP code');
+      }
+    }
+
     // Check if email is being updated and if it's already taken
-    if (updateData.email && updateData.email !== user.email) {
+    if (isEmailChanging && updateData.email) {
       const existingUser = await this.userRepository.findOne({
-        where: { email: updateData.email },
+        where: { email: updateData.email.trim().toLowerCase() },
       });
 
-      if (existingUser) {
+      if (existingUser && existingUser.id !== user.id) {
         throw new ConflictException('Email already exists');
       }
 
-      // Reset email verification status when email is updated
-      user.emailVerified = false;
+      user.email = updateData.email.trim().toLowerCase();
+      user.emailVerified = true;
     }
 
     // Check if phone is being updated and if it's already taken
-    if (updateData.phone && updateData.phone !== user.phone) {
+    if (isPhoneChanging && updateData.phone) {
       const existingUser = await this.userRepository.findOne({
-        where: { phone: updateData.phone },
+        where: { phone: updateData.phone.trim() },
       });
 
-      if (existingUser) {
+      if (existingUser && existingUser.id !== user.id) {
         throw new ConflictException('Phone number already exists');
       }
 
-      // Reset phone verification status when phone is updated
-      user.phoneVerified = false;
+      user.phone = updateData.phone.trim();
+      user.phoneVerified = true;
     }
 
-    // Update user fields
-    Object.assign(user, updateData);
+    // Exclude email, phone, and otp from generic Object.assign so custom handling isn't overridden
+    const { email, phone, otp, ...otherFields } = updateData;
+    Object.assign(user, otherFields);
 
     const savedUser = await this.userRepository.save(user);
     const { password, ...result } = savedUser;

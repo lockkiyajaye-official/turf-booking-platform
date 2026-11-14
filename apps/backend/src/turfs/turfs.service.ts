@@ -1,7 +1,8 @@
 import {
   Injectable,
   NotFoundException,
-  UnauthorizedException
+  UnauthorizedException,
+  BadRequestException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Booking, BookingStatus } from '../database/entities/booking.entity';
@@ -101,24 +102,20 @@ export class TurfsService {
 
     query.orderBy('turf.createdAt', 'DESC');
 
-    if (filters?.page) {
-      const page = filters.page > 0 ? filters.page : 1;
-      const limit = filters.limit && filters.limit > 0 ? filters.limit : 10;
-      const skip = (page - 1) * limit;
+    const page = filters?.page && filters.page > 0 ? Number(filters.page) : 1;
+    const limit = filters?.limit && filters.limit > 0 ? Number(filters.limit) : 10;
+    const skip = (page - 1) * limit;
 
-      const [items, total] = await query.skip(skip).take(limit).getManyAndCount();
-      const totalPages = Math.ceil(total / limit);
-      return {
-        items,
-        total,
-        page,
-        limit,
-        totalPages,
-        hasMore: page < totalPages,
-      };
-    }
-
-    return query.getMany();
+    const [items, total] = await query.skip(skip).take(limit).getManyAndCount();
+    const totalPages = Math.ceil(total / limit);
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages,
+      hasMore: page < totalPages,
+    };
   }
 
   async findOne(id: string) {
@@ -134,7 +131,7 @@ export class TurfsService {
     return turf;
   }
 
-  async findByOwner(ownerId: string, includeDrafts: boolean = true, page?: number, limit?: number) {
+  async findByOwner(ownerId: string, includeDrafts: boolean = true, page?: number, limit?: number, search?: string) {
     const query = this.turfRepository.createQueryBuilder('turf')
       .where('turf.ownerId = :ownerId', { ownerId })
       .orderBy('turf.createdAt', 'DESC');
@@ -143,24 +140,28 @@ export class TurfsService {
       query.andWhere('turf.isDraft = :isDraft', { isDraft: false });
     }
 
-    if (page) {
-      const pageNum = page > 0 ? page : 1;
-      const limitNum = limit && limit > 0 ? limit : 10;
-      const skip = (pageNum - 1) * limitNum;
-
-      const [items, total] = await query.skip(skip).take(limitNum).getManyAndCount();
-      const totalPages = Math.ceil(total / limitNum);
-      return {
-        items,
-        total,
-        page: pageNum,
-        limit: limitNum,
-        totalPages,
-        hasMore: pageNum < totalPages,
-      };
+    if (search && search.trim().length > 0) {
+      const searchTerm = `%${search.trim().toLowerCase()}%`;
+      query.andWhere(
+        '(LOWER(turf.name) LIKE :search OR LOWER(turf.city) LIKE :search OR LOWER(turf.state) LIKE :search OR LOWER(turf.address) LIKE :search)',
+        { search: searchTerm },
+      );
     }
 
-    return query.getMany();
+    const pageNum = page && page > 0 ? Number(page) : 1;
+    const limitNum = limit && limit > 0 ? Number(limit) : 10;
+    const skip = (pageNum - 1) * limitNum;
+
+    const [items, total] = await query.skip(skip).take(limitNum).getManyAndCount();
+    const totalPages = Math.ceil(total / limitNum);
+    return {
+      items,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPages,
+      hasMore: pageNum < totalPages,
+    };
   }
 
   async publishTurf(id: string, owner: User) {
@@ -208,6 +209,20 @@ export class TurfsService {
 
     if (turf.ownerId !== owner.id && owner.role !== UserRole.ADMIN) {
       throw new UnauthorizedException('You can only delete your own turfs');
+    }
+
+    if (turf.isPublished && owner.role !== UserRole.ADMIN) {
+      throw new BadRequestException('Only unpublished turfs can be deleted. Please unpublish the turf before deleting.');
+    }
+
+    const activeBookings = await this.bookingRepository.count({
+      where: {
+        turfId: id,
+        status: In([BookingStatus.CONFIRMED, BookingStatus.PENDING]),
+      },
+    });
+    if (activeBookings > 0) {
+      throw new BadRequestException('Cannot delete turf with active or pending bookings.');
     }
 
     await this.turfRepository.remove(turf);

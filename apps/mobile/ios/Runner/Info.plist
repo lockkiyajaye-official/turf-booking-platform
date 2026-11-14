@@ -47,7 +47,7 @@
 		<true/>
 	</dict>
 	<key>NSCameraUsageDescription</key>
-	<string>Lockkiyajaye needs access to your camera to take a profile picture.</string>
+	<string>Lockkiyajaye needs access to your camera to capture photos for your profile and turf venue listings.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Lockkiyajaye needs access to your location to find nearby turfs and show venues near you.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
@@ -55,7 +55,9 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Lockkiyajaye needs access to your location to find nearby turfs and show venues near you.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Lockkiyajaye needs access to your photo library to select a profile picture.</string>
+	<string>Lockkiyajaye needs access to your photo library to select photos for your profile and turf venue listings.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Lockkiyajaye needs permission to save photos to your photo library.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

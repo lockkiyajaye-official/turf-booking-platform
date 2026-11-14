@@ -131,7 +131,7 @@ class SupportTicketModel {
       'Sep',
       'Oct',
       'Nov',
-      'Dec'
+      'Dec',
     ];
     final month = months[dt.month - 1];
     final day = dt.day;

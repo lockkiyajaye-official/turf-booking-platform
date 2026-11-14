@@ -73,18 +73,20 @@ export default function AdminDeletionRequests() {
         setLoading(true);
         try {
             const [delRes, usersRes] = await Promise.all([
-                api.get("/deletion-requests/admin"),
-                api.get("/users"),
+                api.get("/deletion-requests/admin", { params: { limit: 100 } }),
+                api.get("/users", { params: { limit: 100 } }),
             ]);
 
             if (delRes.data.success) {
-                const items: DeletionItem[] = delRes.data.data || [];
+                const raw = delRes.data.data;
+                const items: DeletionItem[] = Array.isArray(raw) ? raw : (raw?.items || []);
                 setDeletionMessages(items);
                 if (items.length > 0 && !selectedRequest) {
                     setSelectedRequest(items[0]);
                 }
             }
-            setUsers(usersRes.data || []);
+            const uRaw = usersRes.data;
+            setUsers(Array.isArray(uRaw) ? uRaw : (uRaw?.items || []));
         } catch (err) {
             console.error("Failed to fetch deletion requests or users:", err);
             showFeedback("error", "Failed to load deletion requests.");

@@ -15,11 +15,37 @@ export class RegisterDto {
   @IsString()
   lastName: string;
 
-  @IsOptional()
   @IsString()
-  phone?: string;
+  phone: string;
 
   @IsEnum(UserRole)
   role: UserRole;
+
+  @IsOptional()
+  @IsString()
+  businessName?: string;
+
+  @IsOptional()
+  @IsString()
+  businessAddress?: string;
+
+  @IsOptional()
+  @IsString()
+  businessPhone?: string;
+
+  @IsOptional()
+  @IsString()
+  taxId?: string;
+
+  @IsOptional()
+  @IsString()
+  businessRegistrationDoc?: string;
+
+  @IsOptional()
+  @IsString()
+  identityDoc?: string;
+
+  @IsOptional()
+  verificationDocuments?: any[];
 }
 

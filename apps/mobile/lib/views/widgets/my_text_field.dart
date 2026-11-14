@@ -23,6 +23,7 @@ class MyTextField extends StatelessWidget {
   final Color? borderColor; // Added to support custom border color
   final bool readOnly; // Added for tap-only fields
   final VoidCallback? onTap; // Added for tap callbacks
+  final int? maxLength;
 
   const MyTextField({
     super.key,
@@ -44,6 +45,7 @@ class MyTextField extends StatelessWidget {
     this.borderColor, // New
     this.readOnly = false, // New
     this.onTap, // New
+    this.maxLength,
   });
 
   @override
@@ -51,7 +53,7 @@ class MyTextField extends StatelessWidget {
     final colors = Theme.of(context).extension<AppColors>()!;
 
     final effectiveBorderColor =
-        borderColor ?? colors.textMuted.withOpacity(0.5);
+        borderColor ?? colors.textMuted.withValues(alpha: 0.5);
 
     return SizedBox(
       height: height,
@@ -71,7 +73,7 @@ class MyTextField extends StatelessWidget {
         onChanged: onChanged,
         readOnly: readOnly,
         onTap: onTap,
-        maxLength: type == TextInputType.number ? 1 : null,
+        maxLength: maxLength,
         decoration: InputDecoration(
           counterText: "",
           hintText: hintText,

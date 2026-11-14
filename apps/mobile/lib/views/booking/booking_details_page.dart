@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:mobile/core/responsive/screen_extensions.dart';
+import 'package:mobile/core/theme/app_colors.dart';
+import 'package:mobile/core/utils/helpers.dart';
 import 'package:mobile/data/models/amentity_item.dart';
 import 'package:mobile/data/models/turf_model.dart';
 import 'package:mobile/data/services/booking_service.dart';
@@ -81,7 +83,7 @@ class _PaymentVerifyingDialogState extends State<_PaymentVerifyingDialog>
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.12),
+              color: Colors.black.withValues(alpha: 0.12),
               blurRadius: 24,
               offset: const Offset(0, 8),
             ),
@@ -109,7 +111,7 @@ class _PaymentVerifyingDialogState extends State<_PaymentVerifyingDialog>
                       width: 46,
                       height: 46,
                       decoration: BoxDecoration(
-                        color: _green.withOpacity(0.12),
+                        color: _green.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -184,7 +186,7 @@ class _ArcRingPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
     final trackPaint = Paint()
-      ..color = color.withOpacity(0.15)
+      ..color = color.withValues(alpha: 0.15)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4
       ..strokeCap = StrokeCap.round;
@@ -192,7 +194,7 @@ class _ArcRingPainter extends CustomPainter {
 
     final arcPaint = Paint()
       ..shader = SweepGradient(
-        colors: [color.withOpacity(0.0), color],
+        colors: [color.withValues(alpha: 0.0), color],
         startAngle: 0,
         endAngle: 3.14,
       ).createShader(rect)
@@ -254,13 +256,13 @@ class _ShimmerSlotCardState extends State<_ShimmerSlotCard>
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: primaryGreen.withOpacity(0.35)),
+            border: Border.all(color: primaryGreen.withValues(alpha: 0.35)),
             gradient: LinearGradient(
               begin: Alignment(-2.2 + val * 4.4, 0),
               end: Alignment(-0.6 + val * 4.4, 0),
               colors: [
                 Colors.white,
-                primaryGreen.withOpacity(0.12),
+                primaryGreen.withValues(alpha: 0.12),
                 Colors.white,
               ],
               stops: const [0.0, 0.5, 1.0],
@@ -678,7 +680,9 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                                 : (isPastMonth
                                       ? const Color(0xFFF7F7F7)
                                       : (isCurrentMonth
-                                            ? primaryGreen.withOpacity(0.08)
+                                            ? primaryGreen.withValues(
+                                                alpha: 0.08,
+                                              )
                                             : Colors.white)),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
@@ -687,7 +691,9 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                                   : (isPastMonth
                                         ? Colors.grey[200]!
                                         : (isCurrentMonth
-                                              ? primaryGreen.withOpacity(0.5)
+                                              ? primaryGreen.withValues(
+                                                  alpha: 0.5,
+                                                )
                                               : Colors.grey[300]!)),
                               width: isSelected || isCurrentMonth ? 1.5 : 1,
                             ),
@@ -759,28 +765,13 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
   }
 
   String _formatSlot(String slot) {
-    final match = RegExp(
-      r'^(\d{2}):(\d{2})-(\d{2}):(\d{2})$',
-    ).firstMatch(slot.trim());
-    if (match == null) return slot;
-
-    int startHour = int.parse(match.group(1)!);
-    int endHour = int.parse(match.group(3)!);
-
-    String formatHour(int hour) {
-      final suffix = hour >= 12 ? 'PM' : 'AM';
-      int displayHour = hour % 12;
-      if (displayHour == 0) displayHour = 12;
-      return '$displayHour $suffix';
-    }
-
-    return '${formatHour(startHour)} - ${formatHour(endHour)}';
+    return TimeHelper.formatTo12Hour(slot);
   }
 
   /// Raw "HH:mm" pair for the currently selected slot, as the backend expects it.
   (String, String) _selectedSlotRaw() {
     final slot = _slots[_selectedSlotIndex].trim();
-    final parts = slot.split('-');
+    final parts = slot.split(slot.contains('–') ? '–' : '-');
     if (parts.length == 2) {
       return (parts[0].trim(), parts[1].trim());
     }
@@ -817,7 +808,7 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                 width: 56.w,
                 height: 56.w,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE43434).withOpacity(0.1),
+                  color: const Color(0xFFE43434).withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -887,7 +878,7 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
   /// Step 2: open Razorpay for that amount. Booking only CONFIRMED after
   /// payment success (see _onPaymentSuccess).
   Future<void> _startBookingFlow() async {
-    if (_isBooking) return;
+    if (_isBooking || _isVerifyingPayment) return;
     if (_token.isEmpty) {
       _showSignInRequiredDialog(
         title: 'Sign In Required',
@@ -969,7 +960,7 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
     Get.dialog(
       const PopScope(canPop: false, child: _PaymentVerifyingDialog()),
       barrierDismissible: false,
-      barrierColor: Colors.black.withOpacity(0.45),
+      barrierColor: Colors.black.withValues(alpha: 0.45),
     );
   }
 
@@ -1128,7 +1119,10 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>();
     final textTheme = Theme.of(context).textTheme;
+    final textTitleColor = colors?.textTitle ?? const Color(0xFF0F172A);
+    final textGreyColor = colors?.textGrey ?? const Color(0xFF64748B);
     final primaryGreen = const Color(
       0xFF0DAA6C,
     ); // Matching screenshot green exactly
@@ -1141,7 +1135,7 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
     final double dateItemWidth = isTablet
         ? 64.0
         : (availableWidth - ((visibleDaysCount - 1) * dateSpacing)) /
-            visibleDaysCount;
+              visibleDaysCount;
 
     // Slots grid sizing (5 cols on large tablet, 4 on standard tablet, 3 on phone)
     final int slotColumns = isTablet ? (screenWidth >= 1050 ? 5 : 4) : 3;
@@ -1226,7 +1220,7 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                             _imageUrls[index],
                             fit: BoxFit.cover,
                             width: double.infinity,
-                            errorBuilder: (_, __, ___) => Container(
+                            errorBuilder: (_, _, _) => Container(
                               color: Colors.grey[200],
                               child: const Icon(
                                 Icons.sports_soccer,
@@ -1255,7 +1249,7 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                           decoration: BoxDecoration(
                             color: _currentImageIndex == i
                                 ? Colors.white
-                                : Colors.white.withOpacity(0.4),
+                                : Colors.white.withValues(alpha: 0.4),
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -1439,7 +1433,7 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   border: Border.all(
-                    color: primaryGreen.withOpacity(0.35),
+                    color: primaryGreen.withValues(alpha: 0.35),
                     width: 1.2,
                   ),
                   borderRadius: BorderRadius.circular(8),
@@ -1479,8 +1473,9 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                         children: [
                           GestureDetector(
                             onTap: () {
-                              if (_playerCount > 1)
+                              if (_playerCount > 1) {
                                 setState(() => _playerCount--);
+                              }
                             },
                             child: Container(
                               padding: EdgeInsets.symmetric(
@@ -1508,8 +1503,9 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                           ),
                           GestureDetector(
                             onTap: () {
-                              if (_playerCount < 14)
+                              if (_playerCount < 14) {
                                 setState(() => _playerCount++);
+                              }
                             },
                             child: Container(
                               padding: EdgeInsets.symmetric(
@@ -1554,7 +1550,7 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                         vertical: 4.h,
                       ),
                       decoration: BoxDecoration(
-                        color: primaryGreen.withOpacity(0.08),
+                        color: primaryGreen.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(
@@ -1631,7 +1627,7 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                                 ? const Color(0xFFE5E5E5)
                                 : (isSelected
                                       ? primaryGreen
-                                      : primaryGreen.withOpacity(0.4)),
+                                      : primaryGreen.withValues(alpha: 0.4)),
                             width: 1.2,
                           ),
                         ),
@@ -1774,8 +1770,8 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                                           ? const Color(0xFFD0D0D0)
                                           : (isSelected
                                                 ? primaryGreen
-                                                : primaryGreen.withOpacity(
-                                                    0.4,
+                                                : primaryGreen.withValues(
+                                                    alpha: 0.4,
                                                   )),
                                     ),
                                   ),
@@ -1829,7 +1825,136 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                       ),
               ),
 
-              SizedBox(height: 32.h),
+              if (_selectedSlotIndex >= 0 &&
+                  _selectedSlotIndex < _slots.length &&
+                  !_isSlotBooked(_slots[_selectedSlotIndex])) ...[
+                SizedBox(height: 20.h),
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(14.w),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Selected Slot',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: textGreyColor,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            _formatSlot(_slots[_selectedSlotIndex]),
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: textTitleColor,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Turf Rate',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: textGreyColor,
+                            ),
+                          ),
+                          Text(
+                            '₹${widget.turf.pricePerHour.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: textTitleColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 6.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Platform Fee (5%)',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: textGreyColor,
+                            ),
+                          ),
+                          Text(
+                            '+₹${(widget.turf.pricePerHour * 0.05).toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: Colors.purple[700],
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 6.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Gateway & Taxes (2% + 18% GST)',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: textGreyColor,
+                            ),
+                          ),
+                          Text(
+                            '+₹${((widget.turf.pricePerHour * 1.05) * 0.0236).toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: Colors.blue[700],
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8.h),
+                        child: const Divider(height: 1),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Total Payable',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: textTitleColor,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          Text(
+                            '₹${(widget.turf.pricePerHour * 1.05 * 1.0236).toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              color: Color(0xFFE33A3A),
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              SizedBox(height: 24.h),
 
               // ── Continue Button ─────────────────
               SizedBox(
@@ -1839,18 +1964,18 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                   text: _isBooking
                       ? "Booking…"
                       : (_isVerifyingPayment ? "Verifying…" : "Continue"),
-                  height: 48.h, // Ignored since Parent forces height
-                  width: double.infinity, // Ignored since Parent forces width
+                  isLoading: _isBooking || _isVerifyingPayment,
+                  loadingText: _isBooking ? "Booking…" : "Verifying…",
+                  height: 48.h,
+                  width: double.infinity,
                   onTap: (_isBooking || _isVerifyingPayment)
-                      ? () {}
+                      ? null
                       : _startBookingFlow,
                   textStyle: textTheme.bodyMedium!.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
                   ),
-                  backgroundColor: const Color(
-                    0xFFE33A3A,
-                  ), // Match the red from screenshot
+                  backgroundColor: const Color(0xFFE33A3A),
                 ),
               ),
 

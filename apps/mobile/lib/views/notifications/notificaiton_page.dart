@@ -109,26 +109,54 @@ class _NotificationPageState extends State<NotificationPage> {
       case 'booking':
         return Container(
           padding: const EdgeInsets.all(10),
-          decoration: const BoxDecoration(color: _lightGreen, shape: BoxShape.circle),
-          child: const Icon(Icons.check_circle_outline_rounded, color: _green, size: 22),
+          decoration: const BoxDecoration(
+            color: _lightGreen,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.check_circle_outline_rounded,
+            color: _green,
+            size: 22,
+          ),
         );
       case 'payment':
         return Container(
           padding: const EdgeInsets.all(10),
-          decoration: const BoxDecoration(color: _lightAmber, shape: BoxShape.circle),
-          child: const Icon(Icons.payment_rounded, color: Color(0xFFF57F17), size: 22),
+          decoration: const BoxDecoration(
+            color: _lightAmber,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.payment_rounded,
+            color: Color(0xFFF57F17),
+            size: 22,
+          ),
         );
       case 'promo':
         return Container(
           padding: const EdgeInsets.all(10),
-          decoration: const BoxDecoration(color: _lightBlue, shape: BoxShape.circle),
-          child: const Icon(Icons.local_offer_outlined, color: Color(0xFF1976D2), size: 22),
+          decoration: const BoxDecoration(
+            color: _lightBlue,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.local_offer_outlined,
+            color: Color(0xFF1976D2),
+            size: 22,
+          ),
         );
       default:
         return Container(
           padding: const EdgeInsets.all(10),
-          decoration: const BoxDecoration(color: _lightRed, shape: BoxShape.circle),
-          child: const Icon(Icons.notifications_outlined, color: _red, size: 22),
+          decoration: const BoxDecoration(
+            color: _lightRed,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.notifications_outlined,
+            color: _red,
+            size: 22,
+          ),
         );
     }
   }
@@ -155,7 +183,11 @@ class _NotificationPageState extends State<NotificationPage> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1C1C1E), size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: Color(0xFF1C1C1E),
+            size: 20,
+          ),
           onPressed: () => Get.back(),
         ),
         title: Text(
@@ -179,118 +211,130 @@ class _NotificationPageState extends State<NotificationPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: _red))
           : _notifications.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.notifications_off_outlined, size: 64, color: Colors.grey),
-                      SizedBox(height: 12.h),
-                      Text(
-                        'No notifications yet',
-                        style: textTheme.titleSmall?.copyWith(color: Colors.grey[600]),
-                      ),
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.notifications_off_outlined,
+                    size: 64,
+                    color: Colors.grey,
                   ),
-                )
-              : Builder(
-                  builder: (context) {
-                    final isTablet = context.isTablet;
-                    final horizontalPad = isTablet ? 20.w : 16.w;
+                  SizedBox(height: 12.h),
+                  Text(
+                    'No notifications yet',
+                    style: textTheme.titleSmall?.copyWith(
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : Builder(
+              builder: (context) {
+                final isTablet = context.isTablet;
+                final horizontalPad = isTablet ? 20.w : 16.w;
 
-                    Widget buildItem(NotificationPageItem item) {
-                      return GestureDetector(
-                        onTap: () {
-                          if (!item.isRead) {
-                            _markAsRead(item.id);
-                          }
-                        },
-                        child: Container(
-                          padding: EdgeInsets.all(14.w),
-                          decoration: BoxDecoration(
-                            color: item.isRead ? Colors.white : const Color(0xFFFFF8F8),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: item.isRead
-                                  ? const Color(0xFFEEEEEE)
-                                  : _red.withOpacity(0.3),
-                            ),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildIcon(item.type),
-                              SizedBox(width: 12.w),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                Widget buildItem(NotificationPageItem item) {
+                  return GestureDetector(
+                    onTap: () {
+                      if (!item.isRead) {
+                        _markAsRead(item.id);
+                      }
+                    },
+                    child: Container(
+                      padding: EdgeInsets.all(14.w),
+                      decoration: BoxDecoration(
+                        color: item.isRead
+                            ? Colors.white
+                            : const Color(0xFFFFF8F8),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: item.isRead
+                              ? const Color(0xFFEEEEEE)
+                              : _red.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildIcon(item.type),
+                          SizedBox(width: 12.w),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            item.title,
-                                            style: textTheme.titleSmall?.copyWith(
-                                              fontWeight: item.isRead ? FontWeight.w600 : FontWeight.w800,
-                                              color: const Color(0xFF1C1C1E),
-                                            ),
-                                          ),
+                                    Expanded(
+                                      child: Text(
+                                        item.title,
+                                        style: textTheme.titleSmall?.copyWith(
+                                          fontWeight: item.isRead
+                                              ? FontWeight.w600
+                                              : FontWeight.w800,
+                                          color: const Color(0xFF1C1C1E),
                                         ),
-                                        Text(
-                                          _formatTime(item.createdAt),
-                                          style: textTheme.bodySmall?.copyWith(
-                                            color: Colors.grey[500],
-                                            fontSize: 10.sp,
-                                          ),
-                                        ),
-                                      ],
+                                      ),
                                     ),
-                                    SizedBox(height: 4.h),
                                     Text(
-                                      item.message,
+                                      _formatTime(item.createdAt),
                                       style: textTheme.bodySmall?.copyWith(
-                                        color: Colors.grey[700],
-                                        height: 1.4,
+                                        color: Colors.grey[500],
+                                        fontSize: 10.sp,
                                       ),
                                     ),
                                   ],
                                 ),
-                              ),
-                            ],
+                                SizedBox(height: 4.h),
+                                Text(
+                                  item.message,
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: Colors.grey[700],
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      );
-                    }
+                        ],
+                      ),
+                    ),
+                  );
+                }
 
-                    return RefreshIndicator(
-                      onRefresh: _fetchNotifications,
-                      color: _red,
-                      child: isTablet
-                          ? GridView.builder(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: horizontalPad,
-                                vertical: 16.h,
-                              ),
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                return RefreshIndicator(
+                  onRefresh: _fetchNotifications,
+                  color: _red,
+                  child: isTablet
+                      ? GridView.builder(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: horizontalPad,
+                            vertical: 16.h,
+                          ),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
                                 crossAxisSpacing: 14,
                                 mainAxisSpacing: 12,
                                 mainAxisExtent: 105,
                               ),
-                              itemCount: _notifications.length,
-                              itemBuilder: (context, index) =>
-                                  buildItem(_notifications[index]),
-                            )
-                          : ListView.separated(
-                              padding: EdgeInsets.all(16.w),
-                              itemCount: _notifications.length,
-                              separatorBuilder: (_, __) => SizedBox(height: 10.h),
-                              itemBuilder: (context, index) =>
-                                  buildItem(_notifications[index]),
-                            ),
-                    );
-                  },
-                ),
+                          itemCount: _notifications.length,
+                          itemBuilder: (context, index) =>
+                              buildItem(_notifications[index]),
+                        )
+                      : ListView.separated(
+                          padding: EdgeInsets.all(16.w),
+                          itemCount: _notifications.length,
+                          separatorBuilder: (_, _) => SizedBox(height: 10.h),
+                          itemBuilder: (context, index) =>
+                              buildItem(_notifications[index]),
+                        ),
+                );
+              },
+            ),
     );
   }
 }

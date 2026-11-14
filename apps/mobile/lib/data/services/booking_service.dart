@@ -13,7 +13,7 @@ class BookingService {
   }
 
   Map<String, dynamic> _handleResponse(http.Response response) {
-    var data;
+    dynamic data;
     try {
       data = jsonDecode(response.body);
     } catch (_) {
@@ -58,20 +58,46 @@ class BookingService {
     }
   }
 
+  Future<Map<String, dynamic>> createDirectBooking({
+    required String token,
+    required Map<String, dynamic> data,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_base/direct'),
+        headers: _headers(token),
+        body: jsonEncode(data),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
   Future<Map<String, dynamic>> findAll(
     String token, {
     int page = 1,
     int limit = 10,
     String? status,
     String? search,
+    String? source,
+    String? turfId,
   }) async {
     try {
       final queryParams = <String, String>{
         'page': page.toString(),
         'limit': limit.toString(),
       };
-      if (status != null && status.isNotEmpty) queryParams['status'] = status;
+      if (status != null && status.isNotEmpty && status != 'all') {
+        queryParams['status'] = status;
+      }
       if (search != null && search.isNotEmpty) queryParams['search'] = search;
+      if (source != null && source.isNotEmpty && source != 'all') {
+        queryParams['source'] = source;
+      }
+      if (turfId != null && turfId.isNotEmpty && turfId != 'all') {
+        queryParams['turfId'] = turfId;
+      }
 
       final uri = Uri.parse(_base).replace(queryParameters: queryParams);
       final response = await http.get(uri, headers: _headers(token));

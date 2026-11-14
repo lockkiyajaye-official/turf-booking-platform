@@ -15,6 +15,7 @@ class AllTurfsPage extends StatefulWidget {
 
 class _AllTurfsPageState extends State<AllTurfsPage> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   final TurfViewmodel _turfVm = Get.find<TurfViewmodel>();
 
   final List<String> _filters = [
@@ -30,13 +31,24 @@ class _AllTurfsPageState extends State<AllTurfsPage> {
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _turfVm.fetchAllTurfs();
     });
   }
 
+  void _onScroll() {
+    if (_scrollController.hasClients &&
+        _scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200) {
+      _turfVm.loadNextTurfsPage();
+    }
+  }
+
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -52,7 +64,11 @@ class _AllTurfsPageState extends State<AllTurfsPage> {
         backgroundColor: colors.background,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: colors.textTitle, size: 20.sp),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: colors.textTitle,
+            size: 20.sp,
+          ),
           onPressed: () => Get.back(),
         ),
         title: Text(
@@ -75,11 +91,11 @@ class _AllTurfsPageState extends State<AllTurfsPage> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: colors.textGrey.withOpacity(0.15),
+                  color: colors.textGrey.withValues(alpha: 0.15),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -100,7 +116,10 @@ class _AllTurfsPageState extends State<AllTurfsPage> {
                   prefixIcon: Icon(Icons.search_rounded, color: colors.primary),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
-                          icon: Icon(Icons.clear_rounded, color: colors.textGrey),
+                          icon: Icon(
+                            Icons.clear_rounded,
+                            color: colors.textGrey,
+                          ),
                           onPressed: () {
                             _searchController.clear();
                             setState(() {
@@ -123,7 +142,7 @@ class _AllTurfsPageState extends State<AllTurfsPage> {
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
               scrollDirection: Axis.horizontal,
               itemCount: _filters.length,
-              separatorBuilder: (_, __) => SizedBox(width: 8.w),
+              separatorBuilder: (_, _) => SizedBox(width: 8.w),
               itemBuilder: (context, index) {
                 final isSelected = _selectedFilter == index;
                 return ChoiceChip(
@@ -148,7 +167,7 @@ class _AllTurfsPageState extends State<AllTurfsPage> {
                     side: BorderSide(
                       color: isSelected
                           ? const Color(0xFFE43434)
-                          : colors.textGrey.withOpacity(0.2),
+                          : colors.textGrey.withValues(alpha: 0.2),
                     ),
                   ),
                   showCheckmark: false,
@@ -171,18 +190,24 @@ class _AllTurfsPageState extends State<AllTurfsPage> {
               // Filter list by sport category and search query
               final selectedSport = _filters[_selectedFilter];
               final filteredTurfs = _turfVm.turfs.where((turf) {
-                final matchesSearch = _searchQuery.isEmpty ||
+                final matchesSearch =
+                    _searchQuery.isEmpty ||
                     turf.name.toLowerCase().contains(_searchQuery) ||
                     turf.address.toLowerCase().contains(_searchQuery);
 
-                final matchesSport = selectedSport == 'All' ||
-                    turf.sports.any((s) =>
-                        s.toLowerCase().contains(selectedSport.toLowerCase())) ||
-                    turf.amenities.any((a) =>
-                        a.toLowerCase().contains(selectedSport.toLowerCase())) ||
-                    (turf.description ?? '')
-                        .toLowerCase()
-                        .contains(selectedSport.toLowerCase());
+                final matchesSport =
+                    selectedSport == 'All' ||
+                    turf.sports.any(
+                      (s) =>
+                          s.toLowerCase().contains(selectedSport.toLowerCase()),
+                    ) ||
+                    turf.amenities.any(
+                      (a) =>
+                          a.toLowerCase().contains(selectedSport.toLowerCase()),
+                    ) ||
+                    (turf.description ?? '').toLowerCase().contains(
+                      selectedSport.toLowerCase(),
+                    );
 
                 return matchesSearch && matchesSport;
               }).toList();
@@ -202,7 +227,7 @@ class _AllTurfsPageState extends State<AllTurfsPage> {
                             Icon(
                               Icons.sports_soccer_outlined,
                               size: 56.sp,
-                              color: colors.textGrey.withOpacity(0.5),
+                              color: colors.textGrey.withValues(alpha: 0.5),
                             ),
                             SizedBox(height: 12.h),
                             Text(
@@ -231,42 +256,73 @@ class _AllTurfsPageState extends State<AllTurfsPage> {
               final columns = context.turfGridColumns;
               final horizontalPad = isTablet ? 20.w : 16.w;
 
+              final hasMore = _turfVm.turfsHasMore.value;
+              final isFetchingMore = _turfVm.isFetchingMoreTurfs.value;
+
               return RefreshIndicator(
                 color: colors.primary,
                 onRefresh: () => _turfVm.fetchAllTurfs(),
                 child: columns > 1
                     ? GridView.builder(
-                        padding: EdgeInsets.fromLTRB(horizontalPad, 4.h, horizontalPad, 24.h),
+                        controller: _scrollController,
+                        padding: EdgeInsets.fromLTRB(
+                          horizontalPad,
+                          4.h,
+                          horizontalPad,
+                          24.h,
+                        ),
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: columns,
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
                           mainAxisExtent: 168,
                         ),
-                        itemCount: filteredTurfs.length,
+                        itemCount: filteredTurfs.length + (hasMore ? 1 : 0),
                         itemBuilder: (context, index) {
+                          if (index == filteredTurfs.length) {
+                            return Center(
+                              child: isFetchingMore
+                                  ? CircularProgressIndicator(
+                                      color: colors.primary,
+                                      strokeWidth: 2,
+                                    )
+                                  : const SizedBox.shrink(),
+                            );
+                          }
                           final turf = filteredTurfs[index];
                           return VenueCard(
                             turf: turf,
                             margin: EdgeInsets.zero,
-                            onBookNow: () => Get.to(
-                              () => TurfDetailsPage(turf: turf),
-                            ),
+                            onBookNow: () =>
+                                Get.to(() => TurfDetailsPage(turf: turf)),
                           );
                         },
                       )
                     : ListView.builder(
+                        controller: _scrollController,
                         padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 24.h),
-                        itemCount: filteredTurfs.length,
+                        itemCount: filteredTurfs.length + (hasMore ? 1 : 0),
                         itemBuilder: (context, index) {
+                          if (index == filteredTurfs.length) {
+                            return Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16.h),
+                              child: Center(
+                                child: isFetchingMore
+                                    ? CircularProgressIndicator(
+                                        color: colors.primary,
+                                        strokeWidth: 2,
+                                      )
+                                    : const SizedBox.shrink(),
+                              ),
+                            );
+                          }
                           final turf = filteredTurfs[index];
                           return Padding(
                             padding: EdgeInsets.only(bottom: 12.h),
                             child: VenueCard(
                               turf: turf,
-                              onBookNow: () => Get.to(
-                                () => TurfDetailsPage(turf: turf),
-                              ),
+                              onBookNow: () =>
+                                  Get.to(() => TurfDetailsPage(turf: turf)),
                             ),
                           );
                         },

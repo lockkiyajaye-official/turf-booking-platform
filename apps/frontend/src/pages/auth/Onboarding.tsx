@@ -1,4 +1,4 @@
-import { ArrowRight, LogOut } from "lucide-react";
+import { ArrowRight, LogOut, Info } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -19,6 +19,8 @@ export default function Onboarding() {
         businessPhone: "",
         businessDescription: "",
         taxId: "",
+        businessRegistrationDoc: "",
+        identityDoc: "",
     });
 
     useEffect(() => {
@@ -269,7 +271,7 @@ export default function Onboarding() {
 
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1">
-                                    Tax ID{" "}
+                                    Tax ID / GSTIN{" "}
                                     <span className="text-gray-400 font-normal">
                                         (Optional)
                                     </span>
@@ -277,7 +279,7 @@ export default function Onboarding() {
                                 <input
                                     type="text"
                                     className="appearance-none block w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF4D4D] focus:border-transparent transition-all sm:text-sm font-medium"
-                                    placeholder="e.g. GSTIN"
+                                    placeholder="e.g. 29ABCDE1234F1Z5"
                                     value={ownerData.taxId}
                                     onChange={(e) =>
                                         setOwnerData({
@@ -286,6 +288,60 @@ export default function Onboarding() {
                                         })
                                     }
                                 />
+                            </div>
+
+                            {/* Verification Documents & Fast Approval Notice */}
+                            <div className="pt-2">
+                                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 mb-3 flex items-start gap-2.5">
+                                    <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                                    <p className="text-xs text-amber-900 leading-relaxed">
+                                        <span className="font-bold">Faster Approval:</span> Providing official verification documents is optional, but accounts with documentation attached are verified and approved much faster by our team.
+                                    </p>
+                                </div>
+
+                                <div className="space-y-3.5">
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1">
+                                            Business Registration / Trade License{" "}
+                                            <span className="text-gray-400 font-normal">
+                                                (Optional URL or Doc Link)
+                                            </span>
+                                        </label>
+                                        <input
+                                            type="url"
+                                            className="appearance-none block w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF4D4D] focus:border-transparent transition-all sm:text-sm font-medium"
+                                            placeholder="https://... (Link to License / Reg Certificate)"
+                                            value={ownerData.businessRegistrationDoc}
+                                            onChange={(e) =>
+                                                setOwnerData({
+                                                    ...ownerData,
+                                                    businessRegistrationDoc: e.target.value,
+                                                })
+                                            }
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1">
+                                            Owner Identification Proof{" "}
+                                            <span className="text-gray-400 font-normal">
+                                                (Optional Govt ID / PAN / Aadhaar Link)
+                                            </span>
+                                        </label>
+                                        <input
+                                            type="url"
+                                            className="appearance-none block w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF4D4D] focus:border-transparent transition-all sm:text-sm font-medium"
+                                            placeholder="https://... (Link to ID Proof)"
+                                            value={ownerData.identityDoc}
+                                            onChange={(e) =>
+                                                setOwnerData({
+                                                    ...ownerData,
+                                                    identityDoc: e.target.value,
+                                                })
+                                            }
+                                        />
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="pt-2">

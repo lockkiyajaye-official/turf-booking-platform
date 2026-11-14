@@ -33,10 +33,26 @@ export class DeletionRequestsService {
         return await this.deletionRepo.save(newRequest);
     }
 
-    async findAll(): Promise<AccountDeletionRequest[]> {
-        return await this.deletionRepo.find({
+    async findAll(page?: number, limit?: number) {
+        const pageNum = page && page > 0 ? Number(page) : 1;
+        const limitNum = limit && limit > 0 ? Number(limit) : 10;
+        const skip = (pageNum - 1) * limitNum;
+
+        const [items, total] = await this.deletionRepo.findAndCount({
             order: { createdAt: 'DESC' },
+            skip,
+            take: limitNum,
         });
+        const totalPages = Math.ceil(total / limitNum);
+
+        return {
+            items,
+            total,
+            page: pageNum,
+            limit: limitNum,
+            totalPages,
+            hasMore: pageNum < totalPages,
+        };
     }
 
     async findOne(id: string): Promise<AccountDeletionRequest> {

@@ -40,8 +40,9 @@ export default function AdminTurfs() {
     const fetchTurfs = async () => {
         try {
             setLoading(true);
-            const res = await api.get("/turfs");
-            setTurfs(res.data || []);
+            const res = await api.get("/turfs", { params: { limit: 100 } });
+            const items = Array.isArray(res.data) ? res.data : (res.data?.items || []);
+            setTurfs(items);
         } catch (error) {
             console.error("Failed to fetch turfs:", error);
         } finally {
