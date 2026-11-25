@@ -65,7 +65,7 @@ class AboutPage extends StatelessWidget {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  'Version 1.1.0 (Build 18)',
+                  'Version 1.1.1 (Build 20)',
                   style: textTheme.bodySmall?.copyWith(color: colors.textGrey),
                 ),
                 SizedBox(height: 24.h),
