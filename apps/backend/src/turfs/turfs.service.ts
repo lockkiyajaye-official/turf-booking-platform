@@ -11,6 +11,7 @@ import { User, UserRole } from '../database/entities/user.entity';
 import { In, Repository } from 'typeorm';
 import { CreateTurfDto } from './dto/create-turf.dto';
 import { UpdateTurfDto } from './dto/update-turf.dto';
+import { isSlotInPast, PAST_SLOT_ERROR_MESSAGE } from '../common/utils/slot-time.util';
 
 @Injectable()
 export class TurfsService {
@@ -263,6 +264,11 @@ export class TurfsService {
 
   async checkAvailability(turfId: string, date: string, startTime: string, endTime: string) {
     const turf = await this.findOne(turfId);
+
+    // Prevent booking past dates or slots whose start time has already passed
+    if (isSlotInPast(date, startTime)) {
+      return { available: false, reason: PAST_SLOT_ERROR_MESSAGE };
+    }
 
     // Check if the slot is in available slots
     const slotString = startTime && endTime ? `${startTime}-${endTime}` : startTime;

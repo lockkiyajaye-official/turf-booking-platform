@@ -304,6 +304,7 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
   bool _isVerifyingPayment = false;
   Set<String> _bookedSlots = {};
   int _fetchRequestId = 0;
+  Timer? _slotExpiryTimer;
 
   late double _currentRating;
   late int _totalReviews;
@@ -429,6 +430,18 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
             AmenityItem(icon: Icons.videocam_outlined, label: 'CCTV & Safety'),
           ];
 
+    _selectedSlotIndex = _slots.indexWhere((s) => !_isSlotPast(s));
+    _slotExpiryTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (!mounted) return;
+      setState(() {
+        if (_selectedSlotIndex >= 0 &&
+            _selectedSlotIndex < _slots.length &&
+            _isSlotPast(_slots[_selectedSlotIndex])) {
+          _selectedSlotIndex = _slots.indexWhere((s) => !_isSlotUnavailable(s));
+        }
+      });
+    });
+
     _fetchBookedSlots();
     _scrollToSelectedDate(false);
   }
@@ -508,14 +521,14 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
         _bookedSlots = {};
       }
 
-      // If currently selected slot is booked, auto-select first available slot
+      // If currently selected slot is booked or past, auto-select first available slot
       if (_selectedSlotIndex >= 0 && _selectedSlotIndex < _slots.length) {
-        if (_isSlotBooked(_slots[_selectedSlotIndex])) {
-          final firstAvail = _slots.indexWhere((s) => !_isSlotBooked(s));
+        if (_isSlotUnavailable(_slots[_selectedSlotIndex])) {
+          final firstAvail = _slots.indexWhere((s) => !_isSlotUnavailable(s));
           _selectedSlotIndex = firstAvail;
         }
       } else {
-        final firstAvail = _slots.indexWhere((s) => !_isSlotBooked(s));
+        final firstAvail = _slots.indexWhere((s) => !_isSlotUnavailable(s));
         _selectedSlotIndex = firstAvail;
       }
     });
@@ -530,6 +543,14 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
           cleanB.contains(clean) ||
           clean.contains(cleanB);
     });
+  }
+
+  bool _isSlotPast(String slot) {
+    return TimeHelper.isSlotInPast(_selectedDate, slot);
+  }
+
+  bool _isSlotUnavailable(String slot) {
+    return _isSlotBooked(slot) || _isSlotPast(slot);
   }
 
   bool _isPastDate(DateTime d) {
@@ -753,6 +774,7 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
 
   @override
   void dispose() {
+    _slotExpiryTimer?.cancel();
     _dateScrollController.dispose();
     if (_isRazorpaySupported) {
       _razorpay?.clear();
@@ -886,11 +908,24 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
       );
       return;
     }
-    if (_selectedSlotIndex >= 0 && _selectedSlotIndex < _slots.length) {
-      if (_isSlotBooked(_slots[_selectedSlotIndex])) {
-        _showMessage('This slot is already booked for the selected date');
-        return;
-      }
+    if (_selectedSlotIndex < 0 || _selectedSlotIndex >= _slots.length) {
+      _showMessage('Please select an available time slot');
+      return;
+    }
+
+    final selectedSlot = _slots[_selectedSlotIndex];
+    if (_isSlotBooked(selectedSlot)) {
+      _showMessage('This slot is already booked for the selected date');
+      return;
+    }
+
+    // Re-check current time at click to guard against stale open screens
+    if (TimeHelper.isSlotInPast(_selectedDate, selectedSlot)) {
+      setState(() {
+        _selectedSlotIndex = _slots.indexWhere((s) => !_isSlotUnavailable(s));
+      });
+      _showMessage(TimeHelper.pastSlotErrorMessage);
+      return;
     }
 
     setState(() => _isBooking = true);
@@ -922,6 +957,13 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
       _pendingBookingAmount = _parseNum(data['amount']) / 100;
       _pendingOrderId = data['orderId']?.toString();
       _openCheckout();
+      return;
+    }
+
+    // If backend rejected due to validation (e.g. past slot or already booked), surface it immediately
+    if (result['statusCode'] == 400) {
+      _fetchBookedSlots();
+      _showMessage(result['message']?.toString() ?? 'Slot is no longer available.');
       return;
     }
 
@@ -1745,11 +1787,14 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                             children: _slots.asMap().entries.map((e) {
                               int i = e.key;
                               var slot = e.value;
-                              bool isSelected = _selectedSlotIndex == i;
                               bool isBooked = _isSlotBooked(slot);
+                              bool isPast = _isSlotPast(slot);
+                              bool isUnavailable = isBooked || isPast;
+                              bool isSelected =
+                                  _selectedSlotIndex == i && !isUnavailable;
 
                               return GestureDetector(
-                                onTap: isBooked
+                                onTap: isUnavailable
                                     ? null
                                     : () => setState(
                                         () => _selectedSlotIndex = i,
@@ -1759,14 +1804,14 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                                   height: slotItemHeight,
                                   alignment: Alignment.center,
                                   decoration: BoxDecoration(
-                                    color: isBooked
+                                    color: isUnavailable
                                         ? const Color(0xFFF0F0F0)
                                         : (isSelected
                                               ? primaryGreen
                                               : Colors.white),
                                     borderRadius: BorderRadius.circular(6),
                                     border: Border.all(
-                                      color: isBooked
+                                      color: isUnavailable
                                           ? const Color(0xFFD0D0D0)
                                           : (isSelected
                                                 ? primaryGreen
@@ -1779,7 +1824,7 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                                     _formatSlot(slot),
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
-                                      color: isBooked
+                                      color: isUnavailable
                                           ? Colors.grey[400]
                                           : (isSelected
                                                 ? Colors.white
@@ -1788,7 +1833,7 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                                       fontWeight: isSelected
                                           ? FontWeight.w600
                                           : FontWeight.w500,
-                                      decoration: isBooked
+                                      decoration: isUnavailable
                                           ? TextDecoration.lineThrough
                                           : TextDecoration.none,
                                       letterSpacing: -0.2,
@@ -1799,7 +1844,7 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                             }).toList(),
                           ),
                           if (_slots.isNotEmpty &&
-                              _slots.every((s) => _isSlotBooked(s)))
+                              _slots.every((s) => _isSlotUnavailable(s)))
                             Padding(
                               padding: EdgeInsets.only(top: 10.h),
                               child: Row(
@@ -1811,7 +1856,9 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
                                   ),
                                   SizedBox(width: 6.w),
                                   Text(
-                                    'All slots are fully booked for this date',
+                                    _slots.every((s) => _isSlotBooked(s))
+                                        ? 'All slots are fully booked for this date'
+                                        : 'No upcoming slots available for this date',
                                     style: TextStyle(
                                       fontSize: 11.sp,
                                       color: Colors.red[400],
@@ -1827,7 +1874,7 @@ class _TurfDetailsPageState extends State<TurfDetailsPage> {
 
               if (_selectedSlotIndex >= 0 &&
                   _selectedSlotIndex < _slots.length &&
-                  !_isSlotBooked(_slots[_selectedSlotIndex])) ...[
+                  !_isSlotUnavailable(_slots[_selectedSlotIndex])) ...[
                 SizedBox(height: 20.h),
                 Container(
                   width: double.infinity,

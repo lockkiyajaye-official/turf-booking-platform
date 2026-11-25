@@ -23,6 +23,11 @@ import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
 import { addFavorite, checkFavorite, removeFavorite } from "../../services/favorites";
 import { loadRazorpayScript } from "../../utils/razorpay";
+import {
+    getLocalDateString,
+    isSlotInPast,
+    PAST_SLOT_ERROR_MESSAGE,
+} from "../../utils/slotTime";
 import type { Turf } from "./types";
 
 interface TurfReview {
@@ -66,11 +71,9 @@ export default function TurfDetail() {
     const { user } = useAuth();
     const [turf, setTurf] = useState<Turf | null>(null);
     const [loading, setLoading] = useState(true);
-    const [selectedDate, setSelectedDate] = useState(() => {
-        const today = new Date();
-        return today.toISOString().split("T")[0];
-    });
+    const [selectedDate, setSelectedDate] = useState(() => getLocalDateString());
     const [selectedSlot, setSelectedSlot] = useState("");
+    const [currentTime, setCurrentTime] = useState(() => new Date());
     const [bookedSlots, setBookedSlots] = useState<string[]>([]);
     const [loadingSlots, setLoadingSlots] = useState(false);
     const [booking, setBooking] = useState(false);
@@ -102,6 +105,19 @@ export default function TurfDetail() {
             }
         }
     }, [id, user]);
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 30000);
+        return () => clearInterval(timer);
+    }, []);
+
+    useEffect(() => {
+        if (selectedSlot && isSlotInPast(selectedDate, selectedSlot, currentTime)) {
+            setSelectedSlot("");
+        }
+    }, [selectedDate, selectedSlot, currentTime]);
 
     useEffect(() => {
         if (id && selectedDate) {
@@ -230,6 +246,14 @@ export default function TurfDetail() {
             alert("Please select a date and time slot");
             return;
         }
+        // Re-check current time at click to guard against stale open pages
+        const now = new Date();
+        if (isSlotInPast(selectedDate, selectedSlot, now)) {
+            setCurrentTime(now);
+            setSelectedSlot("");
+            alert(PAST_SLOT_ERROR_MESSAGE);
+            return;
+        }
         const [startTime, endTime] = selectedSlot.split("-");
         setBooking(true);
         try {
@@ -278,6 +302,8 @@ export default function TurfDetail() {
             const rzp = new (window as any).Razorpay(options);
             rzp.open();
         } catch (error: any) {
+            setCurrentTime(new Date());
+            fetchBookedSlots(selectedDate);
             alert(error.response?.data?.message || "Unable to start payment");
             setBooking(false);
         }
@@ -342,7 +368,10 @@ export default function TurfDetail() {
         );
     }
 
-    const todayStr = new Date().toISOString().split("T")[0];
+    const todayStr = getLocalDateString(currentTime);
+    const isSelectedSlotUnavailable = selectedSlot
+        ? isSlotBooked(selectedSlot) || isSlotInPast(selectedDate, selectedSlot, currentTime)
+        : false;
     const ratingValue =
         typeof turf.rating === "number"
             ? turf.rating
@@ -889,15 +918,17 @@ export default function TurfDetail() {
                                     <div className="grid grid-cols-2 gap-2 max-h-56 overflow-y-auto p-1 border border-gray-100 rounded-2xl bg-gray-50/50">
                                         {turf.availableSlots.map((slot, idx) => {
                                             const isBooked = isSlotBooked(slot);
-                                            const isSelected = selectedSlot === slot;
+                                            const isPast = isSlotInPast(selectedDate, slot, currentTime);
+                                            const isUnavailable = isBooked || isPast;
+                                            const isSelected = selectedSlot === slot && !isUnavailable;
                                             return (
                                                 <button
                                                     key={idx}
                                                     type="button"
-                                                    disabled={isBooked}
+                                                    disabled={isUnavailable}
                                                     onClick={() => setSelectedSlot(slot)}
                                                     className={`px-3 py-2 text-xs font-bold rounded-xl border text-center transition-all ${
-                                                        isBooked
+                                                        isUnavailable
                                                             ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed line-through"
                                                             : isSelected
                                                             ? "bg-[#E33E33] text-white border-[#E33E33] shadow-xs"
@@ -905,11 +936,15 @@ export default function TurfDetail() {
                                                     }`}
                                                 >
                                                     {formatSlot12H(slot)}
-                                                    {isBooked && (
+                                                    {isBooked ? (
                                                         <span className="block text-[9px] font-normal text-gray-400">
                                                             Booked
                                                         </span>
-                                                    )}
+                                                    ) : isPast ? (
+                                                        <span className="block text-[9px] font-normal text-gray-400">
+                                                            Passed
+                                                        </span>
+                                                    ) : null}
                                                 </button>
                                             );
                                         })}
@@ -918,7 +953,7 @@ export default function TurfDetail() {
                             </div>
 
                             {/* Price Breakdown */}
-                            {selectedSlot && !isSlotBooked(selectedSlot) && (
+                            {selectedSlot && !isSelectedSlotUnavailable && (
                                 <div className="bg-gray-50 rounded-2xl p-4 text-xs space-y-2 border border-gray-100">
                                     <div className="flex justify-between text-gray-600">
                                         <span>Selected Slot</span>
@@ -960,7 +995,7 @@ export default function TurfDetail() {
                                     disabled={
                                         !selectedDate ||
                                         !selectedSlot ||
-                                        isSlotBooked(selectedSlot) ||
+                                        isSelectedSlotUnavailable ||
                                         booking
                                     }
                                     className="w-full bg-[#E33E33] hover:bg-red-700 text-white py-3.5 rounded-xl font-extrabold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-red-200 active:scale-[0.98]"

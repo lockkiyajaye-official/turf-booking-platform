@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobile/core/responsive/screen_extensions.dart';
@@ -38,6 +39,7 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
   bool _isLoadingSlots = false;
   bool _isSubmitting = false;
   int _fetchRequestId = 0;
+  Timer? _slotExpiryTimer;
 
   final TextEditingController _nameCtrl = TextEditingController();
   final TextEditingController _phoneCtrl = TextEditingController();
@@ -50,6 +52,14 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
   void initState() {
     super.initState();
     _initTurf();
+    _slotExpiryTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (!mounted) return;
+      setState(() {
+        if (_selectedSlot != null && _isSlotPast(_selectedSlot!)) {
+          _selectedSlot = null;
+        }
+      });
+    });
   }
 
   void _initTurf() {
@@ -73,6 +83,10 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
           cleanB.contains(clean) ||
           clean.contains(cleanB);
     });
+  }
+
+  bool _isSlotPast(String slot) {
+    return TimeHelper.isSlotInPast(_selectedDate, slot);
   }
 
   Future<void> _fetchBookedSlots() async {
@@ -101,6 +115,7 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
 
   @override
   void dispose() {
+    _slotExpiryTimer?.cancel();
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
     _priceCtrl.dispose();
@@ -109,11 +124,13 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
   }
 
   Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
     final picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime.now().subtract(const Duration(days: 30)),
-      lastDate: DateTime.now().add(const Duration(days: 90)),
+      initialDate: _selectedDate.isBefore(today) ? today : _selectedDate,
+      firstDate: today,
+      lastDate: today.add(const Duration(days: 90)),
     );
 
     if (picked != null && picked != _selectedDate) {
@@ -131,6 +148,14 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
     }
     if (_selectedSlot == null) {
       Get.snackbar('Error', 'Please select an available time slot');
+      return;
+    }
+    // Re-check current time on submit to guard against stale open sheets
+    if (TimeHelper.isSlotInPast(_selectedDate, _selectedSlot!)) {
+      setState(() {
+        _selectedSlot = null;
+      });
+      Get.snackbar('Error', TimeHelper.pastSlotErrorMessage);
       return;
     }
     if (_nameCtrl.text.trim().isEmpty) {
@@ -500,13 +525,16 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
                             runSpacing: slotRunSpacing,
                             children: availableSlots.map((slot) {
                               final isBooked = _isSlotBooked(slot);
-                              final isSelected = _selectedSlot == slot;
+                              final isPast = _isSlotPast(slot);
+                              final isUnavailable = isBooked || isPast;
+                              final isSelected =
+                                  _selectedSlot == slot && !isUnavailable;
                               final displayTime = TimeHelper.formatTo12Hour(
                                 slot,
                               );
 
                               return GestureDetector(
-                                onTap: isBooked
+                                onTap: isUnavailable
                                     ? null
                                     : () {
                                         setState(() {
@@ -520,14 +548,14 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
                                   height: slotItemHeight,
                                   alignment: Alignment.center,
                                   decoration: BoxDecoration(
-                                    color: isBooked
+                                    color: isUnavailable
                                         ? const Color(0xFFF0F0F0)
                                         : (isSelected
                                               ? colors.primary
                                               : Colors.white),
                                     borderRadius: BorderRadius.circular(6),
                                     border: Border.all(
-                                      color: isBooked
+                                      color: isUnavailable
                                           ? const Color(0xFFD0D0D0)
                                           : (isSelected
                                                 ? colors.primary
@@ -540,7 +568,7 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
                                     displayTime,
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
-                                      color: isBooked
+                                      color: isUnavailable
                                           ? Colors.grey[400]
                                           : (isSelected
                                                 ? Colors.white
@@ -549,7 +577,7 @@ class _DirectBookingSheetState extends State<DirectBookingSheet> {
                                       fontWeight: isSelected
                                           ? FontWeight.w600
                                           : FontWeight.w500,
-                                      decoration: isBooked
+                                      decoration: isUnavailable
                                           ? TextDecoration.lineThrough
                                           : TextDecoration.none,
                                       letterSpacing: -0.2,

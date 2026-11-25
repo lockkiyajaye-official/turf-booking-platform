@@ -2,6 +2,11 @@ import { Store, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import api from "../../services/api";
 import type { Turf } from "../../pages/turf-owner/types";
+import {
+    getLocalDateString,
+    isSlotInPast,
+    PAST_SLOT_ERROR_MESSAGE,
+} from "../../utils/slotTime";
 
 interface DirectBookingModalProps {
     isOpen: boolean;
@@ -42,11 +47,9 @@ export default function DirectBookingModal({
 }: DirectBookingModalProps) {
     const [myTurfs, setMyTurfs] = useState<Turf[]>([]);
     const [selectedTurfId, setSelectedTurfId] = useState(initialTurfId || "");
-    const [bookingDate, setBookingDate] = useState(() => {
-        const today = new Date();
-        return today.toISOString().split("T")[0];
-    });
+    const [bookingDate, setBookingDate] = useState(() => getLocalDateString());
     const [selectedSlot, setSelectedSlot] = useState("");
+    const [currentTime, setCurrentTime] = useState(() => new Date());
     const [bookedSlots, setBookedSlots] = useState<string[]>([]);
     const [loadingSlots, setLoadingSlots] = useState(false);
     const [customerName, setCustomerName] = useState("");
@@ -83,6 +86,22 @@ export default function DirectBookingModal({
         }
     }, [selectedTurfId, myTurfs]);
 
+    // Keep current time fresh while modal is open so past slots disable automatically
+    useEffect(() => {
+        if (!isOpen) return;
+        setCurrentTime(new Date());
+        const timer = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 30000);
+        return () => clearInterval(timer);
+    }, [isOpen]);
+
+    useEffect(() => {
+        if (selectedSlot && isSlotInPast(bookingDate, selectedSlot, currentTime)) {
+            setSelectedSlot("");
+        }
+    }, [bookingDate, selectedSlot, currentTime]);
+
     // Fetch booked slots when turf or date changes
     useEffect(() => {
         if (!isOpen || !selectedTurfId || !bookingDate) {
@@ -115,6 +134,14 @@ export default function DirectBookingModal({
         }
         if (!selectedSlot) {
             alert("Please select an available time slot.");
+            return;
+        }
+        // Re-check current time at submit to guard against stale open modal
+        const now = new Date();
+        if (isSlotInPast(bookingDate, selectedSlot, now)) {
+            setCurrentTime(now);
+            setSelectedSlot("");
+            alert(PAST_SLOT_ERROR_MESSAGE);
             return;
         }
         if (!customerName.trim()) {
@@ -209,8 +236,12 @@ export default function DirectBookingModal({
                         </label>
                         <input
                             type="date"
+                            min={getLocalDateString(currentTime)}
                             value={bookingDate}
-                            onChange={(e) => setBookingDate(e.target.value)}
+                            onChange={(e) => {
+                                setBookingDate(e.target.value);
+                                setSelectedSlot("");
+                            }}
                             required
                             className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[#E33E33] font-bold text-sm"
                         />
@@ -241,17 +272,19 @@ export default function DirectBookingModal({
                                             b === slot ||
                                             b.replace(/\s/g, "") === slot.replace(/\s/g, ""),
                                     );
-                                    const isSelected = selectedSlot === slot;
+                                    const isPast = isSlotInPast(bookingDate, slot, currentTime);
+                                    const isUnavailable = isBooked || isPast;
+                                    const isSelected = selectedSlot === slot && !isUnavailable;
                                     const displaySlot = formatSlot12H(slot);
 
                                     return (
                                         <button
                                             key={slot}
                                             type="button"
-                                            disabled={isBooked}
+                                            disabled={isUnavailable}
                                             onClick={() => setSelectedSlot(slot)}
                                             className={`px-3 py-2 text-xs font-bold rounded-lg border text-center transition-all ${
-                                                isBooked
+                                                isUnavailable
                                                     ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed line-through"
                                                     : isSelected
                                                     ? "bg-[#E33E33] text-white border-[#E33E33] shadow-xs"
@@ -259,11 +292,15 @@ export default function DirectBookingModal({
                                             }`}
                                         >
                                             {displaySlot}
-                                            {isBooked && (
+                                            {isBooked ? (
                                                 <span className="block text-[9px] font-normal text-gray-400">
                                                     Booked
                                                 </span>
-                                            )}
+                                            ) : isPast ? (
+                                                <span className="block text-[9px] font-normal text-gray-400">
+                                                    Passed
+                                                </span>
+                                            ) : null}
                                         </button>
                                     );
                                 })}
