@@ -33,7 +33,11 @@ class PaymentService {
         errorMessage = msg;
       }
     }
-    return {'success': false, 'message': errorMessage};
+    return {
+      'success': false,
+      'message': errorMessage,
+      'statusCode': response.statusCode,
+    };
   }
 
   /// Fetch user payment history

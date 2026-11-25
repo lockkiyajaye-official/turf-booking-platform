@@ -5,7 +5,7 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -19,6 +19,7 @@ import { Payout, PayoutStatus } from '../database/entities/payout.entity';
 import { PlatformSettings } from '../database/entities/platform-settings.entity';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { VerifyPaymentDto } from './dto/verify-payment.dto';
+import { isSlotInPast, PAST_SLOT_ERROR_MESSAGE } from '../common/utils/slot-time.util';
 
 @Injectable()
 export class PaymentsService {
@@ -158,6 +159,45 @@ export class PaymentsService {
 
         if (hours <= 0) {
             throw new BadRequestException('Invalid time slot');
+        }
+
+        // Prevent booking past dates or slots whose start time has already passed
+        if (isSlotInPast(dto.bookingDate, dto.startTime)) {
+            throw new BadRequestException(PAST_SLOT_ERROR_MESSAGE);
+        }
+
+        // Prevent double-booking an already reserved slot
+        const dateFormatted = dto.bookingDate ? dto.bookingDate.split('T')[0] : '';
+        const activeBookings = await this.bookingRepository.find({
+            where: {
+                turfId: turf.id,
+                status: In([BookingStatus.CONFIRMED, BookingStatus.PENDING]),
+            },
+        });
+
+        const isConflicting = activeBookings.some((b) => {
+            const bDate = b.bookingDate instanceof Date
+                ? b.bookingDate.toISOString().split('T')[0]
+                : String(b.bookingDate).split('T')[0];
+
+            if (bDate !== dateFormatted) return false;
+
+            if (dto.startTime && dto.endTime) {
+                return (
+                    (b.startTime === dto.startTime && b.endTime === dto.endTime) ||
+                    (`${b.startTime}-${b.endTime}` === `${dto.startTime}-${dto.endTime}`) ||
+                    (`${b.startTime} - ${b.endTime}` === `${dto.startTime} - ${dto.endTime}`)
+                );
+            }
+            return (
+                b.startTime === dto.startTime ||
+                b.startTime.includes(dto.startTime) ||
+                dto.startTime.includes(b.startTime)
+            );
+        });
+
+        if (isConflicting) {
+            throw new BadRequestException('Slot already booked');
         }
 
         const breakdown = await this.calculateFeeBreakdown(turf.id, hours);

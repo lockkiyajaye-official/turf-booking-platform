@@ -13,6 +13,7 @@ import { PaymentsService } from '../payments/payments.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { CreateDirectBookingDto } from './dto/create-direct-booking.dto';
 import { CancelBookingDto } from './dto/cancel-booking.dto';
+import { isSlotInPast, PAST_SLOT_ERROR_MESSAGE } from '../common/utils/slot-time.util';
 
 @Injectable()
 export class BookingsService {
@@ -400,6 +401,11 @@ export class BookingsService {
 
     if (!turf) {
       return { available: false, reason: 'Turf not found' };
+    }
+
+    // Prevent booking past dates or slots whose start time has already passed
+    if (isSlotInPast(date, startTime)) {
+      return { available: false, reason: PAST_SLOT_ERROR_MESSAGE };
     }
 
     // Check if slot exists in available slots

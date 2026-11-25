@@ -105,3 +105,44 @@ If you are using the official Android Studio emulator instead of a physical phon
    adb shell '(printf "GET / HTTP/1.1\r\nHost: 127.0.0.1:3100\r\nConnection: close\r\n\r\n"; sleep 1) | toybox nc 127.0.0.1 3100'
    ```
    Should output `HTTP/1.1 200 OK Hello World!`.
+
+### Cannot Install App from Google Play Store ("App not installed" / Conflict with debug build)
+
+If you previously installed a debug / development build via `flutter run` or `adb install`, Android may keep residual files or retain the package in another user profile (such as **Private Space**, **Dual Apps**, **Secure Folder**, or **Work Profile**).
+
+Because Android enforces consistent app signing certificates across all profiles on the device, the Google Play Store cannot install the official release version over a debug key build.
+
+#### Solution: Completely remove the app across all profiles
+
+1. **Verify your device is connected via USB debugging:**
+   ```bash
+   adb devices
+   ```
+
+2. **Check which profiles have the package installed (e.g., Owner User 0 vs Private Space User 10):**
+   ```bash
+   adb shell pm list users
+   adb shell dumpsys package com.lockkiyajaye.app | grep -E "User 0:|User 10:|installed="
+   ```
+
+3. **Completely uninstall the app across all profiles:**
+   ```bash
+   adb uninstall com.lockkiyajaye.app
+   ```
+
+   *If it remains in a specific profile (such as Private Space / User 10), remove it directly from that user:*
+   ```bash
+   adb shell pm uninstall --user 10 com.lockkiyajaye.app
+   adb shell pm uninstall --user 0 com.lockkiyajaye.app
+   ```
+
+4. **Verify the package is completely wiped:**
+   ```bash
+   adb shell dumpsys package com.lockkiyajaye.app
+   ```
+   It should return:
+   ```
+   Unable to find package: com.lockkiyajaye.app
+   ```
+
+5. Open the **Google Play Store** on your phone and install the app directly.

@@ -1,6 +1,84 @@
 import 'package:url_launcher/url_launcher.dart';
 
 class TimeHelper {
+  static const String pastSlotErrorMessage =
+      'This time slot has already passed. Please select an upcoming time slot.';
+
+  /// Parses the start hour and minute from a slot string in either
+  /// 24-hour ("09:00-10:00", "14:30") or 12-hour ("09:00 AM - 10:00 AM") format.
+  static (int, int)? parseSlotStartTime(String slot) {
+    if (slot.trim().isEmpty) return null;
+
+    final rawStart = slot.contains('–')
+        ? slot.split('–').first
+        : slot.contains('-')
+            ? slot.split('-').first
+            : slot;
+
+    final trimmed = rawStart.trim().toUpperCase();
+    if (trimmed.isEmpty) return null;
+
+    final match12 = RegExp(
+      r'^(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)$',
+    ).firstMatch(trimmed);
+    if (match12 != null) {
+      var hour = int.tryParse(match12.group(1)!);
+      final minute = int.tryParse(match12.group(2)!);
+      final period = match12.group(3)!;
+      if (hour == null ||
+          minute == null ||
+          hour < 1 ||
+          hour > 12 ||
+          minute < 0 ||
+          minute > 59) {
+        return null;
+      }
+      if (period == 'AM' && hour == 12) {
+        hour = 0;
+      } else if (period == 'PM' && hour != 12) {
+        hour += 12;
+      }
+      return (hour, minute);
+    }
+
+    final match24 = RegExp(r'^(\d{1,2}):(\d{2})(?::\d{2})?$').firstMatch(trimmed);
+    if (match24 != null) {
+      final hour = int.tryParse(match24.group(1)!);
+      final minute = int.tryParse(match24.group(2)!);
+      if (hour == null ||
+          minute == null ||
+          hour < 0 ||
+          hour > 23 ||
+          minute < 0 ||
+          minute > 59) {
+        return null;
+      }
+      return (hour, minute);
+    }
+
+    return null;
+  }
+
+  /// Returns true if the slot's start date/time has already passed relative to [now].
+  static bool isSlotInPast(
+    DateTime bookingDate,
+    String slot, {
+    DateTime? now,
+  }) {
+    final parsed = parseSlotStartTime(slot);
+    if (parsed == null) return false;
+
+    final current = now ?? DateTime.now();
+    final slotStart = DateTime(
+      bookingDate.year,
+      bookingDate.month,
+      bookingDate.day,
+      parsed.$1,
+      parsed.$2,
+    );
+    return !slotStart.isAfter(current);
+  }
+
   /// Converts any time string (e.g. "14:00 - 15:00", "09:00-10:00", "14:00")
   /// into a standard 12-hour formatted string (e.g. "02:00 PM - 03:00 PM", "02:00 PM").
   static String formatTo12Hour(String timeStr) {
